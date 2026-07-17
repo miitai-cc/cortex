@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::Result;
 
 pub async fn read_word(file_path: &str) -> Result<String> {

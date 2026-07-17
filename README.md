@@ -90,6 +90,10 @@ This system references and extends `rusty_claw`:
 - [rusty_claw GitHub](https://github.com/opencode/rusty_claw)
 - [rusty_claw Documentation](https://opencode.ai/rusty-claw)
 
+## llm_wiki
+
+- [llm_wiki GitHub](https://github.com/nashsu/llm_wiki)
+
 ## License
 
 [MIT](LICENSE)

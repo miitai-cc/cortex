@@ -2,6 +2,7 @@ use salvo::prelude::*;
 use crate::core::state::AppState;
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn check(depot: &mut Depot) -> Json<serde_json::Value> {
     let state = depot.obtain::<AppState>().unwrap();
     let db_ok = sqlx::query("SELECT 1").execute(&state.db.pool).await.is_ok();

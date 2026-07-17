@@ -9,6 +9,7 @@ use qdrant_client::qdrant::{Condition, DeletePointsBuilder, Filter, PointStruct,
 use qdrant_client::Payload;
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn list(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let docs = DocumentRepo::list_all(&state.db.pool).await?;
@@ -16,6 +17,7 @@ pub async fn list(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn get(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let id = req.param::<String>("id").ok_or(AppError::BadRequest("Missing document id".into()))?;
@@ -24,6 +26,7 @@ pub async fn get(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn upload(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let embedding_service = EmbeddingService::new(&state.config.embedding_model);
@@ -89,6 +92,7 @@ async fn index_document(state: AppState, embedding: EmbeddingService, doc_id: &s
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn delete(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let id = req.param::<String>("id").ok_or(AppError::BadRequest("Missing document id".into()))?;

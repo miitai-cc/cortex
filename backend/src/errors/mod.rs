@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use salvo::http::StatusCode;
 use salvo::prelude::*;
 

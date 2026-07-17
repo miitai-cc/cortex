@@ -23,6 +23,7 @@ pub struct RegisterRequest {
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn login(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let login_req: LoginRequest = req.parse_json().await.map_err(|_| {
@@ -68,6 +69,7 @@ async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_jso
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let reg_req: RegisterRequest = req.parse_json().await.map_err(|_| {
@@ -93,6 +95,7 @@ pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
 
@@ -134,6 +137,7 @@ pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<s
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn profile(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
     let user_id = depot.obtain::<String>().map_err(|_| AppError::Unauthorized("Not authenticated".into()))?;
     let state = depot.obtain::<AppState>().unwrap();

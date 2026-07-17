@@ -1,5 +1,4 @@
 use crate::types::*;
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 pub struct OidcClient {

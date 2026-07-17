@@ -15,6 +15,7 @@ pub struct CreateUserRequest {
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn list_users(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let users = UserRepo::list_all(&state.db.pool).await?;
@@ -22,6 +23,7 @@ pub async fn list_users(depot: &mut Depot) -> Result<Json<serde_json::Value>, Ap
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn create_user(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let create_req: CreateUserRequest = req.parse_json().await.map_err(|_| {

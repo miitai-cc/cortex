@@ -14,6 +14,7 @@ impl AppState {
         let config = AppConfig::from_env();
         let db = Database::new(&config).await;
         let qdrant = Qdrant::from_url(&config.qdrant_url)
+            .skip_compatibility_check()
             .build()
             .expect("Failed to connect to Qdrant");
         Self { config, db, qdrant }

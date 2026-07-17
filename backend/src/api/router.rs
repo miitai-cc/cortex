@@ -7,6 +7,7 @@ const API_PREFIX: &str = "cortex/api/v0.85";
 
 pub fn build_router(state: AppState) -> Router {
     Router::new()
+        .hoop(salvo::logging::Logger::new())
         .hoop(affix_state::inject(state))
         .push(
             Router::with_path(API_PREFIX)

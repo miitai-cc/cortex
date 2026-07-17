@@ -1,5 +1,5 @@
+#![allow(dead_code)]
 use salvo::prelude::*;
-use salvo::http::StatusCode;
 use serde::Deserialize;
 use crate::core::state::AppState;
 use crate::rag::embeddings::EmbeddingService;
@@ -17,11 +17,14 @@ pub struct RagQueryRequest {
 }
 
 #[handler]
+#[tracing::instrument(level = "debug", skip_all)]
 pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
     let query_req: RagQueryRequest = req.parse_json().await.map_err(|_| {
         StatusError::bad_request().detail("Invalid request body")
     })?;
+
+    tracing::debug!("Received RAG query: {:?}", query_req.query);
 
     let embedding = EmbeddingService::new(&state.config.embedding_model);
     let reranker = RerankerService::new(&state.config.reranking_model);
@@ -33,10 +36,12 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
     let top_k = query_req.top_k.unwrap_or(5);
 
     // 1. Generate query embedding
+    tracing::debug!("Generating embedding for query...");
     let query_embedding = embedding.embed(&query_req.query).await
         .map_err(|_| StatusError::internal_server_error())?;
 
     // 2. Search Qdrant
+    tracing::debug!("Searching Qdrant for top {} results...", top_k);
     let search_result = state.qdrant
         .search_points(
             SearchPointsBuilder::new("documents", query_embedding, top_k as u64)
@@ -44,6 +49,8 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
         )
         .await
         .map_err(|_| StatusError::internal_server_error())?;
+    
+    tracing::debug!("Found {} initial results from Qdrant", search_result.result.len());
 
     let mut chunks: Vec<serde_json::Value> = search_result.result.iter().map(|point| {
         let payload: Payload = point.payload.clone().into();

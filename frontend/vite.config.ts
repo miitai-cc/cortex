@@ -26,6 +26,7 @@ export default defineConfig({
   },
   server: {
     port: 54321,
+    open: false,
     proxy: {
       '/cortex/api/v0.85': {
         target: 'http://localhost:54322',

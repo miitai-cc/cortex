@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use sqlx::AnyPool;
 use crate::errors::AppError;
 use crate::models::document::{DocumentModel, DocumentChunkModel};
@@ -5,6 +6,7 @@ use crate::models::document::{DocumentModel, DocumentChunkModel};
 pub struct DocumentRepo;
 
 impl DocumentRepo {
+#[tracing::instrument(level = "debug", skip(pool))]
     pub async fn find_by_id(pool: &AnyPool, id: &str) -> Result<DocumentModel, AppError> {
         sqlx::query_as::<_, DocumentModel>(
             "SELECT id, filename, content_type, file_size, metadata, status, created_at, updated_at
@@ -16,6 +18,7 @@ impl DocumentRepo {
         .ok_or_else(|| AppError::NotFound(format!("Document {} not found", id)))
     }
 
+#[tracing::instrument(level = "debug", skip(pool))]
     pub async fn list_all(pool: &AnyPool) -> Result<Vec<DocumentModel>, AppError> {
         sqlx::query_as::<_, DocumentModel>(
             "SELECT id, filename, content_type, file_size, metadata, status, created_at, updated_at
@@ -26,6 +29,7 @@ impl DocumentRepo {
         .map_err(AppError::from)
     }
 
+#[tracing::instrument(level = "debug", skip(pool))]
     pub async fn create(
         pool: &AnyPool,
         id: &str,
@@ -46,6 +50,7 @@ impl DocumentRepo {
         Self::find_by_id(pool, id).await
     }
 
+#[tracing::instrument(level = "debug", skip(pool))]
     pub async fn update_status(
         pool: &AnyPool,
         id: &str,
@@ -60,6 +65,7 @@ impl DocumentRepo {
         Self::find_by_id(pool, id).await
     }
 
+#[tracing::instrument(level = "debug", skip(pool))]
     pub async fn delete(pool: &AnyPool, id: &str) -> Result<(), AppError> {
         let affected = sqlx::query("DELETE FROM documents WHERE id = ?")
             .bind(id)
@@ -77,6 +83,7 @@ impl DocumentRepo {
 pub struct ChunkRepo;
 
 impl ChunkRepo {
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn find_by_document_id(
         pool: &AnyPool,
         document_id: &str,
@@ -91,6 +98,7 @@ impl ChunkRepo {
         .map_err(AppError::from)
     }
 
+#[tracing::instrument(level = "debug", skip(pool, content))]
     pub async fn create(
         pool: &AnyPool,
         id: &str,
@@ -117,6 +125,7 @@ impl ChunkRepo {
         })
     }
 
+#[tracing::instrument(level = "debug", skip(pool))]
     pub async fn delete_by_document_id(pool: &AnyPool, document_id: &str) -> Result<(), AppError> {
         sqlx::query("DELETE FROM document_chunks WHERE document_id = ?")
             .bind(document_id)
