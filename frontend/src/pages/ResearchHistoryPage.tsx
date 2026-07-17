@@ -25,8 +25,8 @@ export default function ResearchHistoryPage() {
 
       {sorted.length === 0 ? (
         <div className="card text-center py-12">
-          <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">尚無研究紀錄</p>
+          <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">尚無研究紀錄</p>
           <button
             onClick={() => navigate('/cortex/research')}
             className="mt-4 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -49,20 +49,20 @@ export default function ResearchHistoryPage() {
                     }`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{task.topic}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{task.topic}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {cfg.label} · {task.queries.length} 個查詢 · {new Date(task.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <button
                     onClick={() => removeTask(task.id)}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                    className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
                   >
                     刪除
                   </button>
                 </div>
                 {task.synthesis && (
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-3 pl-11">{task.synthesis}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-3 pl-11">{task.synthesis}</p>
                 )}
               </div>
             );

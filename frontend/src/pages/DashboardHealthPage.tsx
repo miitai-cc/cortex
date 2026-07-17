@@ -159,17 +159,17 @@ const resourceGauges = [
 ];
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
-  healthy: { color: 'text-green-600', bg: 'bg-green-50', label: '正常' },
-  warning: { color: 'text-amber-600', bg: 'bg-amber-50', label: '警告' },
-  error: { color: 'text-red-600', bg: 'bg-red-50', label: '異常' },
-  degraded: { color: 'text-orange-600', bg: 'bg-orange-50', label: '降級' },
+  healthy: { color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', label: '正常' },
+  warning: { color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', label: '警告' },
+  error: { color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20', label: '異常' },
+  degraded: { color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20', label: '降級' },
 };
 
 const jobStatusConfig: Record<string, { color: string; bg: string }> = {
-  processing: { color: 'text-blue-600', bg: 'bg-blue-50' },
-  queued: { color: 'text-gray-500', bg: 'bg-gray-50' },
-  completed: { color: 'text-green-600', bg: 'bg-green-50' },
-  failed: { color: 'text-red-600', bg: 'bg-red-50' },
+  processing: { color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+  queued: { color: 'text-gray-500', bg: 'bg-gray-50 dark:bg-gray-700/50' },
+  completed: { color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
+  failed: { color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20' },
 };
 
 export default function DashboardHealthPage() {
@@ -206,55 +206,55 @@ export default function DashboardHealthPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className={`card border-l-4 ${isHealthy ? 'border-l-green-500' : 'border-l-red-500'}`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${isHealthy ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`p-2.5 rounded-lg ${isHealthy ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
               {isHealthy ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
             </div>
             <div>
-              <p className="text-xs text-gray-500">系統狀態</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">系統狀態</p>
               <p className="text-base font-bold">{isLoading ? '—' : isHealthy ? '正常運行' : '異常'}</p>
             </div>
           </div>
         </div>
         <div className="card border-l-4 border-l-blue-500">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-blue-50">
+            <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/20">
               <Timer className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">API 延遲</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">API 延遲</p>
               <p className="text-base font-bold">{currentLatency}ms</p>
             </div>
           </div>
         </div>
         <div className="card border-l-4 border-l-purple-500">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-purple-50">
+            <div className="p-2.5 rounded-lg bg-purple-50 dark:bg-purple-900/20">
               <BarChart3 className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">錯誤率</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">錯誤率</p>
               <p className="text-base font-bold">{errorRate}%</p>
             </div>
           </div>
         </div>
         <div className="card border-l-4 border-l-green-500">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-green-50">
+            <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20">
               <Shield className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">運行時間</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">運行時間</p>
               <p className="text-base font-bold">99.97%</p>
             </div>
           </div>
         </div>
         <div className="card border-l-4 border-l-amber-500">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-amber-50">
+            <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20">
               <Activity className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">總請求數</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">總請求數</p>
               <p className="text-base font-bold">{totalRequests.toLocaleString()}</p>
             </div>
           </div>
@@ -271,11 +271,11 @@ export default function DashboardHealthPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Icon className="w-4 h-4" style={{ color: gauge.fill }} />
-                    <span className="text-sm font-medium text-gray-700">{gauge.name}</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{gauge.name}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{gauge.cores || gauge.detail}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{gauge.cores || gauge.detail}</span>
                 </div>
-                <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div className="relative w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -285,8 +285,8 @@ export default function DashboardHealthPage() {
                   />
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-400">{gauge.value}%</span>
-                  <span className="text-xs text-gray-400">{gauge.value > 80 ? '高' : gauge.value > 60 ? '中' : '低'}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{gauge.value}%</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{gauge.value > 80 ? '高' : gauge.value > 60 ? '中' : '低'}</span>
                 </div>
               </div>
             );
@@ -295,7 +295,7 @@ export default function DashboardHealthPage() {
 
         {/* Resource History Chart */}
         <div className="lg:col-span-3 card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">資源使用趨勢（24 小時）</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">資源使用趨勢（24 小時）</h3>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={mockResourceHistory}>
               <defs>
@@ -319,11 +319,11 @@ export default function DashboardHealthPage() {
           <div className="flex items-center gap-4 mt-2 justify-center">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              <span className="text-xs text-gray-500">CPU</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">CPU</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-              <span className="text-xs text-gray-500">記憶體</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">記憶體</span>
             </div>
           </div>
         </div>
@@ -332,7 +332,7 @@ export default function DashboardHealthPage() {
       {/* API Latency & Error Rate */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">API 回應時間趨勢</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">API 回應時間趨勢</h3>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={mockApiLatency}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -346,17 +346,17 @@ export default function DashboardHealthPage() {
           <div className="flex items-center gap-4 mt-2 justify-center">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span className="text-xs text-gray-500">平均延遲 ({currentLatency}ms)</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">平均延遲 ({currentLatency}ms)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              <span className="text-xs text-gray-500">P99 ({mockApiLatency[mockApiLatency.length - 1].p99}ms)</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">P99 ({mockApiLatency[mockApiLatency.length - 1].p99}ms)</span>
             </div>
           </div>
         </div>
 
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">請求量與錯誤率</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">請求量與錯誤率</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={mockErrorRate}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -370,11 +370,11 @@ export default function DashboardHealthPage() {
           <div className="flex items-center gap-4 mt-2 justify-center">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-              <span className="text-xs text-gray-500">總請求 ({totalRequests})</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">總請求 ({totalRequests})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <span className="text-xs text-gray-500">錯誤 ({totalErrors})</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">錯誤 ({totalErrors})</span>
             </div>
           </div>
         </div>
@@ -383,8 +383,8 @@ export default function DashboardHealthPage() {
       {/* Services */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-700">服務健康狀態</h3>
-          <span className="text-xs text-gray-400">每 10 秒自動更新</span>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">服務健康狀態</h3>
+          <span className="text-xs text-gray-400 dark:text-gray-500">每 10 秒自動更新</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {services.map((svc) => {
@@ -392,24 +392,24 @@ export default function DashboardHealthPage() {
             const SvcIcon = svc.icon;
             return (
               <div key={svc.name} className={`p-4 rounded-xl border transition-all hover:shadow-md ${
-                svc.status === 'healthy' ? 'border-green-200 bg-green-50/30' :
-                svc.status === 'warning' ? 'border-amber-200 bg-amber-50/30' :
-                'border-red-200 bg-red-50/30'
+                svc.status === 'healthy' ? 'border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-900/20' :
+                svc.status === 'warning' ? 'border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/20' :
+                'border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-900/20'
               }`}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`p-2 rounded-lg ${cfg.bg}`}>
                     <SvcIcon className={`w-4 h-4 ${cfg.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{svc.name}</p>
-                    <p className="text-xs text-gray-400">{svc.version}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{svc.name}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{svc.version}</p>
                   </div>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
                     {cfg.label}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mb-2">{svc.details}</p>
-                <div className="flex items-center gap-4 text-xs text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{svc.details}</p>
+                <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
                   <span>延遲: {svc.latency}</span>
                   <span>可用率: {svc.uptime}</span>
                   <span className="ml-auto">{svc.lastCheck}</span>
@@ -425,25 +425,25 @@ export default function DashboardHealthPage() {
         {/* Processing Queue */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-700">處理佇列</h3>
-            <span className="text-xs text-gray-400">{mockQueueJobs.filter(j => j.status !== 'completed').length} 筆進行中</span>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">處理佇列</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{mockQueueJobs.filter(j => j.status !== 'completed').length} 筆進行中</span>
           </div>
           <div className="space-y-3">
             {mockQueueJobs.map((job) => {
               const jCfg = jobStatusConfig[job.status] || jobStatusConfig.queued;
               return (
-                <div key={job.id} className="p-3 bg-gray-50 rounded-lg">
+                <div key={job.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${jCfg.bg} ${jCfg.color}`}>
                         {job.type}
                       </span>
-                      <span className="text-sm text-gray-700 truncate">{job.target}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{job.target}</span>
                     </div>
-                    <span className="text-xs text-gray-400">{job.started}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{job.started}</span>
                   </div>
                   {job.status === 'processing' && (
-                    <div className="relative w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="relative w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500 rounded-full transition-all duration-300"
                         style={{ width: `${job.progress}%` }}
@@ -459,17 +459,17 @@ export default function DashboardHealthPage() {
         {/* Recent Alerts */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-700">最近告警</h3>
-            <span className="text-xs text-gray-400">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">最近告警</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               {mockAlerts.filter(a => !a.resolved).length} 個未解決
             </span>
           </div>
           <div className="space-y-2">
             {mockAlerts.map((alert) => {
               const alertColors: Record<string, { icon: typeof AlertCircle; color: string; bg: string; border: string }> = {
-                error: { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-                warning: { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-                info: { icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+                error: { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800' },
+                warning: { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
+                info: { icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
               };
               const aCfg = alertColors[alert.level] || alertColors.info;
               const AlertIcon = aCfg.icon;
@@ -482,9 +482,9 @@ export default function DashboardHealthPage() {
                 >
                   <AlertIcon className={`w-4 h-4 mt-0.5 shrink-0 ${aCfg.color}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-700">{alert.message}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{alert.message}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-400">{alert.time}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{alert.time}</span>
                       {alert.resolved && (
                         <span className="text-xs text-green-600 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> 已解決

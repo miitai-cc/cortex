@@ -15,12 +15,12 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl-empty">
       <CommonHeroTitle icon={Settings} title={t('settings.title')} />
-      
+
       <div className="card space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('settings.language')}
           </label>
           <select

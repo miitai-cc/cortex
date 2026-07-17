@@ -46,19 +46,19 @@ export default function ResearchPanel() {
   };
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-30 flex flex-col">
-      <div className="p-4 border-b border-gray-200">
+    <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-xl z-30 flex flex-col">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <CommonHeroTitle icon={FlaskConical} title="深層研究" description="自動化網路搜尋與綜合分析，擴展知識邊界" />
-        <button onClick={() => setPanelOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
+        <button onClick={() => setPanelOpen(false)} className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 z-10">
           <PanelRightClose className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-700">
         <div className="flex gap-2">
           <input
             type="text"
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:text-gray-100"
             placeholder="輸入研究主題..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
@@ -76,23 +76,23 @@ export default function ResearchPanel() {
 
       <div className="flex-1 overflow-auto p-3 space-y-2">
         {tasks.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-8">尚無研究任務</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">尚無研究任務</p>
         ) : (
           tasks.map((task) => {
             const cfg = STATUS_CONFIG[task.status];
             const Icon = cfg.icon;
             return (
-              <div key={task.id} className="bg-gray-50 rounded-lg p-3">
+              <div key={task.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Icon className={`w-4 h-4 ${cfg.color} ${task.status === 'queued' || task.status === 'searching' || task.status === 'synthesizing' ? 'animate-spin' : ''}`} />
-                  <span className="text-xs font-medium text-gray-700 truncate flex-1">{task.topic}</span>
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate flex-1">{task.topic}</span>
                   <span className={`text-xs ${cfg.color}`}>{cfg.label}</span>
-                  <button onClick={() => removeTask(task.id)} className="text-gray-400 hover:text-red-500">
+                  <button onClick={() => removeTask(task.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
                 {task.synthesis && (
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-3">{task.synthesis}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-3">{task.synthesis}</p>
                 )}
               </div>
             );

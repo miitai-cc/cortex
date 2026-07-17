@@ -23,18 +23,18 @@ export default function DashboardActivityPage() {
           {mockActivities.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className={`p-2 rounded-lg ${item.bg}`}>
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <div className={`p-2 rounded-lg ${item.bg} dark:bg-opacity-20`}>
                   <Icon className={`w-4 h-4 ${item.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-medium">{item.action}</span>
-                    <span className="mx-1.5 text-gray-400">·</span>
-                    <span className="text-gray-500 truncate">{item.target}</span>
+                    <span className="mx-1.5 text-gray-400 dark:text-gray-500">·</span>
+                    <span className="text-gray-500 dark:text-gray-400 truncate">{item.target}</span>
                   </p>
                 </div>
-                <span className="text-xs text-gray-400 shrink-0">{item.time}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{item.time}</span>
               </div>
             );
           })}

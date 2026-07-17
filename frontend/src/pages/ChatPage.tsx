@@ -211,8 +211,8 @@ export default function ChatPage() {
   return (
     <div className="flex h-full">
       {/* Conversation sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
-        <div className="p-3 border-b border-gray-200">
+      <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0">
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={handleNewChat}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
@@ -227,8 +227,8 @@ export default function ChatPage() {
               key={conv.id}
               className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
                 conv.id === activeConversationId
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
               onClick={() => setActiveConversation(conv.id)}
             >
@@ -236,32 +236,32 @@ export default function ChatPage() {
               <span className="text-sm truncate flex-1">{conv.title}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
-                className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
           {conversations.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-8">尚無對話，點擊上方開始</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">尚無對話，點擊上方開始</p>
           )}
         </div>
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
         <div className="px-4 pt-4">
           <CommonHeroTitle icon={MessageSquare} title="對話" description="與您的知識庫對話，支援多輪上下文理解與即時串流回覆" />
         </div>
         <div className="flex-1 overflow-auto">
           <div className="max-w-4xl mx-auto px-4 py-6">
             {displayedMessages.length === 0 && !isStreaming && (
-              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                <div className="w-20 h-20 bg-primary-50 rounded-2xl flex items-center justify-center mb-6">
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
+                <div className="w-20 h-20 bg-primary-50 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mb-6">
                   <Sparkles className="w-10 h-10 text-primary-500" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Cortex 智慧檢索</h2>
-                <p className="text-sm text-gray-500 mb-10 max-w-md text-center">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Cortex 智慧檢索</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-md text-center">
                   與您的知識庫對話，支援多輪上下文理解與即時串流回覆
                 </p>
                 <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
@@ -274,7 +274,7 @@ export default function ChatPage() {
                     <button
                       key={q}
                       onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                      className="px-4 py-3 text-sm text-gray-600 bg-gray-50 rounded-xl hover:bg-gray-100 border border-gray-200 transition-colors text-left"
+                      className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors text-left"
                     >
                       <span className="text-xs text-primary-500 font-medium block mb-1">{desc}</span>
                       {q}
@@ -298,16 +298,16 @@ export default function ChatPage() {
                   className={`max-w-[75%] px-4 py-3 rounded-2xl ${
                     msg.role === 'user'
                       ? 'bg-primary-600 text-white rounded-br-md'
-                      : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md'
                   }`}
                 >
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                   {msg.references && msg.references.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200/50">
-                      <p className="text-xs font-medium text-gray-500 mb-1">參考來源：</p>
+                    <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">參考來源：</p>
                       <div className="space-y-1">
                         {msg.references.slice(0, 3).map((ref: any, i: number) => (
-                          <div key={i} className="text-xs text-gray-400 flex items-start gap-1">
+                          <div key={i} className="text-xs text-gray-400 dark:text-gray-500 flex items-start gap-1">
                             <span className="text-primary-400 shrink-0">[{i + 1}]</span>
                             <span className="line-clamp-1">{(ref.content || '').slice(0, 80)}...</span>
                           </div>
@@ -330,7 +330,7 @@ export default function ChatPage() {
                 <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center shrink-0 mt-1">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="max-w-[75%] px-4 py-3 rounded-2xl bg-gray-100 text-gray-800 rounded-bl-md">
+                <div className="max-w-[75%] px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md">
                   {streamingContent ? (
                     <div className="text-sm whitespace-pre-wrap leading-relaxed">
                       {streamingContent}
@@ -343,16 +343,16 @@ export default function ChatPage() {
                         <span className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <span className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-xs text-gray-400">思考中</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">思考中</span>
                     </div>
                   )}
 
                   {hasRefs && (
-                    <div className="mt-3 pt-3 border-t border-gray-200/50">
-                      <p className="text-xs font-medium text-gray-500 mb-1">參考來源：</p>
+                    <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">參考來源：</p>
                       <div className="space-y-1">
                         {streamingRefs.slice(0, 3).map((ref: any, i: number) => (
-                          <div key={i} className="text-xs text-gray-400 flex items-start gap-1">
+                          <div key={i} className="text-xs text-gray-400 dark:text-gray-500 flex items-start gap-1">
                             <span className="text-primary-400 shrink-0">[{i + 1}]</span>
                             <span className="line-clamp-1">{(ref.content || '').slice(0, 80)}...</span>
                           </div>
@@ -369,32 +369,32 @@ export default function ChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-gray-200 bg-white">
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <div className="max-w-4xl mx-auto p-4">
             {/* Context indicator */}
             {selectedDocs.length > 0 && (
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <div className="flex items-center gap-1.5 text-xs text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">
+                <div className="flex items-center gap-1.5 text-xs text-primary-600 bg-primary-50 dark:bg-primary-900/30 px-2.5 py-1 rounded-full">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span className="font-medium">{selectedDocs.length} 個上下文文件</span>
                 </div>
                 {selectedDocs.slice(0, 3).map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full"
+                    className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full"
                   >
-                    <FileText className="w-3 h-3 text-gray-400" />
+                    <FileText className="w-3 h-3 text-gray-400 dark:text-gray-500" />
                     <span className="max-w-[120px] truncate">{doc.filename}</span>
                     <button
                       onClick={() => removeDocument(doc.id)}
-                      className="ml-0.5 text-gray-400 hover:text-red-500"
+                      className="ml-0.5 text-gray-400 dark:text-gray-500 hover:text-red-500"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
                 {selectedDocs.length > 3 && (
-                  <span className="text-xs text-gray-400">+{selectedDocs.length - 3} 更多</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">+{selectedDocs.length - 3} 更多</span>
                 )}
               </div>
             )}
@@ -404,8 +404,8 @@ export default function ChatPage() {
                 onClick={toggleContextPanel}
                 className={`shrink-0 p-3 rounded-xl border transition-colors ${
                   contextPanelOpen
-                    ? 'bg-primary-50 border-primary-300 text-primary-600'
-                    : 'bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400'
+                    : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
                 title="上下文庫管理"
               >
@@ -414,7 +414,7 @@ export default function ChatPage() {
               <input
                 ref={inputRef}
                 type="text"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-gray-50"
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="輸入您的問題... (Enter 發送)"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

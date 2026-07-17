@@ -21,10 +21,10 @@ export default function SettingsSystemPage() {
 
       <div className="max-w-2xl space-y-6">
         <div className="card space-y-4">
-          <h3 className="text-sm font-semibold text-gray-700">{t('settings.model')}</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('settings.model')}</h3>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.embeddingModel')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.embeddingModel')}</label>
             <select
               className="input-field w-full"
               value={embeddingModel}
@@ -37,7 +37,7 @@ export default function SettingsSystemPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.rerankingModel')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.rerankingModel')}</label>
             <select
               className="input-field w-full"
               value={rerankingModel}
@@ -49,7 +49,7 @@ export default function SettingsSystemPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.llmProvider')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.llmProvider')}</label>
             <select
               className="input-field w-full"
               value={llmProvider}
@@ -62,7 +62,7 @@ export default function SettingsSystemPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.apiKey')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.apiKey')}</label>
             <input
               type="password"
               className="input-field w-full"

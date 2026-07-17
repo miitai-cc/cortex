@@ -66,11 +66,11 @@ export default function GraphCommunityPage() {
       <CommonHeroTitle icon={Users} title={t('nav.graph.community')} description="分析知識圖譜中的社群結構" />
 
       {loading ? (
-        <p className="text-gray-500">{t('common.loading')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
       ) : communityEntries.length === 0 ? (
         <div className="card text-center py-12">
-          <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">未偵測到社群結構</p>
+          <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">未偵測到社群結構</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,12 +80,12 @@ export default function GraphCommunityPage() {
               <div key={id} className="card">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-3 h-3 rounded-full" style={{ background: color }} />
-                  <h3 className="text-sm font-semibold text-gray-700">社群 {Number(id) + 1}</h3>
-                  <span className="text-xs text-gray-400 ml-auto">{members.length} 個節點</span>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">社群 {Number(id) + 1}</h3>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{members.length} 個節點</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {members.map((label) => (
-                    <span key={label} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-lg">
+                    <span key={label} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">
                       {label}
                     </span>
                   ))}

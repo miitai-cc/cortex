@@ -18,7 +18,7 @@ export default function DocumentDetailPage() {
     <div>
       <button
         onClick={() => navigate('/cortex/documents')}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+        className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
       >
         <ArrowLeft className="w-4 h-4" />
         {t('common.back')}
@@ -31,18 +31,18 @@ export default function DocumentDetailPage() {
             <div className="flex items-center gap-3 mb-4">
               <FileText className="w-8 h-8 text-primary-600" />
               <div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {t(`documents.status.${doc.status}`)} · {doc.file_type}
                 </p>
               </div>
             </div>
             <div className="border-t pt-4">
-              <pre className="text-sm text-gray-600 whitespace-pre-wrap">{doc.content}</pre>
+              <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{doc.content}</pre>
             </div>
           </div>
         </div>
       ) : (
-        <p className="text-gray-500">{t('common.error')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.error')}</p>
       )}
     </div>
   );

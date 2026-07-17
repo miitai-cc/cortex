@@ -31,17 +31,17 @@ export default function DocumentsPage() {
       <div
         {...getRootProps()}
         className={`mb-6 p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors ${
-          isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'
+          isDragActive ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
         }`}
       >
         <input {...getInputProps()} />
-        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-        <p className="text-gray-600">{isDragActive ? t('documents.dropzone.active') : t('documents.upload')}</p>
-        <p className="text-sm text-gray-400 mt-1">PDF, DOCX, TXT, MD</p>
+        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+        <p className="text-gray-600 dark:text-gray-300">{isDragActive ? t('documents.dropzone.active') : t('documents.upload')}</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">PDF, DOCX, TXT, MD</p>
       </div>
 
       <div className="relative mb-4">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           className="input-field pl-10"
@@ -52,20 +52,20 @@ export default function DocumentsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-gray-500">{t('common.loading')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
       ) : (
         <div className="grid gap-4">
           {data?.data?.map((doc: any) => (
             <div key={doc.id} className="card flex items-center justify-between">
               <Link to={`/cortex/documents/${doc.id}`} className="flex-1">
-                <p className="font-medium text-gray-900">{doc.filename}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-gray-900 dark:text-gray-100">{doc.filename}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {t(`documents.status.${doc.status}`)} · {doc.file_type}
                 </p>
               </Link>
               <button
                 onClick={() => deleteMutation.mutate(doc.id)}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
               >
                 <Trash2 className="w-5 h-5" />
               </button>

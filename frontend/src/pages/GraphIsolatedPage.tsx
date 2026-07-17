@@ -38,25 +38,25 @@ export default function GraphIsolatedPage() {
       <CommonHeroTitle icon={AlertTriangle} title={t('nav.graph.isolated')} description="找出知識圖譜中孤立或連結稀少的節點" />
 
       {loading ? (
-        <p className="text-gray-500">{t('common.loading')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
       ) : isolated.length === 0 ? (
         <div className="card text-center py-12">
-          <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">所有節點均有良好連結</p>
+          <AlertTriangle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">所有節點均有良好連結</p>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
             共找到 <span className="font-medium text-amber-600">{isolated.length}</span> 個孤立節點
           </p>
           {isolated.map((node) => (
             <div key={node.id} className="card flex items-center gap-3">
-              <div className="p-2 bg-amber-50 rounded-lg shrink-0">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg shrink-0">
+                <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{node.label}</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{node.label}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   類型: {node.type} · 連結數: {node.link_count}
                 </p>
               </div>
