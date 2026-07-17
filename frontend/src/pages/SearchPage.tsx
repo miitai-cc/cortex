@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, Loader2, FileText } from 'lucide-react';
 import { searchApi } from '../services/api';
 import ReactMarkdown from 'react-markdown';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 export default function SearchPage() {
   const { t } = useTranslation();
@@ -27,7 +28,7 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('search.title')}</h1>
+      <CommonHeroTitle icon={Search} title={t('search.title')} />
       
       <div className="flex gap-3 mb-8">
         <input

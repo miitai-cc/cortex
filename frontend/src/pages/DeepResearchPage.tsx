@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 const STATUS_ICONS: Record<string, typeof Loader2> = {
   queued: Loader2,
@@ -79,16 +80,7 @@ export default function DeepResearchPage() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <FlaskConical className="w-5 h-5 text-purple-600" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">深層研究</h1>
-            <p className="text-sm text-gray-500">自動化網路搜尋與綜合分析，擴展知識邊界</p>
-          </div>
-        </div>
-
+        <CommonHeroTitle icon={FlaskConical} title="深層研究" description="自動化網路搜尋與綜合分析，擴展知識邊界" />
         <div className="space-y-3">
           <input
             type="text"

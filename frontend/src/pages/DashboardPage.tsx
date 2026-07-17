@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { FileText, Layers, Search, Activity } from 'lucide-react';
+import { FileText, Layers, Search, Activity, LayoutDashboard } from 'lucide-react';
 import { healthApi } from '../services/api';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 const stats = [
   { key: 'totalDocuments', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -20,7 +21,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('dashboard.title')}</h1>
+      <CommonHeroTitle icon={LayoutDashboard} title={t('dashboard.title')} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <div key={stat.key} className="card">

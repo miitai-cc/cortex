@@ -17,8 +17,8 @@ import {
   Minimize2,
   ExternalLink
 } from 'lucide-react';
-import Breadcrumb from '../Breadcrumb';
-import './dashboard.css';
+import Breadcrumb from './Breadcrumb';
+import './CommonHeroTitle.css';
 
 const CommonHeroTitle = ({
   icon: IconComponent = LayoutDashboard,
@@ -34,7 +34,6 @@ const CommonHeroTitle = ({
   onSettings,
   onFullscreenChange,
   extraButtons = [],
-  customActions = null,
   theme = {}
 }) => {
   const [isCompact, setIsCompact] = useState(false);
@@ -152,12 +151,12 @@ const CommonHeroTitle = ({
   return (
     <>
       <section
-        className={`dashboard-hero ${isCompact ? 'compact' : ''}`}
+        className={`common-hero ${isCompact ? 'compact' : ''}`}
         style={heroStyle}
       >
-        <div className="hero-left">
+        <div className="common-hero-left">
           <button
-            className="hero-icon-btn"
+            className="common-hero-icon-btn"
             style={iconBtnStyle}
             onClick={toggleCompact}
             title={isCompact ? "展開 Hero" : "收合 Hero"}
@@ -165,7 +164,7 @@ const CommonHeroTitle = ({
             <IconComponent size={isCompact ? 18 : 42} />
           </button>
 
-          <div className="hero-info">
+          <div className="common-hero-info">
             {breadcrumb && !isCompact && (
               <Breadcrumb
                 items={
@@ -175,22 +174,22 @@ const CommonHeroTitle = ({
                 }
               />
             )}
-            <div className="hero-title-row">
-              <h1 className="hero-title-common" style={titleStyle}>{title}</h1>
-              {version && <span className="hero-version" style={versionStyle}>v{version}</span>}
+            <div className="common-hero-title-row">
+              <h1 className="common-hero-title" style={titleStyle}>{title}</h1>
+              {version && <span className="common-hero-version" style={versionStyle}>v{version}</span>}
             </div>
             {description && !isCompact && (
-              <p className="hero-description" style={descStyle}>{description}</p>
+              <p className="common-hero-description" style={descStyle}>{description}</p>
             )}
             {tags.length > 0 && !isCompact && (
-              <div className="hero-tags">
+              <div className="common-hero-tags">
                 {tags.map((tag, idx) => {
                   const isExternal = !!tag.href;
                   if (isExternal) {
                     return (
                       <a
                         key={idx}
-                        className="hero-tag"
+                        className="common-hero-tag"
                         href={tag.href}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -204,7 +203,7 @@ const CommonHeroTitle = ({
                   return (
                     <button
                       key={idx}
-                      className={`hero-tag${tag.active ? ' active' : ''}`}
+                      className={`common-hero-tag${tag.active ? ' active' : ''}`}
                       onClick={tag.onClick}
                       title={tag.tooltip || tag.label}
                     >
@@ -217,11 +216,12 @@ const CommonHeroTitle = ({
           </div>
         </div>
 
-        <div className="hero-right">
-          <div className="hero-actions">
-            <div className="hero-actions-row">
+        <div className="common-hero-right">
+          <div className="common-hero-actions">
+            <div className="common-hero-actions-row">
               <button
-                className="hero-btn hero-btn-ai"
+                style={{ display: "none" }}
+                className="common-hero-btn common-hero-btn-ai"
                 onClick={() => setShowAiPromptModal(true)}
                 title="AI Prompt - 使用 AI 調整儀表板"
               >
@@ -229,9 +229,10 @@ const CommonHeroTitle = ({
                 <span>AI Prompt</span>
               </button>
 
-              <div className="hero-dropdown" ref={exportDropdownRef}>
+              <div className="common-hero-dropdown" ref={exportDropdownRef}>
                 <button
-                  className="hero-btn hero-btn-export"
+                  style={{ display: "none" }}
+                  className="common-hero-btn common-hero-btn-export"
                   onClick={() => setShowExportDropdown(!showExportDropdown)}
                   title="匯出"
                 >
@@ -240,7 +241,7 @@ const CommonHeroTitle = ({
                   <ChevronDown size={14} />
                 </button>
                 {showExportDropdown && (
-                  <div className="hero-dropdown-menu">
+                  <div className="common-hero-dropdown-menu">
                     <button onClick={() => handleExportClick('json')}>
                       <FileJson size={16} />
                       <span>JSON</span>
@@ -262,7 +263,7 @@ const CommonHeroTitle = ({
               </div>
 
               <button
-                className="hero-btn hero-btn-refresh"
+                className="common-hero-btn common-hero-btn-refresh"
                 onClick={handleRefresh}
                 title="重新整理"
               >
@@ -271,7 +272,8 @@ const CommonHeroTitle = ({
               </button>
 
               <button
-                className="hero-btn hero-btn-settings"
+                style={{ display: "none" }}
+                className="common-hero-btn common-hero-btn-settings"
                 onClick={handleSettings}
                 title="設定"
               >
@@ -279,7 +281,7 @@ const CommonHeroTitle = ({
               </button>
 
               <button
-                className="hero-btn hero-btn-fullscreen"
+                className="common-hero-btn common-hero-btn-fullscreen"
                 onClick={handleFullscreen}
                 title={isFullscreen ? "退出全螢幕" : "全螢幕"}
               >
@@ -287,13 +289,13 @@ const CommonHeroTitle = ({
               </button>
             </div>
 
-            <div className="hero-divider"></div>
+            <div className="common-hero-divider"></div>
 
-            <div className="hero-actions-row">
+            <div className="common-hero-actions-row">
               {extraButtons.map((btn, idx) => (
                 <button
                   key={idx}
-                  className="hero-btn hero-btn-extra"
+                  className="common-hero-btn common-hero-btn-extra"
                   onClick={btn.onClick}
                   title={btn.label}
                 >
@@ -301,19 +303,18 @@ const CommonHeroTitle = ({
                   <span>{btn.label}</span>
                 </button>
               ))}
-              {customActions}
             </div>
           </div>
         </div>
 
         {context && !isCompact && (
-          <div className="hero-context-card">
+          <div className="common-hero-context-card">
             <b>{context.project}</b>
             <span>{context.region}</span>
             <small>{context.unit}</small>
           </div>
         )}
-      </section>
+      </section >
 
       {showAiPromptModal && (
         <div
@@ -398,7 +399,8 @@ const CommonHeroTitle = ({
             </div>
           </div>
         </div>
-      )}
+      )
+      }
     </>
   );
 };

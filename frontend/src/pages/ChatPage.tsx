@@ -11,6 +11,7 @@ import {
   User,
   Sparkles,
 } from 'lucide-react';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 export default function ChatPage() {
   const {
@@ -224,6 +225,9 @@ export default function ChatPage() {
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col bg-white">
+        <div className="px-4 pt-4">
+          <CommonHeroTitle icon={MessageSquare} title="對話" description="與您的知識庫對話，支援多輪上下文理解與即時串流回覆" />
+        </div>
         <div className="flex-1 overflow-auto">
           <div className="max-w-4xl mx-auto px-4 py-6">
             {displayedMessages.length === 0 && !isStreaming && (

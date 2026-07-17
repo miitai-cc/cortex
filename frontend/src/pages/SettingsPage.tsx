@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { Settings } from 'lucide-react';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
@@ -14,7 +16,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('settings.title')}</h1>
+      <CommonHeroTitle icon={Settings} title={t('settings.title')} />
       
       <div className="card space-y-6">
         <div>

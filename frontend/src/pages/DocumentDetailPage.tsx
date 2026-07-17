@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDocument } from '../hooks/useDocuments';
 import { ArrowLeft, FileText } from 'lucide-react';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,18 +25,20 @@ export default function DocumentDetailPage() {
       </button>
 
       {doc ? (
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <FileText className="w-8 h-8 text-primary-600" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{doc.filename}</h1>
-              <p className="text-sm text-gray-500">
-                {t(`documents.status.${doc.status}`)} · {doc.file_type}
-              </p>
+        <div>
+          <CommonHeroTitle icon={FileText} title={doc.filename} description={`${t(`documents.status.${doc.status}`)} · ${doc.file_type}`} />
+          <div className="card">
+            <div className="flex items-center gap-3 mb-4">
+              <FileText className="w-8 h-8 text-primary-600" />
+              <div>
+                <p className="text-sm text-gray-500">
+                  {t(`documents.status.${doc.status}`)} · {doc.file_type}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="border-t pt-4">
-            <pre className="text-sm text-gray-600 whitespace-pre-wrap">{doc.content}</pre>
+            <div className="border-t pt-4">
+              <pre className="text-sm text-gray-600 whitespace-pre-wrap">{doc.content}</pre>
+            </div>
           </div>
         </div>
       ) : (

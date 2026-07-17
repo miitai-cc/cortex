@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Search as SearchIcon, Trash2 } from 'lucide-react';
+import { Upload, Search as SearchIcon, Trash2, FileText } from 'lucide-react';
 import { useDocuments, useUploadDocument, useDeleteDocument } from '../hooks/useDocuments';
 import { Link } from 'react-router-dom';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 export default function DocumentsPage() {
   const { t } = useTranslation();
@@ -25,9 +26,7 @@ export default function DocumentsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('documents.title')}</h1>
-      </div>
+      <CommonHeroTitle icon={FileText} title={t('documents.title')} />
 
       <div
         {...getRootProps()}

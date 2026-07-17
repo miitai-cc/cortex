@@ -10,6 +10,7 @@ import {
   Type,
   AlertTriangle,
 } from 'lucide-react';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 const TYPE_COLORS: Record<string, string> = {
   'application/pdf': '#ef4444',
@@ -348,7 +349,9 @@ export default function KnowledgeGraphPage() {
   const selectedNode = data?.nodes.find((n) => n.id === selectedNodeId);
 
   return (
-    <div className="flex h-full">
+    <div>
+      <CommonHeroTitle icon={Layers} title="知識圖譜" description="視覺化文件與概念之間的關聯" />
+      <div className="flex h-full">
       {/* Graph canvas */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden">
         <canvas
@@ -466,6 +469,7 @@ export default function KnowledgeGraphPage() {
           <p className="text-xs text-gray-400">
             拖曳畫布移動視圖 · 滾輪縮放 · 點擊節點查看詳情
           </p>
+        </div>
         </div>
       </div>
     </div>

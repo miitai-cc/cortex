@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   AlertCircle,
   PanelRightClose,
+  FlaskConical,
 } from 'lucide-react';
+import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
 const STATUS_CONFIG: Record<string, { icon: typeof Loader2; label: string; color: string }> = {
   queued: { icon: Loader2, label: '佇列', color: 'text-gray-400' },
@@ -45,9 +47,9 @@ export default function ResearchPanel() {
 
   return (
     <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-30 flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-700">深層研究</h3>
-        <button onClick={() => setPanelOpen(false)} className="text-gray-400 hover:text-gray-600">
+      <div className="p-4 border-b border-gray-200">
+        <CommonHeroTitle icon={FlaskConical} title="深層研究" description="自動化網路搜尋與綜合分析，擴展知識邊界" />
+        <button onClick={() => setPanelOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
           <PanelRightClose className="w-4 h-4" />
         </button>
       </div>
