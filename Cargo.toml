@@ -1,0 +1,3 @@
+[workspace]
+members = ["backend", "lib/rust", "lib/rust/sso"]
+resolver = "2"

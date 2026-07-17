@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-backend
+  namespace: cortex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cortex-backend
+  template:
+    metadata:
+      labels:
+        app: cortex-backend
+    spec:
+      containers:
+        - name: cortex-backend
+          image: cortex-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+            - name: SERVER_PORT
+              value: "8080"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: DB_TYPE
+              value: "sqlite"
+            - name: DB_HOST
+              value: "localhost"
+            - name: DB_PORT
+              value: ""
+            - name: DB_NAME
+              value: "cortex"
+            - name: DB_USER
+              value: "cortex"
+            - name: DB_PASSWORD
+              value: ""
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: database-url
+            - name: QDRANT_URL
+              value: "http://qdrant:6333"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: jwt-secret
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: openai-api-key
+            - name: EMBEDDING_MODEL
+              value: "BAAI/bge-small-zh-v1.5"
+            - name: RERANKING_MODEL
+              value: "BAAI/bge-reranker-v2-m3"
+            - name: KEYCLOAK_URL
+              value: "http://keycloak:8080"
+            - name: KEYCLOAK_REALM
+              value: "cortex"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "cortex-backend"
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: ""
+            - name: UPLOAD_DIR
+              value: "/app/uploads"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: uploads
+              mountPath: /app/uploads
+          livenessProbe:
+            httpGet:
+              path: /cortex/api/v0.85/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /cortex/api/v0.85/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cortex-data-pvc
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: cortex-uploads-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-backend
+  namespace: cortex
+spec:
+  selector:
+    app: cortex-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-data-pvc
+  namespace: cortex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-uploads-pvc
+  namespace: cortex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

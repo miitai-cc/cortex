@@ -1,0 +1,8 @@
+{
+  "name": "cortex",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "lib/react/*"
+  ]
+}

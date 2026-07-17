@@ -1,0 +1,10 @@
+target/
+.git/
+.gitignore
+**/*.md
+frontend/node_modules/
+frontend/dist/
+data/
+uploads/
+*.swp
+.DS_Store

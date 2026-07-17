@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-frontend
+  namespace: cortex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cortex-frontend
+  template:
+    metadata:
+      labels:
+        app: cortex-frontend
+    spec:
+      containers:
+        - name: cortex-frontend
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: frontend-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+            - name: frontend-assets
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: frontend-config
+          configMap:
+            name: nginx-config
+        - name: frontend-assets
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-frontend
+  namespace: cortex
+spec:
+  selector:
+    app: cortex-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: cortex
+data:
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name _;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /cortex/api/v0.85/ {
+            proxy_pass http://cortex-backend:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /cortex/ws/ {
+            proxy_pass http://cortex-backend:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }

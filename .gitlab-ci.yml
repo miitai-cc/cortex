@@ -1,0 +1,61 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  CARGO_HOME: ${CI_PROJECT_DIR}/.cargo
+  DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+
+cache:
+  paths:
+    - .cargo/
+    - target/
+    - frontend/node_modules/
+
+backend-test:
+  stage: test
+  image: rust:1.80-slim-bookworm
+  before_script:
+    - apt-get update && apt-get install -y pkg-config libssl-dev clang
+  script:
+    - cargo test --workspace --all-features
+  except:
+    - tags
+
+frontend-test:
+  stage: test
+  image: node:20-alpine
+  before_script:
+    - cd frontend && npm ci
+  script:
+    - cd frontend && npm run typecheck && npm run lint
+  except:
+    - tags
+
+backend-build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+  script:
+    - docker build -t ${DOCKER_IMAGE} .
+    - docker push ${DOCKER_IMAGE}
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - kubectl config set-cluster k8s --server=${KUBE_URL}
+    - kubectl config set-credentials gitlab --token=${KUBE_TOKEN}
+    - kubectl config set-context default --cluster=k8s --user=gitlab --namespace=cortex
+    - kubectl config use-context default
+  script:
+    - kubectl set image deployment/cortex-backend cortex-backend=${DOCKER_IMAGE}
+    - kubectl rollout status deployment/cortex-backend
+  only:
+    - main
