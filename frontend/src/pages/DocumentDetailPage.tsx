@@ -17,7 +17,7 @@ export default function DocumentDetailPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/documents')}
+        onClick={() => navigate('/cortex/documents')}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
       >
         <ArrowLeft className="w-4 h-4" />

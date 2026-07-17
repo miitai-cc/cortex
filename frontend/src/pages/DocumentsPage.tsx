@@ -57,7 +57,7 @@ export default function DocumentsPage() {
         <div className="grid gap-4">
           {data?.data?.map((doc: any) => (
             <div key={doc.id} className="card flex items-center justify-between">
-              <Link to={`/documents/${doc.id}`} className="flex-1">
+              <Link to={`/cortex/documents/${doc.id}`} className="flex-1">
                 <p className="font-medium text-gray-900">{doc.filename}</p>
                 <p className="text-sm text-gray-500">
                   {t(`documents.status.${doc.status}`)} · {doc.file_type}

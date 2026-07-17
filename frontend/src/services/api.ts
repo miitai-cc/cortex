@@ -68,3 +68,14 @@ export const researchApi = {
   start: (data: { topic: string; queries: string[] }) => api.post('/research/start', data),
   list: () => api.get('/research/list'),
 };
+
+export const dashboardApi = {
+  stats: () => api.get('/dashboard/stats'),
+  queryTrend: () => api.get('/dashboard/query-trend'),
+};
+
+export const contextApi = {
+  getDocuments: () => api.get('/documents'),
+  getSettings: () => api.get('/chat/context/settings'),
+  updateSettings: (settings: any) => api.put('/chat/context/settings', settings),
+};
