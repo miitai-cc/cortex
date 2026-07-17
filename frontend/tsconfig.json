@@ -18,10 +18,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@lib/*": ["../lib/react/*"],
-      "eiva-fe-sso": ["../lib/react/sso/src"],
-      "eiva-fe-sso/*": ["../lib/react/sso/src/*"]
+      "eiva-fe-sso": ["../lib/react/common/eiva-fe-sso/src"],
+      "eiva-fe-sso/*": ["../lib/react/common/eiva-fe-sso/src/*"]
     },
     "baseUrl": "."
   },
-  "include": ["src", "../lib/react", "../lib/react/sso/src"]
+  "include": ["src", "../lib/react", "../lib/react/common/eiva-fe-sso/src"]
 }

@@ -32,8 +32,8 @@ jsonwebtoken = "9"
 oauth2 = "5"
 zip = "2"
 cortex-lib = { path = "../lib/rust" }
-eiva-be-sso = { path = "../lib/rust/sso" }
-eiva-be-security = { path = "../lib/rust/common/eiva-be-security" }
+eiva-be-sso = { path = "../lib/rust/crates/common/eiva-be-sso" }
+eiva-be-security = { path = "../lib/rust/crates/common/eiva-be-security" }
 async-trait = "0.1"
 
 [features]
