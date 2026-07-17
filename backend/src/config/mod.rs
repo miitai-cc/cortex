@@ -54,6 +54,7 @@ impl DbType {
     }
 }
 
+#[derive(Clone)]
 pub struct AppConfig {
     pub login_type: LoginType,
     pub db_type: DbType,

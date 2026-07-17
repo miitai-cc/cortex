@@ -1,11 +1,13 @@
 use salvo::prelude::*;
-use salvo::http::StatusCode;
 use crate::core::state::AppState;
 use crate::config::LoginType;
-use crate::security::jwt::create_token;
-use crate::security::password::{hash_password, verify_password};
+use eiva_be_security::repository::UserRepo;
+use crate::errors::AppError;
+use eiva_be_security::jwt::create_token;
+use eiva_be_security::password::{hash_password, verify_password};
 use cortex_lib::utils::generate_id;
 use eiva_be_sso::{KeycloakClient, SsoConfig, SsoProvider, SsoCallbackRequest};
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct LoginRequest {
@@ -21,22 +23,22 @@ pub struct RegisterRequest {
 }
 
 #[handler]
-pub async fn login(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
+pub async fn login(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let login_req: LoginRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().with_detail("Invalid request body")
+        AppError::BadRequest("Invalid request body".into())
     })?;
 
     match state.config.login_type {
-        LoginType::Mock => mock_login(&state, &login_req),
+        LoginType::Mock => Ok(mock_login(&state, &login_req)),
         LoginType::Normal | LoginType::Sso => db_login(&state, &login_req).await,
     }
 }
 
-fn mock_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::Value>, StatusError> {
+fn mock_login(state: &AppState, req: &LoginRequest) -> Json<serde_json::Value> {
     let id = generate_id();
     let token = create_token(&id, &req.username, "admin", &state.config.jwt_secret);
-    Ok(Json(serde_json::json!({
+    Json(serde_json::json!({
         "token": token,
         "user": {
             "id": id,
@@ -44,69 +46,62 @@ fn mock_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::V
             "email": format!("{}@cortex.local", req.username),
             "role": "admin"
         }
-    })))
+    }))
 }
 
-async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::Value>, StatusError> {
-    let row = sqlx::query_as::<_, (String, String, String, String, String)>(
-        "SELECT id, username, email, password_hash, role FROM users WHERE username = ?"
-    )
-    .bind(&req.username)
-    .fetch_optional(&state.db.pool)
-    .await
-    .map_err(|_| StatusError::internal_server_error())?;
+async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::Value>, AppError> {
+    let result = UserRepo::find_with_password(&state.db.pool, &req.username).await?;
 
-    match row {
-        Some((id, username, email, password_hash, role)) => {
+    match result {
+        Some((user, password_hash)) => {
             if !verify_password(&req.password, &password_hash) {
-                return Err(StatusError::unauthorized().with_detail("Invalid credentials"));
+                return Err(AppError::Unauthorized("Invalid credentials".into()));
             }
-            let token = create_token(&id, &username, &role, &state.config.jwt_secret);
+            let token = create_token(&user.id, &user.username, &user.role, &state.config.jwt_secret);
             Ok(Json(serde_json::json!({
                 "token": token,
-                "user": { "id": id, "username": username, "email": email, "role": role }
+                "user": user
             })))
         }
-        None => Err(StatusError::unauthorized().with_detail("Invalid credentials")),
+        None => Err(AppError::Unauthorized("Invalid credentials".into())),
     }
 }
 
 #[handler]
-pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
+pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let reg_req: RegisterRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().with_detail("Invalid request body")
+        AppError::BadRequest("Invalid request body".into())
     })?;
 
     let id = generate_id();
     let password_hash = hash_password(&reg_req.password);
+    let user = UserRepo::create(
+        &state.db.pool,
+        &id,
+        &reg_req.username,
+        &reg_req.email,
+        &password_hash,
+        "user",
+    ).await?;
 
-    sqlx::query("INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, ?, 'user')")
-        .bind(&id)
-        .bind(&reg_req.username)
-        .bind(&reg_req.email)
-        .bind(&password_hash)
-        .execute(&state.db.pool)
-        .await
-        .map_err(|_| StatusError::conflict().with_detail("Username or email already exists"))?;
-
-    let token = create_token(&id, &reg_req.username, "user", &state.config.jwt_secret);
+    let token = create_token(&user.id, &user.username, &user.role, &state.config.jwt_secret);
     Ok(Json(serde_json::json!({
         "token": token,
-        "user": { "id": id, "username": reg_req.username, "email": reg_req.email, "role": "user" }
+        "user": user
     })))
 }
 
 #[handler]
-pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
+pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
 
     if state.config.login_type != LoginType::Sso {
-        return Err(StatusError::forbidden().with_detail("SSO login is not enabled"));
+        return Err(AppError::Unauthorized("SSO login is not enabled".into()));
     }
 
     let callback: SsoCallbackRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().with_detail("Invalid request body")
+        AppError::BadRequest("Invalid request body".into())
     })?;
 
     let sso_config = SsoConfig {
@@ -122,55 +117,28 @@ pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<s
 
     let client = KeycloakClient::new(sso_config);
     let auth_result = client.authenticate(&callback.code, &callback.redirect_uri).await
-        .map_err(|e| StatusError::internal_server_error().with_detail(e.to_string()))?;
+        .map_err(|e| AppError::Internal(e.to_string()))?;
 
     let user_id = &auth_result.user.sub;
     let username = auth_result.user.preferred_username.as_deref().unwrap_or("sso_user");
     let email = auth_result.user.email.as_deref().unwrap_or("");
     let role = if auth_result.user.roles.contains(&"admin".to_string()) { "admin" } else { "user" };
 
-    // Upsert user in local DB
-    sqlx::query(
-        "INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, '', ?)
-         ON CONFLICT(id) DO UPDATE SET username=?, email=?, role=?"
-    )
-    .bind(user_id)
-    .bind(username)
-    .bind(email)
-    .bind(role)
-    .bind(username)
-    .bind(email)
-    .bind(role)
-    .execute(&state.db.pool)
-    .await
-    .map_err(|_| StatusError::internal_server_error())?;
+    let user = UserRepo::upsert_sso(&state.db.pool, user_id, username, email, role).await?;
+    let token = create_token(&user.id, &user.username, &user.role, &state.config.jwt_secret);
 
-    let token = create_token(user_id, username, role, &state.config.jwt_secret);
     Ok(Json(serde_json::json!({
         "token": token,
-        "user": { "id": user_id, "username": username, "email": email, "role": role }
+        "user": user
     })))
 }
 
 #[handler]
-pub async fn profile(depot: &mut Depot) -> Result<Json<serde_json::Value>, StatusError> {
-    let user_id = depot.obtain::<String>().map_err(|_| StatusError::unauthorized())?;
+pub async fn profile(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
+    let user_id = depot.obtain::<String>().map_err(|_| AppError::Unauthorized("Not authenticated".into()))?;
     let state = depot.obtain::<AppState>().unwrap();
-
-    let row = sqlx::query_as::<_, (String, String, String, String)>(
-        "SELECT id, username, email, role FROM users WHERE id = ?"
-    )
-    .bind(&*user_id)
-    .fetch_optional(&state.db.pool)
-    .await
-    .map_err(|_| StatusError::internal_server_error())?;
-
-    match row {
-        Some((id, username, email, role)) => Ok(Json(serde_json::json!({
-            "id": id, "username": username, "email": email, "role": role
-        }))),
-        None => Err(StatusError::not_found().with_detail("User not found")),
-    }
+    let user = UserRepo::find_by_id(&state.db.pool, &user_id).await?;
+    Ok(Json(serde_json::json!(user)))
 }
 
 pub fn router() -> Router {

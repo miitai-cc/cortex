@@ -1,9 +1,13 @@
 use salvo::prelude::*;
 use salvo::http::StatusCode;
+use serde::Deserialize;
 use crate::core::state::AppState;
 use crate::rag::embeddings::EmbeddingService;
 use crate::rag::reranker::RerankerService;
 use crate::rag::llm::LLMService;
+use qdrant_client::qdrant::point_id::PointIdOptions;
+use qdrant_client::qdrant::SearchPointsBuilder;
+use qdrant_client::Payload;
 
 #[derive(Deserialize, Debug)]
 pub struct RagQueryRequest {
@@ -16,7 +20,7 @@ pub struct RagQueryRequest {
 pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
     let query_req: RagQueryRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().with_detail("Invalid request body")
+        StatusError::bad_request().detail("Invalid request body")
     })?;
 
     let embedding = EmbeddingService::new(&state.config.embedding_model);
@@ -34,18 +38,27 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
 
     // 2. Search Qdrant
     let search_result = state.qdrant
-        .search_points("documents", None, query_embedding, top_k as u64, None, true, None)
+        .search_points(
+            SearchPointsBuilder::new("documents", query_embedding, top_k as u64)
+                .with_payload(true)
+        )
         .await
         .map_err(|_| StatusError::internal_server_error())?;
 
     let mut chunks: Vec<serde_json::Value> = search_result.result.iter().map(|point| {
-        let payload = &point.payload;
+        let payload: Payload = point.payload.clone().into();
+        let payload_json: serde_json::Value = payload.into();
+        let id_str = point.id.as_ref().map(|pid| match &pid.point_id_options {
+            Some(PointIdOptions::Num(n)) => n.to_string(),
+            Some(PointIdOptions::Uuid(u)) => u.clone(),
+            None => String::new(),
+        }).unwrap_or_default();
         serde_json::json!({
-            "id": point.id,
-            "content": payload.get("content").and_then(|v| v.as_str()).unwrap_or(""),
+            "id": id_str,
+            "content": payload_json.get("content").and_then(|v| v.as_str()).unwrap_or(""),
             "score": point.score,
-            "document_id": payload.get("document_id").and_then(|v| v.as_str()).unwrap_or(""),
-            "chunk_index": payload.get("chunk_index").and_then(|v| v.as_i64()).unwrap_or(0),
+            "document_id": payload_json.get("document_id").and_then(|v| v.as_str()).unwrap_or(""),
+            "chunk_index": payload_json.get("chunk_index").and_then(|v| v.as_i64()).unwrap_or(0),
         })
     }).collect();
 

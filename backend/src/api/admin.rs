@@ -1,5 +1,10 @@
 use salvo::prelude::*;
 use crate::core::state::AppState;
+use eiva_be_security::repository::UserRepo;
+use crate::errors::AppError;
+use eiva_be_security::password::hash_password;
+use cortex_lib::utils::generate_id;
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct CreateUserRequest {
@@ -10,45 +15,31 @@ pub struct CreateUserRequest {
 }
 
 #[handler]
-pub async fn list_users(depot: &mut Depot) -> Result<Json<serde_json::Value>, StatusError> {
+pub async fn list_users(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let rows = sqlx::query_as::<_, (String, String, String, String)>(
-        "SELECT id, username, email, role FROM users"
-    )
-    .fetch_all(&state.db.pool)
-    .await
-    .map_err(|_| StatusError::internal_server_error())?;
-
-    let users: Vec<serde_json::Value> = rows.into_iter()
-        .map(|(id, username, email, role)| {
-            serde_json::json!({ "id": id, "username": username, "email": email, "role": role })
-        })
-        .collect();
-
+    let users = UserRepo::list_all(&state.db.pool).await?;
     Ok(Json(serde_json::json!(users)))
 }
 
 #[handler]
-pub async fn create_user(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
+pub async fn create_user(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
     let create_req: CreateUserRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request()
+        AppError::BadRequest("Invalid request body".into())
     })?;
 
-    let id = cortex_lib::utils::generate_id();
-    let password_hash = crate::security::password::hash_password(&create_req.password);
+    let id = generate_id();
+    let password_hash = hash_password(&create_req.password);
+    let user = UserRepo::create(
+        &state.db.pool,
+        &id,
+        &create_req.username,
+        &create_req.email,
+        &password_hash,
+        &create_req.role,
+    ).await?;
 
-    sqlx::query("INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, ?, ?)")
-        .bind(&id)
-        .bind(&create_req.username)
-        .bind(&create_req.email)
-        .bind(&password_hash)
-        .bind(&create_req.role)
-        .execute(&state.db.pool)
-        .await
-        .map_err(|_| StatusError::conflict())?;
-
-    Ok(Json(serde_json::json!({ "id": id, "username": create_req.username, "email": create_req.email, "role": create_req.role })))
+    Ok(Json(serde_json::json!(user)))
 }
 
 pub fn router() -> Router {

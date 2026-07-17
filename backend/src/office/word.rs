@@ -20,12 +20,12 @@ pub async fn create_word(content: &str, output_path: &str) -> Result<()> {
     use std::io::Write;
     let mut archive = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
 
-    let options = zip::write::FileOptions::default();
-    archive.add_directory("_rels/", options)?;
-    archive.add_directory("word/", options)?;
-    archive.add_directory("docProps/", options)?;
+    let opts = zip::write::FileOptions::<()>::default();
+    archive.add_directory("_rels/", opts)?;
+    archive.add_directory("word/", opts)?;
+    archive.add_directory("docProps/", opts)?;
 
-    archive.start_file("[Content_Types].xml", options)?;
+    archive.start_file("[Content_Types].xml", opts)?;
     archive.write_all(
         br#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -35,7 +35,7 @@ pub async fn create_word(content: &str, output_path: &str) -> Result<()> {
         </Types>"#
     )?;
 
-    archive.start_file("word/document.xml", options)?;
+    archive.start_file("word/document.xml", opts)?;
     let doc_xml = format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">

@@ -61,15 +61,15 @@ fn extract_text_from_pptx_xml(xml: &str) -> String {
 pub async fn create_powerpoint(titles: Vec<String>, output_path: &str) -> Result<()> {
     use std::io::Write;
     let mut archive = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
-    let options = zip::write::FileOptions::default();
+    let opts = zip::write::FileOptions::<()>::default();
 
-    archive.add_directory("_rels/", options)?;
-    archive.add_directory("ppt/", options)?;
-    archive.add_directory("ppt/slides/", options)?;
-    archive.add_directory("ppt/_rels/", options)?;
-    archive.add_directory("docProps/", options)?;
+    archive.add_directory("_rels/", opts)?;
+    archive.add_directory("ppt/", opts)?;
+    archive.add_directory("ppt/slides/", opts)?;
+    archive.add_directory("ppt/_rels/", opts)?;
+    archive.add_directory("docProps/", opts)?;
 
-    archive.start_file("[Content_Types].xml", options)?;
+    archive.start_file("[Content_Types].xml", opts)?;
     archive.write_all(br#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
             <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -78,7 +78,7 @@ pub async fn create_powerpoint(titles: Vec<String>, output_path: &str) -> Result
             <Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
         </Types>"#)?;
 
-    archive.start_file("ppt/presentation.xml", options)?;
+    archive.start_file("ppt/presentation.xml", opts)?;
     let pres_xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
             <p:sldIdLst>
@@ -89,7 +89,7 @@ pub async fn create_powerpoint(titles: Vec<String>, output_path: &str) -> Result
 
     for (i, title) in titles.iter().enumerate() {
         let slide_path = format!("ppt/slides/slide{}.xml", i + 1);
-        archive.start_file(&slide_path, options)?;
+        archive.start_file(&slide_path, opts)?;
         let slide_xml = format!(
             r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">

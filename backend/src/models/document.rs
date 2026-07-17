@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
+use sqlx::FromRow;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DocumentModel {
     pub id: String,
     pub filename: String,
@@ -12,7 +13,7 @@ pub struct DocumentModel {
     pub updated_at: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DocumentChunkModel {
     pub id: String,
     pub document_id: String,

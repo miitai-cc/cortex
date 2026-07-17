@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from 'eiva-fe-security';
 import { API_BASE_URL } from '../config/env';
 
 const api = axios.create({

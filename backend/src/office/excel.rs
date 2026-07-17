@@ -1,4 +1,5 @@
 use anyhow::Result;
+use calamine::{Reader, open_workbook_auto};
 
 pub async fn read_excel(file_path: &str) -> Result<Vec<Vec<String>>> {
     let mut workbook = calamine::open_workbook_auto(file_path)?;

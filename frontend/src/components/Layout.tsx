@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from 'eiva-fe-security';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,

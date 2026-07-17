@@ -4,10 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-salvo = { version = "0.74", features = ["full"] }
-salvo-extra = "0.74"
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "sqlite", "mysql", "mssql", "uuid", "chrono", "migrate"] }
-qdrant-client = "1.12"
+salvo = { version = "0.74", features = ["default", "affix-state"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "any", "postgres", "sqlite", "mysql", "uuid", "chrono", "migrate"] }
+qdrant-client = "1.18"
 tokenizers = "0.21"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -27,16 +26,19 @@ calamine = "0.26"
 rust_xlsxwriter = "0.78"
 pulldown-cmark = "0.12"
 comrak = "0.29"
+mime = "0.3"
 argon2 = "0.5"
 jsonwebtoken = "9"
 oauth2 = "5"
 zip = "2"
 cortex-lib = { path = "../lib/rust" }
 eiva-be-sso = { path = "../lib/rust/sso" }
+eiva-be-security = { path = "../lib/rust/common/eiva-be-security" }
+async-trait = "0.1"
 
 [features]
 default = ["sqlite"]
 sqlite = ["sqlx/sqlite"]
 postgres = ["sqlx/postgres"]
 mysql = ["sqlx/mysql"]
-mssql = ["sqlx/mssql"]
+

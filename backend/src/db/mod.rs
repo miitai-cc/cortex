@@ -1,13 +1,19 @@
-use sqlx::any::{AnyPool, AnyPoolOptions};
+use sqlx::any::AnyPoolOptions;
+use sqlx::{Any, Pool};
 use crate::config::{AppConfig, DbType};
 
+pub mod repository;
+
+#[derive(Clone)]
 pub struct Database {
-    pub pool: AnyPool,
+    pub pool: Pool<Any>,
     pub db_type: DbType,
 }
 
 impl Database {
     pub async fn new(config: &AppConfig) -> Self {
+        sqlx::any::install_default_drivers();
+        Self::ensure_data_dir(config).await;
         if !AnyPoolOptions::new()
             .connect(&config.database_url)
             .await
@@ -24,6 +30,24 @@ impl Database {
             .await
             .expect("Failed to create database pool");
         Self { pool, db_type: config.db_type.clone() }
+    }
+
+    async fn ensure_data_dir(config: &AppConfig) {
+        if config.db_type != DbType::Sqlite {
+            return;
+        }
+        let path_str = config.database_url
+            .strip_prefix("sqlite:")
+            .unwrap_or(&config.database_url)
+            .split('?')
+            .next()
+            .unwrap_or(&config.database_url);
+        if let Some(parent) = std::path::Path::new(path_str).parent() {
+            if !parent.exists() {
+                let _ = tokio::fs::create_dir_all(parent).await;
+                tracing::info!("Created data directory: {:?}", parent);
+            }
+        }
     }
 
     pub async fn run_migrations(&self) -> Result<(), sqlx::Error> {

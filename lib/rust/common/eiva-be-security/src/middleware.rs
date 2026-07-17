@@ -1,22 +1,20 @@
 use salvo::prelude::*;
 use salvo::http::{StatusCode, header};
-use crate::core::state::AppState;
-use crate::security::jwt::verify_token;
+use crate::jwt::verify_token;
 
-pub struct AuthMiddleware;
+pub struct AuthMiddleware {
+    jwt_secret: String,
+}
+
+impl AuthMiddleware {
+    pub fn new(jwt_secret: String) -> Self {
+        Self { jwt_secret }
+    }
+}
 
 #[async_trait]
 impl Handler for AuthMiddleware {
     async fn handle(&self, req: &mut Request, depot: &mut Depot, res: &mut Response, ctrl: &mut FlowCtrl) {
-        let state = match depot.obtain::<AppState>() {
-            Ok(s) => s,
-            Err(_) => {
-                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-                ctrl.skip_rest();
-                return;
-            }
-        };
-
         // Skip auth for login and health endpoints
         let path = req.uri().path().to_string();
         if path == "/api/auth/login" || path == "/api/auth/register" || path == "/api/health" {
@@ -42,7 +40,7 @@ impl Handler for AuthMiddleware {
             return;
         };
 
-        match verify_token(token, &state.config.jwt_secret) {
+        match verify_token(token, &self.jwt_secret) {
             Ok(claims) => {
                 depot.insert("user_id", claims.sub);
                 depot.insert("username", claims.username);

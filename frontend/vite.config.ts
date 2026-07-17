@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
@@ -11,24 +15,24 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['eiva-fe-sso'],
+    include: ['eiva-fe-sso', 'eiva-fe-security'],
   },
   build: {
     outDir: '../backend/assets',
     emptyOutDir: true,
     commonjsOptions: {
-      include: [/eiva-fe-sso/, /node_modules/],
+      include: [/eiva-fe-sso/, /eiva-fe-security/, /node_modules/],
     },
   },
   server: {
-    port: 3000,
+    port: 54321,
     proxy: {
       '/cortex/api/v0.85': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:54322',
         changeOrigin: true,
       },
       '/cortex/ws': {
-        target: 'ws://localhost:8080',
+        target: 'ws://localhost:54322',
         ws: true,
       },
     },

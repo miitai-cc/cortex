@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
+import { useAuthStore } from 'eiva-fe-security';
 import Layout from './components/Layout';
-import LoginPage from './pages/LoginPage';
+import { LoginPage } from 'eiva-fe-security';
 import DashboardPage from './pages/DashboardPage';
 import DocumentsPage from './pages/DocumentsPage';
 import SearchPage from './pages/SearchPage';

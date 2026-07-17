@@ -11,13 +11,12 @@ mod markdown;
 mod webdav;
 mod gsuite;
 mod i18n;
-mod security;
+mod middleware;
 mod monitoring;
 mod config;
 mod db;
 mod errors;
 mod logging;
-mod middleware;
 mod models;
 
 fn load_env() {
@@ -56,8 +55,8 @@ async fn main() {
     let app_state = core::state::AppState::new().await;
     let _ = app_state.db.run_migrations().await;
 
-    let router = api::router::build_router(app_state);
+    let service = api::router::build_service(app_state);
 
     let acceptor = TcpListener::new("0.0.0.0:8080").bind().await;
-    Server::new(acceptor).serve(router).await;
+    Server::new(acceptor).serve(service).await;
 }
