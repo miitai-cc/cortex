@@ -4,3 +4,6 @@ pub mod rag;
 pub mod health;
 pub mod router;
 pub mod admin;
+pub mod graph;
+pub mod chat;
+pub mod research;

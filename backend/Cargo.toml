@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-salvo = { version = "0.74", features = ["default", "affix-state", "logging"] }
+salvo = { version = "0.74", features = ["default", "affix-state", "logging", "sse"] }
 sqlx = { version = "0.8", features = ["runtime-tokio", "any", "postgres", "sqlite", "mysql", "uuid", "chrono", "migrate"] }
 qdrant-client = "1.18"
 tokenizers = "0.21"
@@ -18,7 +18,10 @@ chrono = { version = "0.4", features = ["serde"] }
 thiserror = "1"
 anyhow = "1"
 dotenv = "0.15"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+tokio-stream = "0.1"
+bytes = "1"
+futures-util = "0.3"
 tantivy = "0.22"
 pdf-extract = "0.7"
 lopdf = "0.34"

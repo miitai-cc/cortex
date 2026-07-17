@@ -114,9 +114,31 @@ impl Database {
             id_col = id_column, text = text_type, ts = timestamp_default, bool = boolean_type
         );
 
+        let create_conversations = format!(
+            "CREATE TABLE IF NOT EXISTS conversations (
+                id {text} PRIMARY KEY,
+                title {text} NOT NULL,
+                created_at {ts},
+                updated_at {ts}
+            )",
+            text = text_type, ts = timestamp_default
+        );
+
+        let create_researches = format!(
+            "CREATE TABLE IF NOT EXISTS researches (
+                id {text} PRIMARY KEY,
+                topic {text} NOT NULL,
+                synthesis {text},
+                created_at {ts}
+            )",
+            text = text_type, ts = timestamp_default
+        );
+
         sqlx::query(&create_documents).execute(&self.pool).await?;
         sqlx::query(&create_chunks).execute(&self.pool).await?;
         sqlx::query(&create_users).execute(&self.pool).await?;
+        sqlx::query(&create_conversations).execute(&self.pool).await?;
+        sqlx::query(&create_researches).execute(&self.pool).await?;
 
         Ok(())
     }

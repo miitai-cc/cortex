@@ -1,8 +1,12 @@
 {
   "app.name": "Cortex RAG 系統",
   "nav.dashboard": "儀表板",
+  "nav.chat": "智慧對話",
   "nav.documents": "文件管理",
-  "nav.search": "智慧檢索",
+  "nav.search": "檢索",
+  "nav.graph": "知識圖譜",
+  "nav.research": "深層研究",
+  "research.title": "深層研究",
   "nav.settings": "系統設定",
   "nav.logout": "登出",
   "login.title": "登入 Cortex",

@@ -1,5 +1,5 @@
 use salvo::prelude::*;
-use crate::api::{auth, documents, rag, health, admin};
+use crate::api::{auth, documents, rag, health, admin, graph, chat, research};
 use crate::core::state::AppState;
 use crate::middleware::error_handler::handle_error;
 
@@ -16,6 +16,9 @@ pub fn build_router(state: AppState) -> Router {
                 .push(rag::router())
                 .push(health::router())
                 .push(admin::router())
+                .push(graph::router())
+                .push(chat::router())
+                .push(research::router())
         )
 }
 

@@ -52,3 +52,19 @@ export const searchApi = {
 export const healthApi = {
   check: () => api.get('/health'),
 };
+
+export const chatApi = {
+  send: (data: { conversation_id?: string; message: string; history?: { role: string; content: string }[] }) =>
+    api.post('/chat/send', data),
+  listConversations: () => api.get('/chat/conversations'),
+  deleteConversation: (id: string) => api.delete(`/chat/conversations/${id}`),
+};
+
+export const graphApi = {
+  getData: () => api.get('/graph/data'),
+};
+
+export const researchApi = {
+  start: (data: { topic: string; queries: string[] }) => api.post('/research/start', data),
+  list: () => api.get('/research/list'),
+};

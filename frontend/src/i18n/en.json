@@ -1,8 +1,12 @@
 {
   "app.name": "Cortex RAG System",
   "nav.dashboard": "Dashboard",
+  "nav.chat": "AI Chat",
   "nav.documents": "Documents",
   "nav.search": "Search",
+  "nav.graph": "Knowledge Graph",
+  "nav.research": "Deep Research",
+  "research.title": "Deep Research",
   "nav.settings": "Settings",
   "nav.logout": "Logout",
   "login.title": "Login to Cortex",
