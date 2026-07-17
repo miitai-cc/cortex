@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { env, API_BASE_URL } from '../config/env';
+import { env, API_BASE_URL, isSsoLogin } from '../config/env';
 import {
   redirectToKeycloakLogin,
   redirectToKeycloakLogout,
@@ -82,7 +82,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
-        if (env.KEYCLOAK_ENABLED) {
+        if (isSsoLogin()) {
           redirectToKeycloakLogout({
             enabled: true,
             provider: 'keycloak',

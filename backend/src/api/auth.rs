@@ -1,6 +1,7 @@
 use salvo::prelude::*;
 use salvo::http::StatusCode;
 use crate::core::state::AppState;
+use crate::config::LoginType;
 use crate::security::jwt::create_token;
 use crate::security::password::{hash_password, verify_password};
 use cortex_lib::utils::generate_id;
@@ -26,17 +27,38 @@ pub async fn login(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
         StatusError::bad_request().with_detail("Invalid request body")
     })?;
 
+    match state.config.login_type {
+        LoginType::Mock => mock_login(&state, &login_req),
+        LoginType::Normal | LoginType::Sso => db_login(&state, &login_req).await,
+    }
+}
+
+fn mock_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::Value>, StatusError> {
+    let id = generate_id();
+    let token = create_token(&id, &req.username, "admin", &state.config.jwt_secret);
+    Ok(Json(serde_json::json!({
+        "token": token,
+        "user": {
+            "id": id,
+            "username": req.username,
+            "email": format!("{}@cortex.local", req.username),
+            "role": "admin"
+        }
+    })))
+}
+
+async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::Value>, StatusError> {
     let row = sqlx::query_as::<_, (String, String, String, String, String)>(
         "SELECT id, username, email, password_hash, role FROM users WHERE username = ?"
     )
-    .bind(&login_req.username)
+    .bind(&req.username)
     .fetch_optional(&state.db.pool)
     .await
     .map_err(|_| StatusError::internal_server_error())?;
 
     match row {
         Some((id, username, email, password_hash, role)) => {
-            if !verify_password(&login_req.password, &password_hash) {
+            if !verify_password(&req.password, &password_hash) {
                 return Err(StatusError::unauthorized().with_detail("Invalid credentials"));
             }
             let token = create_token(&id, &username, &role, &state.config.jwt_secret);
@@ -78,6 +100,11 @@ pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde
 #[handler]
 pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
+
+    if state.config.login_type != LoginType::Sso {
+        return Err(StatusError::forbidden().with_detail("SSO login is not enabled"));
+    }
+
     let callback: SsoCallbackRequest = req.parse_json().await.map_err(|_| {
         StatusError::bad_request().with_detail("Invalid request body")
     })?;

@@ -28,6 +28,7 @@ services:
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8080
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOGIN_TYPE=${LOGIN_TYPE:-mock}
       - DB_TYPE=${DB_TYPE:-sqlite}
       - DB_HOST=${DB_HOST:-localhost}
       - DB_PORT=${DB_PORT:-}

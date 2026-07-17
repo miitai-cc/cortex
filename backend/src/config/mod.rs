@@ -1,6 +1,23 @@
 use std::env;
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum LoginType {
+    Mock,
+    Normal,
+    Sso,
+}
+
+impl LoginType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LoginType::Mock => "mock",
+            LoginType::Normal => "normal",
+            LoginType::Sso => "sso",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum DbType {
     Sqlite,
     Mariadb,
@@ -38,6 +55,7 @@ impl DbType {
 }
 
 pub struct AppConfig {
+    pub login_type: LoginType,
     pub db_type: DbType,
     pub database_url: String,
     pub db_host: String,
@@ -64,6 +82,12 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Self {
+        let login_type = match env::var("LOGIN_TYPE").as_deref() {
+            Ok("normal") => LoginType::Normal,
+            Ok("sso") => LoginType::Sso,
+            _ => LoginType::Mock,
+        };
+
         let db_type = match env::var("DB_TYPE").as_deref() {
             Ok("mariadb") => DbType::Mariadb,
             Ok("sqlserver") => DbType::Sqlserver,
@@ -96,6 +120,7 @@ impl AppConfig {
         });
 
         Self {
+            login_type,
             db_type,
             database_url,
             db_host,

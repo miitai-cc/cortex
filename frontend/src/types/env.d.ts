@@ -6,7 +6,7 @@ declare global {
       BACKEND_HOST?: string;
       BACKEND_PORT?: string;
       API_PREFIX?: string;
-      KEYCLOAK_ENABLED?: boolean | string;
+      LOGIN_TYPE?: string;
       KEYCLOAK_URL?: string;
       KEYCLOAK_REALM?: string;
       KEYCLOAK_CLIENT_ID?: string;

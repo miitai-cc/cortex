@@ -26,6 +26,8 @@ spec:
               value: "8080"
             - name: LOG_LEVEL
               value: "info"
+            - name: LOGIN_TYPE
+              value: "mock"
             - name: DB_TYPE
               value: "sqlite"
             - name: DB_HOST

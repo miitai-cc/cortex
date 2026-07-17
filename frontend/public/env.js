@@ -4,8 +4,10 @@ window.__ENV__ = {
   BACKEND_PORT: '8080',
   API_PREFIX: '/cortex/api/v0.85',
 
-  // Keycloak SSO (set KEYCLOAK_ENABLED=true to enable)
-  KEYCLOAK_ENABLED: false,
+  // Login type: mock | normal | sso
+  LOGIN_TYPE: 'mock',
+
+  // Keycloak SSO (used when LOGIN_TYPE=sso)
   KEYCLOAK_URL: 'http://localhost:8080',
   KEYCLOAK_REALM: 'cortex',
   KEYCLOAK_CLIENT_ID: 'cortex-frontend',
