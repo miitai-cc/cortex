@@ -1,0 +1,52 @@
+[package]
+name = "pageindex-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kevin Chen"]
+license = "MIT"
+description = "Core library for PageIndex - vectorless RAG document indexing"
+
+[features]
+default = ["lopdf", "markdown"]
+mupdf = ["dep:mupdf"]
+lopdf = ["dep:lopdf"]
+markdown = []
+
+[dependencies]
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# Logging
+tracing = "0.1"
+
+# PDF parsing (feature-gated)
+mupdf = { version = "0.4", optional = true }
+lopdf = { version = "0.34", optional = true }
+pdf-extract = { version = "0.7", optional = true }
+
+# Token counting
+tiktoken-rs = "0.6"
+
+# Environment
+dotenvy = "0.15"
+
+# Regex for parsing
+regex = "1"
+
+# Randomization
+rand = "0.8"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { version = "1", features = ["test-util", "macros"] }

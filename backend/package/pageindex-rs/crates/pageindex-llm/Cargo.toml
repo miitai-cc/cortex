@@ -1,0 +1,49 @@
+[package]
+name = "pageindex-llm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "LLM provider implementations for PageIndex"
+
+[features]
+default = ["openai"]
+openai = ["dep:async-openai"]
+anthropic = []
+ollama = []
+gemini = []
+groq = []
+azure = []
+mock = []
+all = ["openai", "anthropic", "ollama", "gemini", "groq", "azure"]
+
+[dependencies]
+pageindex-core = { workspace = true, default-features = false }
+
+# Error handling
+thiserror.workspace = true
+anyhow.workspace = true
+
+# Async
+tokio.workspace = true
+async-trait.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# HTTP client
+reqwest.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# OpenAI
+async-openai = { workspace = true, optional = true }
+
+# Environment
+dotenvy.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }
+wiremock.workspace = true

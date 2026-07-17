@@ -64,10 +64,14 @@ async fn main() {
     let _ = app_state.db.run_migrations().await;
     tracing::debug!("Database migrations completed");
 
+    let server_host = app_state.config.server_host.clone();
+    let server_port = app_state.config.server_port;
+
     let service = api::router::build_service(app_state);
 
-    let acceptor = TcpListener::new("0.0.0.0:8080").bind().await;
-    tracing::info!("Server listening on 0.0.0.0:8080");
+    let addr = format!("{}:{}", server_host, server_port);
+    let acceptor = TcpListener::new(&addr).bind().await;
+    tracing::info!("Server listening on {}", addr);
     Server::new(acceptor).serve(service).await;
 }
 

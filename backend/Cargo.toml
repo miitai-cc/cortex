@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-salvo = { version = "0.74", features = ["default", "affix-state", "logging", "sse"] }
+salvo = { version = "0.74", features = ["default", "affix-state", "logging", "sse", "cors"] }
 sqlx = { version = "0.8", features = ["runtime-tokio", "any", "postgres", "sqlite", "mysql", "uuid", "chrono", "migrate"] }
 qdrant-client = "1.18"
 tokenizers = "0.21"
@@ -37,6 +37,7 @@ zip = "2"
 cortex-lib = { path = "../lib/rust" }
 eiva-be-sso = { path = "../lib/rust/crates/common/eiva-be-sso" }
 eiva-be-security = { path = "../lib/rust/crates/common/eiva-be-security" }
+pageindex-core = { path = "package/pageindex-rs/crates/pageindex-core" }
 async-trait = "0.1"
 
 [features]

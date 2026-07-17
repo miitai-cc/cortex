@@ -1,0 +1,47 @@
+[package]
+name = "pageindex-store"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Document storage and sync for PageIndex"
+
+[features]
+default = ["sqlite", "watcher"]
+json-store = []
+sqlite = ["dep:rusqlite"]
+watcher = ["dep:notify", "dep:notify-debouncer-mini"]
+
+[dependencies]
+pageindex-core = { workspace = true, default-features = false }
+
+# Error handling
+thiserror.workspace = true
+anyhow.workspace = true
+
+# Async
+tokio.workspace = true
+async-trait.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# File system
+directories.workspace = true
+dirs.workspace = true
+notify = { workspace = true, optional = true }
+notify-debouncer-mini = { workspace = true, optional = true }
+
+# Database (optional)
+rusqlite = { workspace = true, optional = true }
+
+# Utilities
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile.workspace = true
+tokio = { workspace = true, features = ["test-util", "macros"] }

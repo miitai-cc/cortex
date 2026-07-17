@@ -1,0 +1,74 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/pageindex-core",
+    "crates/pageindex-llm",
+    "crates/pageindex-store",
+    "crates/pageindex-cli",
+    "crates/pageindex-mcp",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Kevin Chen"]
+license = "MIT"
+repository = "https://github.com/kevinmichaelchen/pageindex-rs"
+description = "A vectorless, reasoning-based RAG system that builds hierarchical tree indices from PDFs"
+keywords = ["pdf", "rag", "llm", "document-processing", "indexing"]
+categories = ["text-processing", "command-line-utilities"]
+
+[workspace.dependencies]
+# Core
+thiserror = "2"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+dotenvy = "0.15"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# PDF
+mupdf = "0.4"
+lopdf = "0.34"
+pdf-extract = "0.7"
+
+# Token counting
+tiktoken-rs = "0.6"
+
+# LLM providers
+async-openai = "0.28"
+reqwest = { version = "0.12", features = ["json"] }
+
+# CLI
+clap = { version = "4", features = ["derive", "env"] }
+indicatif = "0.17"
+console = "0.15"
+
+# Storage
+rusqlite = { version = "0.32", features = ["bundled"] }
+notify = "6"
+notify-debouncer-mini = "0.4"
+directories = "6"
+dirs = "5"
+
+# MCP
+rmcp = { version = "0.14", features = ["server", "transport-io", "macros"] }
+schemars = "0.8"
+
+# Testing
+tempfile = "3"
+wiremock = "0.6"
+
+# Workspace crates
+pageindex-core = { path = "crates/pageindex-core", default-features = false }
+pageindex-llm = { path = "crates/pageindex-llm", default-features = false }
+pageindex-store = { path = "crates/pageindex-store", default-features = false }

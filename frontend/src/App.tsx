@@ -21,6 +21,7 @@ import GraphIsolatedPage from './pages/GraphIsolatedPage';
 import DeepResearchPage from './pages/DeepResearchPage';
 import ResearchHistoryPage from './pages/ResearchHistoryPage';
 import ResearchPanel from './pages/ResearchPanel';
+import AiModelsPage from './pages/AiModelsPage';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -49,6 +50,7 @@ function App() {
           <Route path="/cortex/research/history" element={<ResearchHistoryPage />} />
           <Route path="/cortex/settings" element={<SettingsPage />} />
           <Route path="/cortex/settings/system" element={<SettingsSystemPage />} />
+          <Route path="/cortex/ai-models" element={<AiModelsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/cortex/login" replace />} />
       </Routes>

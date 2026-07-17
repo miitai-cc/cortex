@@ -1,0 +1,38 @@
+[package]
+name = "pageindex-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Command-line interface for PageIndex"
+
+[[bin]]
+name = "pageindex"
+path = "src/main.rs"
+
+[dependencies]
+pageindex-core = { workspace = true, default-features = false, features = ["lopdf", "markdown"] }
+pageindex-llm = { workspace = true, default-features = false, features = ["openai", "mock"] }
+pageindex-store = { workspace = true, default-features = false, features = ["sqlite", "json-store", "watcher"] }
+
+# CLI
+clap.workspace = true
+indicatif.workspace = true
+console.workspace = true
+
+# Async
+tokio.workspace = true
+
+# Logging
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Environment
+dotenvy.workspace = true
+
+# Error handling
+anyhow.workspace = true

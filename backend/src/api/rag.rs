@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use salvo::prelude::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use crate::core::state::AppState;
 use crate::rag::embeddings::EmbeddingService;
 use crate::rag::reranker::RerankerService;
@@ -14,6 +14,39 @@ pub struct RagQueryRequest {
     pub query: String,
     pub top_k: Option<u32>,
     pub use_hybrid: Option<bool>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct EmbedRequest {
+    pub text: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct EmbedResponse {
+    pub model: String,
+    pub dimension: usize,
+    pub preview: Vec<f32>,
+    pub embedding: Vec<f32>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RerankRequest {
+    pub query: String,
+    pub documents: Vec<String>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct RerankResultItem {
+    pub index: usize,
+    pub document: String,
+    pub relevance_score: f64,
+}
+
+#[derive(Serialize, Debug)]
+pub struct RerankResponse {
+    pub model: String,
+    pub query: String,
+    pub results: Vec<RerankResultItem>,
 }
 
 #[handler]
@@ -104,7 +137,79 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
     })))
 }
 
+#[handler]
+#[tracing::instrument(level = "debug", skip_all)]
+pub async fn embed(depot: &mut Depot, req: &mut Request) -> Result<Json<EmbedResponse>, StatusError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let embed_req: EmbedRequest = req.parse_json().await.map_err(|_| {
+        StatusError::bad_request().detail("Invalid request body")
+    })?;
+
+    let embedding_service = EmbeddingService::new(&state.config.embedding_model);
+
+    tracing::debug!("Embed request for text (len={})", embed_req.text.len());
+
+    let embedding = embedding_service.embed(&embed_req.text).await
+        .map_err(|e| {
+            tracing::warn!("Embedding failed: {:?}", e);
+            StatusError::internal_server_error().detail("Embedding model call failed")
+        })?;
+
+    let dimension = embedding.len();
+    let preview = embedding.iter().take(20).cloned().collect();
+
+    Ok(Json(EmbedResponse {
+        model: state.config.embedding_model.clone(),
+        dimension,
+        preview,
+        embedding,
+    }))
+}
+
+#[handler]
+#[tracing::instrument(level = "debug", skip_all)]
+pub async fn rerank_docs(depot: &mut Depot, req: &mut Request) -> Result<Json<RerankResponse>, StatusError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let rerank_req: RerankRequest = req.parse_json().await.map_err(|_| {
+        StatusError::bad_request().detail("Invalid request body")
+    })?;
+
+    if rerank_req.documents.is_empty() {
+        return Err(StatusError::bad_request().detail("documents must not be empty"));
+    }
+
+    let reranker = RerankerService::new(&state.config.reranking_model);
+
+    tracing::debug!("Rerank request: query='{}', {} documents", rerank_req.query, rerank_req.documents.len());
+
+    let texts: Vec<&str> = rerank_req.documents.iter().map(|s| s.as_str()).collect();
+    let scores = reranker.rerank(&rerank_req.query, &texts).await
+        .map_err(|e| {
+            tracing::warn!("Reranking failed: {:?}", e);
+            StatusError::internal_server_error().detail("Reranking model call failed")
+        })?;
+
+    let mut results: Vec<RerankResultItem> = scores.iter().enumerate().map(|(i, &score)| {
+        RerankResultItem {
+            index: i,
+            document: rerank_req.documents[i].clone(),
+            relevance_score: score,
+        }
+    }).collect();
+
+    // Sort by relevance_score descending
+    results.sort_by(|a, b| b.relevance_score.partial_cmp(&a.relevance_score).unwrap_or(std::cmp::Ordering::Equal));
+
+    Ok(Json(RerankResponse {
+        model: state.config.reranking_model.clone(),
+        query: rerank_req.query,
+        results,
+    }))
+}
+
 pub fn router() -> Router {
     Router::with_path("rag")
         .push(Router::with_path("query").post(query))
+        .push(Router::with_path("embed").post(embed))
+        .push(Router::with_path("rerank").post(rerank_docs))
 }

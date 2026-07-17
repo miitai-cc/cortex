@@ -45,14 +45,26 @@ pub async fn upload(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_j
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
+    // Preserve original extension so pageindex-core can detect PDF
+    let ext = std::path::Path::new(&filename)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    let file_path_with_ext = format!("{}.{}", file_path, ext);
+    tokio::fs::copy(&file_path, &file_path_with_ext)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
     DocumentRepo::create(&state.db.pool, &doc_id, &filename, &content_type, file_size).await?;
 
     let state_clone = state.clone();
     let embedding_clone = embedding_service.clone();
     let doc_id_clone = doc_id.clone();
-    let file_path_clone = file_path.clone();
+    let file_path_clone = file_path_with_ext.clone();
+    let is_pdf = ext == "pdf";
     tokio::spawn(async move {
-        if let Err(e) = index_document(state_clone, embedding_clone, &doc_id_clone, &file_path_clone).await {
+        if let Err(e) = index_document(state_clone, embedding_clone, &doc_id_clone, &file_path_clone, is_pdf).await {
             tracing::error!("Failed to index document {}: {:?}", doc_id_clone, e);
         }
     });
@@ -60,17 +72,115 @@ pub async fn upload(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_j
     Ok(Json(serde_json::json!({
         "id": doc_id,
         "filename": filename,
-        "status": "pending"
+        "status": "pending",
+        "index_method": if is_pdf { "pageindex" } else { "chunker" }
     })))
 }
 
-async fn index_document(state: AppState, embedding: EmbeddingService, doc_id: &str, file_path: &str) -> Result<(), anyhow::Error> {
-    crate::db::repository::document_repo::DocumentRepo::update_status(
-        &state.db.pool, doc_id, "processing"
-    ).await?;
+// ──────────────────────────────────────────────────────────────
+// Core indexing pipeline dispatcher
+// ──────────────────────────────────────────────────────────────
+async fn index_document(
+    state: AppState,
+    embedding: EmbeddingService,
+    doc_id: &str,
+    file_path: &str,
+    is_pdf: bool,
+) -> Result<(), anyhow::Error> {
+    DocumentRepo::update_status(&state.db.pool, doc_id, "processing").await?;
+
+    if is_pdf {
+        index_pdf_with_pageindex(&state, &embedding, doc_id, file_path).await
+    } else {
+        index_with_chunker(&state, &embedding, doc_id, file_path).await
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// PDF: Page-by-page indexing via pageindex-core
+// ──────────────────────────────────────────────────────────────
+async fn index_pdf_with_pageindex(
+    state: &AppState,
+    embedding: &EmbeddingService,
+    doc_id: &str,
+    file_path: &str,
+) -> Result<(), anyhow::Error> {
+    use pageindex_core::pdf::get_page_tokens;
+
+    tracing::info!("Using pageindex-core for PDF: {}", file_path);
+
+    // get_page_tokens is synchronous (lopdf backend) — run in spawn_blocking
+    let file_path_owned = file_path.to_string();
+    let pages = tokio::task::spawn_blocking(move || {
+        get_page_tokens(&file_path_owned, "gpt-4o")
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("spawn_blocking error: {:?}", e))?
+    .map_err(|e| anyhow::anyhow!("pageindex get_page_tokens error: {:?}", e))?;
+
+    let page_count = pages.len();
+    tracing::info!("pageindex extracted {} pages from document {}", page_count, doc_id);
+
+    for (i, page) in pages.iter().enumerate() {
+        let page_num = i + 1; // 1-based
+        let content = &page.text;
+
+        if content.trim().is_empty() {
+            tracing::debug!("Skipping empty page {} for doc {}", page_num, doc_id);
+            continue;
+        }
+
+        let chunk_id = generate_id();
+        let embedding_vec = embedding.embed(content).await
+            .map_err(|e| anyhow::anyhow!("Embedding failed for page {}: {:?}", page_num, e))?;
+
+        ChunkRepo::create(&state.db.pool, &chunk_id, doc_id, content, i as i32).await?;
+
+        let payload = Payload::try_from(serde_json::json!({
+            "document_id": doc_id,
+            "chunk_index": i,
+            "page_number": page_num,
+            "token_count": page.token_count,
+            "content": content,
+            "index_method": "pageindex"
+        }))
+        .map_err(|e| anyhow::anyhow!("Payload conversion error: {:?}", e))?;
+
+        let point = PointStruct::new(chunk_id, embedding_vec, payload);
+        state.qdrant.upsert_points(UpsertPointsBuilder::new("documents", vec![point])).await?;
+
+        tracing::debug!("Indexed page {}/{} for doc {}", page_num, page_count, doc_id);
+    }
+
+    // Persist metadata (page_count, index_method) into the documents table
+    sqlx::query("UPDATE documents SET metadata = ? WHERE id = ?")
+        .bind(serde_json::json!({
+            "page_count": page_count,
+            "index_method": "pageindex"
+        }).to_string())
+        .bind(doc_id)
+        .execute(&state.db.pool)
+        .await?;
+
+    DocumentRepo::update_status(&state.db.pool, doc_id, "indexed").await?;
+    tracing::info!("Pageindex indexing complete for doc {} ({} pages)", doc_id, page_count);
+    Ok(())
+}
+
+// ──────────────────────────────────────────────────────────────
+// Non-PDF: Original chunker-based indexing (txt, md, docx)
+// ──────────────────────────────────────────────────────────────
+async fn index_with_chunker(
+    state: &AppState,
+    embedding: &EmbeddingService,
+    doc_id: &str,
+    file_path: &str,
+) -> Result<(), anyhow::Error> {
+    tracing::info!("Using chunker for non-PDF: {}", file_path);
 
     let content = parse_file(file_path).await?;
     let chunks = crate::rag::chunker::chunk_text(&content, 512, 128);
+    let chunk_count = chunks.len();
 
     for (i, chunk_text) in chunks.iter().enumerate() {
         let chunk_id = generate_id();
@@ -81,13 +191,26 @@ async fn index_document(state: AppState, embedding: EmbeddingService, doc_id: &s
         let payload = Payload::try_from(serde_json::json!({
             "document_id": doc_id,
             "chunk_index": i,
-            "content": chunk_text
-        })).map_err(|e| anyhow::anyhow!("Payload conversion error: {:?}", e))?;
+            "content": chunk_text,
+            "index_method": "chunker"
+        }))
+        .map_err(|e| anyhow::anyhow!("Payload conversion error: {:?}", e))?;
+
         let point = PointStruct::new(chunk_id, embedding_vec, payload);
         state.qdrant.upsert_points(UpsertPointsBuilder::new("documents", vec![point])).await?;
     }
 
+    sqlx::query("UPDATE documents SET metadata = ? WHERE id = ?")
+        .bind(serde_json::json!({
+            "chunk_count": chunk_count,
+            "index_method": "chunker"
+        }).to_string())
+        .bind(doc_id)
+        .execute(&state.db.pool)
+        .await?;
+
     DocumentRepo::update_status(&state.db.pool, doc_id, "indexed").await?;
+    tracing::info!("Chunker indexing complete for doc {} ({} chunks)", doc_id, chunk_count);
     Ok(())
 }
 

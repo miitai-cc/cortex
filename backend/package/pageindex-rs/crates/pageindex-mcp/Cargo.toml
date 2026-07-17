@@ -1,0 +1,37 @@
+[package]
+name = "pageindex-mcp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "MCP Server for PageIndex - AI assistant integration"
+
+[[bin]]
+name = "pageindex-mcp"
+path = "src/main.rs"
+
+[dependencies]
+pageindex-core = { workspace = true, default-features = false, features = ["lopdf", "markdown"] }
+pageindex-llm = { workspace = true, default-features = false, features = ["openai"] }
+pageindex-store = { workspace = true, default-features = false, features = ["sqlite"] }
+
+# MCP
+rmcp.workspace = true
+
+# Async
+tokio.workspace = true
+async-trait.workspace = true
+
+# Logging
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Environment
+dotenvy.workspace = true
+
+# Error handling
+anyhow.workspace = true

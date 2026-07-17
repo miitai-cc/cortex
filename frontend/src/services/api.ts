@@ -79,3 +79,8 @@ export const contextApi = {
   getSettings: () => api.get('/chat/context/settings'),
   updateSettings: (settings: any) => api.put('/chat/context/settings', settings),
 };
+
+export const aiModelApi = {
+  embed: (text: string) => api.post('/rag/embed', { text }),
+  rerank: (query: string, documents: string[]) => api.post('/rag/rerank', { query, documents }),
+};

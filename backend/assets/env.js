@@ -1,6 +1,6 @@
 window.__ENV__ = {
   // Backend API
-  BACKEND_HOST: '0.0.0.0',
+  BACKEND_HOST: 'localhost',
   BACKEND_PORT: '54322',
   API_PREFIX: '/cortex/api/v0.85',
 

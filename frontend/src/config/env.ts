@@ -25,7 +25,7 @@ function readEnv(): EnvConfig {
     : 'mock';
 
   return {
-    BACKEND_HOST: w.BACKEND_HOST || '0.0.0.0',
+    BACKEND_HOST: w.BACKEND_HOST || 'localhost',
     BACKEND_PORT: w.BACKEND_PORT || '8080',
     API_PREFIX: w.API_PREFIX || '/cortex/api/v0.85',
     LOGIN_TYPE: loginType,

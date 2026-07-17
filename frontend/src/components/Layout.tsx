@@ -33,6 +33,8 @@ import {
   Sliders,
   Sun,
   Moon,
+  Cpu,
+  ArrowUpDown,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
@@ -106,6 +108,15 @@ const navItems: NavItem[] = [
     children: [
       { labelKey: 'nav.research.new', icon: Plus, to: '/cortex/research' },
       { labelKey: 'nav.research.history', icon: Clock, to: '/cortex/research/history' },
+    ],
+  },
+  {
+    to: '/cortex/ai-models',
+    icon: Cpu,
+    labelKey: 'nav.aiModels',
+    children: [
+      { labelKey: 'nav.aiModels.embedding', icon: Layers, to: '/cortex/ai-models' },
+      { labelKey: 'nav.aiModels.reranking', icon: ArrowUpDown, to: '/cortex/ai-models' },
     ],
   },
   {
