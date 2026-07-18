@@ -40,10 +40,7 @@ impl DocumentRepo {
         .fetch_all(pool)
         .await
         .map_err(AppError::from)?;
-        tracing::debug!(
-            "[DocumentRepo::list_all] 查詢完成，共 {} 筆",
-            docs.len()
-        );
+        tracing::debug!("[DocumentRepo::list_all] 查詢完成，共 {} 筆", docs.len());
         Ok(docs)
     }
 

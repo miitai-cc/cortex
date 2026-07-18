@@ -23,6 +23,11 @@ import ResearchHistoryPage from './pages/ResearchHistoryPage';
 import ResearchPanel from './pages/ResearchPanel';
 import AiModelsPage from './pages/AiModelsPage';
 import IndexingPage from './pages/IndexingPage';
+import AiDocumentQueryPage from './pages/AiDocumentQueryPage';
+import ContentManagementPage from './pages/ContentManagementPage';
+import KnowledgeCenterPage from './pages/KnowledgeCenterPage';
+import PersonalWorkspacePage from './pages/PersonalWorkspacePage';
+import KnowledgeCategoriesPage from './pages/KnowledgeCategoriesPage';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -33,7 +38,8 @@ function App() {
         <Route path="/" element={<Navigate to="/cortex" replace />} />
         <Route path="/cortex/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/cortex" replace />} />
         <Route element={isAuthenticated ? <Layout /> : <Navigate to="/cortex/login" replace />}>
-          <Route path="/cortex" element={<DashboardPage />} />
+          <Route path="/cortex" element={<AiDocumentQueryPage />} />
+          <Route path="/cortex/dashboard" element={<DashboardPage />} />
           <Route path="/cortex/dashboard/health" element={<DashboardHealthPage />} />
           <Route path="/cortex/dashboard/activity" element={<DashboardActivityPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
@@ -42,7 +48,11 @@ function App() {
           <Route path="/cortex/documents/list" element={<DocumentListPage />} />
           <Route path="/cortex/documents/recent" element={<RecentDocumentsPage />} />
           <Route path="/cortex/documents/indexing" element={<IndexingPage />} />
+          <Route path="/cortex/documents/content" element={<ContentManagementPage />} />
           <Route path="/cortex/documents/:id" element={<DocumentDetailPage />} />
+          <Route path="/cortex/knowledge/:section?" element={<KnowledgeCenterPage />} />
+          <Route path="/cortex/knowledge-categories" element={<KnowledgeCategoriesPage />} />
+          <Route path="/cortex/workspace/:section?" element={<PersonalWorkspacePage />} />
           <Route path="/cortex/search" element={<SearchPage />} />
           <Route path="/cortex/search/hybrid" element={<SearchHybridPage />} />
           <Route path="/cortex/graph" element={<KnowledgeGraphPage />} />

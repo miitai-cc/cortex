@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use crate::core::state::AppState;
+use crate::db::repository::document_repo::DocumentRepo;
 use crate::rag::embeddings::EmbeddingService;
 use crate::rag::llm::LLMService;
 use crate::rag::reranker::RerankerService;
@@ -8,12 +9,15 @@ use qdrant_client::qdrant::SearchPointsBuilder;
 use qdrant_client::Payload;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
+use std::collections::HashSet;
 
 #[derive(Deserialize, Debug)]
 pub struct RagQueryRequest {
     pub query: String,
     pub top_k: Option<u32>,
     pub use_hybrid: Option<bool>,
+    pub document_ids: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -71,6 +75,19 @@ pub async fn query(
     );
 
     let top_k = query_req.top_k.unwrap_or(5);
+    let requested_document_ids = query_req.document_ids.clone().unwrap_or_default();
+    let version_rows = sqlx::query("SELECT v.document_id, i.current_version, v.version_number FROM content_versions v JOIN content_items i ON i.id = v.content_id")
+        .fetch_all(&state.db.pool).await.map_err(|_| StatusError::internal_server_error())?;
+    let stale_document_ids = version_rows
+        .into_iter()
+        .filter(|row| row.get::<i64, _>("version_number") != row.get::<i64, _>("current_version"))
+        .map(|row| row.get::<String, _>("document_id"))
+        .collect::<HashSet<_>>();
+    let search_limit = if requested_document_ids.is_empty() {
+        top_k
+    } else {
+        (top_k * 10).max(50)
+    };
 
     // 1. Generate query embedding
     tracing::debug!("Generating embedding for query...");
@@ -84,7 +101,8 @@ pub async fn query(
     let search_result = state
         .qdrant
         .search_points(
-            SearchPointsBuilder::new("documents", query_embedding, top_k as u64).with_payload(true),
+            SearchPointsBuilder::new("documents", query_embedding, search_limit as u64)
+                .with_payload(true),
         )
         .await
         .map_err(|_| StatusError::internal_server_error())?;
@@ -109,7 +127,36 @@ pub async fn query(
             "document_id": payload_json.get("document_id").and_then(|v| v.as_str()).unwrap_or(""),
             "chunk_index": payload_json.get("chunk_index").and_then(|v| v.as_i64()).unwrap_or(0),
         })
-    }).collect();
+    }).filter(|chunk| {
+        let document_id = chunk["document_id"].as_str().unwrap_or("");
+        if requested_document_ids.is_empty() { !stale_document_ids.contains(document_id) }
+        else { requested_document_ids.iter().any(|id| id == document_id) }
+    })
+      .take(top_k as usize)
+      .collect();
+
+    let documents = DocumentRepo::list_all(&state.db.pool)
+        .await
+        .map_err(|_| StatusError::internal_server_error())?;
+    for chunk in &mut chunks {
+        let document_id = chunk["document_id"].as_str().unwrap_or("");
+        if let Some(document) = documents.iter().find(|document| document.id == document_id) {
+            let directory = document
+                .metadata
+                .as_deref()
+                .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+                .and_then(|metadata| {
+                    metadata
+                        .get("relative_directory")
+                        .and_then(|value| value.as_str())
+                        .map(str::to_owned)
+                })
+                .unwrap_or_else(|| "/".to_string());
+            chunk["filename"] = serde_json::json!(document.filename);
+            chunk["directory"] = serde_json::json!(directory);
+            chunk["content_type"] = serde_json::json!(document.content_type);
+        }
+    }
 
     // 3. Re-rank if we have results
     if !chunks.is_empty() {

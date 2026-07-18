@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -61,13 +61,19 @@ export default function DocumentsPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [indexEvents, setIndexEvents] = useState<DisplayEvent[]>([]);
-  const { data, isLoading } = useDocuments({ search });
+  const [directory, setDirectory] = useState(() => localStorage.getItem('cortex-doc-directory') || '/');
+  useEffect(() => {
+    const update = (event: Event) => setDirectory((event as CustomEvent<string>).detail || '/');
+    window.addEventListener('cortex-directory-changed', update);
+    return () => window.removeEventListener('cortex-directory-changed', update);
+  }, []);
+  const { data, isLoading } = useDocuments({ search, directory });
   const uploadMutation = useUploadDocument((file, event) => {
     setIndexEvents((current) => [
       ...current,
       { ...event, id: Date.now() + Math.random(), filename: file.name },
     ]);
-  });
+  }, directory);
   const deleteMutation = useDeleteDocument();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -76,6 +82,7 @@ export default function DocumentsPage() {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
       'text/plain': ['.txt'],
       'text/markdown': ['.md'],
     },
@@ -86,6 +93,7 @@ export default function DocumentsPage() {
   return (
     <div>
       <CommonHeroTitle icon={FileText} title={t('documents.title')} />
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">操作目錄：<span className="font-medium text-primary-600">{directory}</span></p>
 
       {/* Drop zone */}
       <div
@@ -101,9 +109,9 @@ export default function DocumentsPage() {
         <p className="text-gray-600 dark:text-gray-300">
           {isDragActive ? t('documents.dropzone.active') : t('documents.upload')}
         </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">PDF, DOCX, TXT, MD</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">PDF, DOCX, XLSX, PPTX, TXT, MD</p>
         <p className="text-xs text-violet-500 dark:text-violet-400 mt-1">
-          PDF → PageIndex (逐頁索引)　·　其他 → Chunker
+          PDF / Office → Markdown → PageIndex → Chunker
         </p>
       </div>
 

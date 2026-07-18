@@ -23,10 +23,9 @@ pub async fn parse_file(file_path: &str) -> Result<String> {
             tracing::debug!("[parse_file] → 分派到 parse_pdf");
             let result = parse_pdf(file_path).await;
             match &result {
-                Ok(content) => tracing::debug!(
-                    "[parse_file] parse_pdf 完成，content_len={}",
-                    content.len()
-                ),
+                Ok(content) => {
+                    tracing::debug!("[parse_file] parse_pdf 完成，content_len={}", content.len())
+                }
                 Err(e) => tracing::debug!("[parse_file] parse_pdf 失敗: {:?}", e),
             }
             result
@@ -44,7 +43,11 @@ pub async fn parse_file(file_path: &str) -> Result<String> {
             result
         }
         _ => {
-            tracing::debug!("[parse_file] 不支援的副檔名 '{}', file_path={}", extension, file_path);
+            tracing::debug!(
+                "[parse_file] 不支援的副檔名 '{}', file_path={}",
+                extension,
+                file_path
+            );
             Err(anyhow::anyhow!("Unsupported file type: {}", extension))
         }
     }
@@ -93,10 +96,7 @@ async fn parse_docx(file_path: &str) -> Result<String> {
         use std::io::Read;
         let mut xml_content = String::new();
         file.read_to_string(&mut xml_content)?;
-        tracing::debug!(
-            "[parse_docx] XML 讀取完成，xml_len={}",
-            xml_content.len()
-        );
+        tracing::debug!("[parse_docx] XML 讀取完成，xml_len={}", xml_content.len());
         // Simple XML tag stripping for text extraction
         content = xml_content
             .replace("<w:p>", "\n")

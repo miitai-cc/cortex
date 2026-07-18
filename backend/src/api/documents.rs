@@ -12,14 +12,64 @@ use qdrant_client::qdrant::{
 use qdrant_client::Payload;
 use salvo::prelude::*;
 use salvo::websocket::{Message, WebSocketUpgrade};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::path::{Component, Path, PathBuf};
 use tokio::sync::mpsc::UnboundedSender;
 
 const DOCUMENTS_COLLECTION: &str = "documents";
 
+pub(crate) fn normalized_directory(value: Option<&str>) -> Result<String, AppError> {
+    let value = value.unwrap_or("/").trim();
+    let mut parts = Vec::new();
+    for component in Path::new(value).components() {
+        match component {
+            Component::RootDir | Component::CurDir => {}
+            Component::Normal(part) => parts.push(part.to_string_lossy().into_owned()),
+            _ => return Err(AppError::BadRequest("Invalid document directory".into())),
+        }
+    }
+    if value.contains('\\') || parts.iter().any(|part| part.is_empty()) {
+        return Err(AppError::BadRequest("Invalid document directory".into()));
+    }
+    Ok(if parts.is_empty() {
+        "/".into()
+    } else {
+        format!("/{}", parts.join("/"))
+    })
+}
+
+pub(crate) fn directory_path(upload_dir: &str, directory: &str) -> PathBuf {
+    Path::new(upload_dir).join(directory.trim_start_matches('/'))
+}
+
+fn document_directory(metadata: Option<&str>) -> String {
+    metadata
+        .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+        .and_then(|value| {
+            value
+                .get("relative_directory")
+                .and_then(|v| v.as_str())
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| "/".into())
+}
+
+pub(crate) async fn save_document_directory(
+    state: &AppState,
+    id: &str,
+    directory: &str,
+) -> Result<(), AppError> {
+    sqlx::query("UPDATE documents SET metadata = ? WHERE id = ?")
+        .bind(serde_json::json!({"relative_directory": directory}).to_string())
+        .bind(id)
+        .execute(&state.db.pool)
+        .await?;
+    Ok(())
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct DocumentIndexEvent {
+pub(crate) struct DocumentIndexEvent {
     #[serde(rename = "type")]
     event_type: &'static str,
     stage: &'static str,
@@ -102,11 +152,24 @@ async fn ensure_documents_collection(
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn list(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
+pub async fn list(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
     tracing::debug!("▶ [list] 收到列出文件請求");
     let state = depot.obtain::<AppState>().unwrap();
     tracing::debug!("[list] 從 DB 查詢所有文件...");
-    let docs = DocumentRepo::list_all(&state.db.pool).await?;
+    let directory = normalized_directory(req.query::<String>("directory").as_deref())?;
+    let search = req
+        .query::<String>("search")
+        .unwrap_or_default()
+        .to_lowercase();
+    let docs = DocumentRepo::list_all(&state.db.pool)
+        .await?
+        .into_iter()
+        .filter(|doc| document_directory(doc.metadata.as_deref()) == directory)
+        .filter(|doc| search.is_empty() || doc.filename.to_lowercase().contains(&search))
+        .collect::<Vec<_>>();
     tracing::debug!(
         "[list] 查詢完成，共 {} 筆文件，回傳結果: {:?}",
         docs.len(),
@@ -134,6 +197,32 @@ pub async fn get(
 }
 
 #[handler]
+pub async fn preview(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::BadRequest("Missing document id".into()))?;
+    let document = DocumentRepo::find_by_id(&state.db.pool, &id).await?;
+    let chunks = ChunkRepo::find_by_document_id(&state.db.pool, &id).await?;
+    let content = chunks
+        .iter()
+        .map(|chunk| chunk.content.as_str())
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    Ok(Json(serde_json::json!({
+        "id": document.id,
+        "filename": document.filename,
+        "contentType": document.content_type,
+        "previewType": "markdown",
+        "content": content,
+        "chunkCount": chunks.len()
+    })))
+}
+
+#[handler]
 #[tracing::instrument(level = "debug", skip_all)]
 pub async fn upload(
     depot: &mut Depot,
@@ -141,6 +230,7 @@ pub async fn upload(
 ) -> Result<Json<serde_json::Value>, AppError> {
     tracing::debug!("▶ [upload] 收到文件上傳請求");
     let state = depot.obtain::<AppState>().unwrap();
+    let directory = normalized_directory(req.query::<String>("directory").as_deref())?;
     let embedding_service = EmbeddingService::new(&state.config.embedding_model);
     tracing::debug!(
         "[upload] embedding_model={}, upload_dir={}",
@@ -166,10 +256,11 @@ pub async fn upload(
     );
 
     let doc_id = generate_id();
-    let file_path = format!("{}/{}", state.config.upload_dir, doc_id);
+    let upload_path = directory_path(&state.config.upload_dir, &directory);
+    let file_path = upload_path.join(&doc_id).to_string_lossy().into_owned();
     tracing::debug!("[upload] 生成 doc_id={}, 目標路徑={}", doc_id, file_path);
 
-    tokio::fs::create_dir_all(&state.config.upload_dir)
+    tokio::fs::create_dir_all(&upload_path)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
     tracing::debug!("[upload] 上傳目錄已確認存在: {}", state.config.upload_dir);
@@ -202,17 +293,17 @@ pub async fn upload(
 
     tracing::debug!("[upload] 寫入 DB 文件記錄...");
     DocumentRepo::create(&state.db.pool, &doc_id, &filename, &content_type, file_size).await?;
+    save_document_directory(state, &doc_id, &directory).await?;
     tracing::debug!("[upload] DB 記錄寫入完成，準備啟動背景索引...");
 
     let state_clone = state.clone();
     let embedding_clone = embedding_service.clone();
     let doc_id_clone = doc_id.clone();
     let file_path_clone = file_path_with_ext.clone();
-    let is_pdf = ext == "pdf";
+    let ext_clone = ext.clone();
     tracing::debug!(
-        "[upload] is_pdf={}, index_method={}",
-        is_pdf,
-        if is_pdf { "pageindex" } else { "chunker" }
+        "[upload] source_extension={}, index_method=pageindex+chunker",
+        ext
     );
     tokio::spawn(async move {
         if let Err(e) = index_document(
@@ -220,7 +311,7 @@ pub async fn upload(
             embedding_clone,
             &doc_id_clone,
             &file_path_clone,
-            is_pdf,
+            &ext_clone,
             None,
         )
         .await
@@ -235,7 +326,7 @@ pub async fn upload(
         "id": doc_id,
         "filename": filename,
         "status": "pending",
-        "index_method": if is_pdf { "pageindex" } else { "chunker" }
+        "index_method": "pageindex+chunker"
     });
     tracing::debug!("[upload] 回傳結果: {}", response);
     Ok(Json(response))
@@ -246,6 +337,7 @@ async fn run_document_upload_stream(
     state: AppState,
     filename: String,
     content_type: String,
+    directory: String,
 ) {
     let (mut sink, mut stream) = ws.split();
     let (events, mut event_rx) = tokio::sync::mpsc::unbounded_channel::<DocumentIndexEvent>();
@@ -306,16 +398,20 @@ async fn run_document_upload_stream(
         .and_then(|extension| extension.to_str())
         .unwrap_or("")
         .to_lowercase();
-    let is_pdf = ext == "pdf";
-    let file_path = format!("{}/{}.{}", state.config.upload_dir, doc_id, ext);
+    let upload_path = directory_path(&state.config.upload_dir, &directory);
+    let file_path = upload_path
+        .join(format!("{}.{}", doc_id, ext))
+        .to_string_lossy()
+        .into_owned();
 
     let result: Result<serde_json::Value, anyhow::Error> = async {
-        tokio::fs::create_dir_all(&state.config.upload_dir).await?;
+        tokio::fs::create_dir_all(&upload_path).await?;
         tokio::fs::write(&file_path, &file_bytes).await?;
         let file_size = i64::try_from(file_bytes.len()).unwrap_or(i64::MAX);
         let document =
             DocumentRepo::create(&state.db.pool, &doc_id, &filename, &content_type, file_size)
                 .await?;
+        save_document_directory(&state, &doc_id, &directory).await?;
         let _ = events.send(DocumentIndexEvent::progress(
             "uploaded",
             format!("文件已接收並建立記錄: {filename}"),
@@ -324,21 +420,15 @@ async fn run_document_upload_stream(
         ));
 
         let embedding = EmbeddingService::new(&state.config.embedding_model);
-        index_document(
-            &state,
-            embedding,
-            &doc_id,
-            &file_path,
-            is_pdf,
-            Some(&events),
-        )
-        .await?;
+        let pageindex =
+            index_document(&state, embedding, &doc_id, &file_path, &ext, Some(&events)).await?;
 
         let indexed = DocumentRepo::find_by_id(&state.db.pool, &doc_id).await?;
         Ok(serde_json::json!({
             "document": indexed,
             "initialDocument": document,
-            "indexMethod": if is_pdf { "pageindex" } else { "chunker" }
+            "indexMethod": "pageindex+chunker",
+            "pageindex": pageindex
         }))
     }
     .await;
@@ -384,10 +474,12 @@ pub async fn upload_stream(
     let content_type = req
         .query::<String>("content_type")
         .unwrap_or_else(|| "application/octet-stream".to_string());
+    let directory = normalized_directory(req.query::<String>("directory").as_deref())
+        .map_err(|_| StatusError::bad_request())?;
 
     WebSocketUpgrade::new()
         .upgrade(req, res, move |ws| async move {
-            run_document_upload_stream(ws, state, filename, content_type).await;
+            run_document_upload_stream(ws, state, filename, content_type, directory).await;
         })
         .await
 }
@@ -395,19 +487,42 @@ pub async fn upload_stream(
 // ──────────────────────────────────────────────────────────────
 // Core indexing pipeline dispatcher
 // ──────────────────────────────────────────────────────────────
-async fn index_document(
+pub(crate) async fn index_document(
     state: &AppState,
     embedding: EmbeddingService,
     doc_id: &str,
     file_path: &str,
-    is_pdf: bool,
+    source_extension: &str,
     progress: Option<&UnboundedSender<DocumentIndexEvent>>,
-) -> Result<(), anyhow::Error> {
-    tracing::debug!(
-        "▶ [index_document] 開始索引流程 doc_id={}, file_path={}, is_pdf={}",
+) -> Result<Option<serde_json::Value>, anyhow::Error> {
+    index_document_configured(
+        state,
+        embedding,
         doc_id,
         file_path,
-        is_pdf
+        source_extension,
+        progress,
+        true,
+        true,
+    )
+    .await
+}
+
+pub(crate) async fn index_document_configured(
+    state: &AppState,
+    embedding: EmbeddingService,
+    doc_id: &str,
+    file_path: &str,
+    source_extension: &str,
+    progress: Option<&UnboundedSender<DocumentIndexEvent>>,
+    pageindex_enabled: bool,
+    rag_enabled: bool,
+) -> Result<Option<serde_json::Value>, anyhow::Error> {
+    tracing::debug!(
+        "▶ [index_document] 開始索引流程 doc_id={}, file_path={}, source_extension={}",
+        doc_id,
+        file_path,
+        source_extension
     );
 
     tracing::debug!("[index_document] 更新文件狀態為 'processing'...");
@@ -423,177 +538,165 @@ async fn index_document(
     );
     tracing::debug!("[index_document] 狀態更新完成，分派索引方法...");
 
-    if is_pdf {
-        tracing::debug!("[index_document] → 分派到 pageindex 方法");
-        index_pdf_with_pageindex(state, &embedding, doc_id, file_path, progress).await
-    } else {
-        tracing::debug!("[index_document] → 分派到 chunker 方法");
-        index_with_chunker(state, &embedding, doc_id, file_path, progress).await
-    }
-}
-
-// ──────────────────────────────────────────────────────────────
-// PDF: Page-by-page indexing via pageindex-core
-// ──────────────────────────────────────────────────────────────
-async fn index_pdf_with_pageindex(
-    state: &AppState,
-    embedding: &EmbeddingService,
-    doc_id: &str,
-    file_path: &str,
-    progress: Option<&UnboundedSender<DocumentIndexEvent>>,
-) -> Result<(), anyhow::Error> {
-    use pageindex_core::pdf::get_page_tokens;
-
-    tracing::info!("Using pageindex-core for PDF: {}", file_path);
-    tracing::debug!(
-        "[pageindex] 開始 PDF 逐頁索引 file_path={}, doc_id={}",
-        file_path,
-        doc_id
-    );
-
-    // get_page_tokens is synchronous (lopdf backend) — run in spawn_blocking
-    let file_path_owned = file_path.to_string();
-    tracing::debug!("[pageindex] 呼叫 get_page_tokens（同步，spawn_blocking）...");
-    let pages = tokio::task::spawn_blocking(move || get_page_tokens(&file_path_owned, "gpt-4o"))
-        .await
-        .map_err(|e| anyhow::anyhow!("spawn_blocking error: {:?}", e))?;
-    tracing::debug!("[pageindex] spawn_blocking 完成，解析結果中...");
-    let pages = pages.map_err(|e| anyhow::anyhow!("pageindex get_page_tokens error: {:?}", e))?;
-
-    let page_count = pages.len();
-    let mut collection_ready = false;
-    tracing::info!(
-        "pageindex extracted {} pages from document {}",
-        page_count,
-        doc_id
-    );
-    tracing::debug!(
-        "[pageindex] 提取完成，共 {} 頁，每頁 tokens 資訊: {:?}",
-        page_count,
-        pages.iter().map(|p| p.token_count).collect::<Vec<_>>()
-    );
+    let document = DocumentRepo::find_by_id(&state.db.pool, doc_id).await?;
     report(
         progress,
         DocumentIndexEvent::progress(
-            "chunking",
-            format!("PDF 解析完成，共 {page_count} 頁"),
+            "conversion",
+            format!("開始將 .{source_extension} 轉換為 Markdown"),
+            Some(doc_id),
+            16,
+        ),
+    );
+    let markdown_path = crate::ingestion::to_markdown::convert_to_markdown(
+        file_path,
+        source_extension,
+        &document.filename,
+    )
+    .await?;
+    report(
+        progress,
+        DocumentIndexEvent::progress(
+            "conversion",
+            "Markdown 轉換完成，開始 PageIndex",
+            Some(doc_id),
+            20,
+        ),
+    );
+
+    let pageindex_result = if pageindex_enabled {
+        run_pageindex_api(state, doc_id, &markdown_path, progress).await?
+    } else {
+        report(
+            progress,
+            DocumentIndexEvent::progress(
+                "pageindex",
+                "此版本已停用 PageIndex，略過頁面索引",
+                Some(doc_id),
+                35,
+            ),
+        );
+        None
+    };
+    if rag_enabled {
+        tracing::debug!("[index_document] → 對 Markdown 分派到 chunker 方法");
+        index_with_chunker(state, &embedding, doc_id, &markdown_path, progress).await?;
+    } else {
+        report(
+            progress,
+            DocumentIndexEvent::progress("rag", "此版本已停用 RAG，略過向量索引", Some(doc_id), 85),
+        );
+        DocumentRepo::update_status(&state.db.pool, doc_id, "indexed").await?;
+    }
+
+    if let Some(pageindex) = &pageindex_result {
+        let document = DocumentRepo::find_by_id(&state.db.pool, doc_id).await?;
+        let mut metadata = document
+            .metadata
+            .as_deref()
+            .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+            .and_then(|value| value.as_object().cloned())
+            .unwrap_or_default();
+        metadata.insert("pageindex".to_string(), pageindex.clone());
+        metadata.insert(
+            "source_format".to_string(),
+            serde_json::Value::String(source_extension.to_ascii_lowercase()),
+        );
+        metadata.insert(
+            "converted_to_markdown".to_string(),
+            serde_json::Value::Bool(markdown_path != file_path),
+        );
+        sqlx::query("UPDATE documents SET metadata = ? WHERE id = ?")
+            .bind(serde_json::Value::Object(metadata).to_string())
+            .bind(doc_id)
+            .execute(&state.db.pool)
+            .await?;
+    }
+
+    Ok(pageindex_result)
+}
+
+async fn run_pageindex_api(
+    state: &AppState,
+    doc_id: &str,
+    file_path: &str,
+    progress: Option<&UnboundedSender<DocumentIndexEvent>>,
+) -> Result<Option<serde_json::Value>, anyhow::Error> {
+    use crate::rag::pageindex_client::PageIndexApiClient;
+    use pageindex_core::Config;
+
+    let extension = std::path::Path::new(file_path)
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if extension != "pdf" && extension != "md" && extension != "markdown" {
+        report(
+            progress,
+            DocumentIndexEvent::progress(
+                "pageindex_skipped",
+                format!("PageIndex API 不支援 .{extension}，繼續原索引"),
+                Some(doc_id),
+                20,
+            ),
+        );
+        return Ok(None);
+    }
+
+    let api_key = state.config.pageindex_api_key.clone().unwrap_or_default();
+    if extension == "pdf" && api_key.trim().is_empty() {
+        return Err(anyhow::anyhow!(
+            "PAGEINDEX_API_KEY or OPENAI_API_KEY is required for PDF PageIndex"
+        ));
+    }
+    let model = state.config.pageindex_model.clone();
+    let client = pageindex_core::llm::RetryingClient::with_defaults(PageIndexApiClient::new(
+        api_key,
+        state.config.pageindex_base_url.clone(),
+        model.clone(),
+    ));
+    let config = Config::new()
+        .with_env_overrides()
+        .with_model(model)
+        .with_node_text(false)
+        .with_node_summary(false)
+        .with_doc_description(false);
+
+    report(
+        progress,
+        DocumentIndexEvent::progress(
+            "pageindex",
+            "開始呼叫 PageIndex API 建立階層索引",
+            Some(doc_id),
+            18,
+        ),
+    );
+
+    let mut structure = if extension == "pdf" {
+        pageindex_core::page_index(file_path, &client, &config).await?
+    } else {
+        pageindex_core::markdown::md_to_tree(file_path, &client, &config).await?
+    };
+    let document = DocumentRepo::find_by_id(&state.db.pool, doc_id).await?;
+    structure.doc_name = document.filename;
+    let result = serde_json::to_value(&structure)?;
+    report(
+        progress,
+        DocumentIndexEvent::progress(
+            "pageindex",
+            format!(
+                "PageIndex API 索引完成，共 {} 個節點",
+                structure.node_count()
+            ),
             Some(doc_id),
             25,
         ),
     );
-
-    for (i, page) in pages.iter().enumerate() {
-        let page_num = i + 1; // 1-based
-        let content = &page.text;
-
-        tracing::debug!(
-            "[pageindex] 處理第 {} 頁 (index={}): text_len={}, token_count={}",
-            page_num,
-            i,
-            content.len(),
-            page.token_count
-        );
-
-        if content.trim().is_empty() {
-            tracing::debug!("[pageindex] 第 {} 頁為空白，跳過", page_num);
-            continue;
-        }
-
-        tracing::debug!(
-            "[pageindex] 第 {} 頁前 100 字元: {:?}",
-            page_num,
-            &content[..content.len().min(100)]
-        );
-
-        let chunk_id = generate_id();
-        tracing::debug!("[pageindex] 第 {} 頁生成 chunk_id={}", page_num, chunk_id);
-
-        tracing::debug!("[pageindex] 第 {} 頁正在產生 embedding...", page_num);
-        let embedding_vec = embedding
-            .embed(content)
-            .await
-            .map_err(|e| anyhow::anyhow!("Embedding failed for page {}: {:?}", page_num, e))?;
-        tracing::debug!(
-            "[pageindex] 第 {} 頁 embedding 完成，vector_dim={}",
-            page_num,
-            embedding_vec.len()
-        );
-
-        if !collection_ready {
-            ensure_documents_collection(state, embedding_vec.len()).await?;
-            collection_ready = true;
-        }
-
-        tracing::debug!("[pageindex] 第 {} 頁寫入 DB chunk 記錄...", page_num);
-        ChunkRepo::create(&state.db.pool, &chunk_id, doc_id, content, i as i32).await?;
-        tracing::debug!("[pageindex] 第 {} 頁 DB 記錄寫入完成", page_num);
-
-        let payload = Payload::try_from(serde_json::json!({
-            "document_id": doc_id,
-            "chunk_index": i,
-            "page_number": page_num,
-            "token_count": page.token_count,
-            "content": content,
-            "index_method": "pageindex"
-        }))
-        .map_err(|e| anyhow::anyhow!("Payload conversion error: {:?}", e))?;
-
-        let point = PointStruct::new(chunk_id.clone(), embedding_vec.clone(), payload);
-        tracing::debug!(
-            "[pageindex] 第 {} 頁 upsert 到 Qdrant collection='documents'...",
-            page_num
-        );
-        state
-            .qdrant
-            .upsert_points(UpsertPointsBuilder::new("documents", vec![point]))
-            .await?;
-        let percent = 25 + (((i + 1) * 65 / page_count.max(1)) as u8);
-        report(
-            progress,
-            DocumentIndexEvent::progress(
-                "indexing",
-                format!("第 {page_num}/{page_count} 頁已寫入向量資料庫"),
-                Some(doc_id),
-                percent,
-            ),
-        );
-        tracing::debug!(
-            "[pageindex] ✅ 第 {}/{} 頁完成 (doc_id={}, chunk_id={})",
-            page_num,
-            page_count,
-            doc_id,
-            chunk_id
-        );
-    }
-
-    // Persist metadata (page_count, index_method) into the documents table
-    let metadata_json = serde_json::json!({
-        "page_count": page_count,
-        "index_method": "pageindex"
-    });
-    tracing::debug!(
-        "[pageindex] 寫入 metadata 到 documents 表: {}",
-        metadata_json
-    );
-    sqlx::query("UPDATE documents SET metadata = ? WHERE id = ?")
-        .bind(metadata_json.to_string())
-        .bind(doc_id)
-        .execute(&state.db.pool)
-        .await?;
-
-    tracing::debug!("[pageindex] 更新文件狀態為 'indexed'...");
-    DocumentRepo::update_status(&state.db.pool, doc_id, "indexed").await?;
-    tracing::info!(
-        "Pageindex indexing complete for doc {} ({} pages)",
-        doc_id,
-        page_count
-    );
-    tracing::debug!("[pageindex] ▶ 索引流程完成 doc_id={}", doc_id);
-    Ok(())
+    Ok(Some(result))
 }
 
 // ──────────────────────────────────────────────────────────────
-// Non-PDF: Original chunker-based indexing (txt, md, docx)
+// Markdown chunker indexing
 // ──────────────────────────────────────────────────────────────
 async fn index_with_chunker(
     state: &AppState,
@@ -692,13 +795,21 @@ async fn index_with_chunker(
         );
     }
 
-    let metadata_json = serde_json::json!({
-        "chunk_count": chunk_count,
-        "index_method": "chunker"
-    });
-    tracing::debug!("[chunker] 寫入 metadata 到 documents 表: {}", metadata_json);
+    let document = DocumentRepo::find_by_id(&state.db.pool, doc_id).await?;
+    let mut metadata_json = document
+        .metadata
+        .as_deref()
+        .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+        .and_then(|value| value.as_object().cloned())
+        .unwrap_or_default();
+    metadata_json.insert("chunk_count".into(), serde_json::json!(chunk_count));
+    metadata_json.insert("index_method".into(), serde_json::json!("chunker"));
+    tracing::debug!(
+        "[chunker] 寫入 metadata 到 documents 表: {:?}",
+        metadata_json
+    );
     sqlx::query("UPDATE documents SET metadata = ? WHERE id = ?")
-        .bind(metadata_json.to_string())
+        .bind(serde_json::Value::Object(metadata_json).to_string())
         .bind(doc_id)
         .execute(&state.db.pool)
         .await?;
@@ -748,10 +859,193 @@ pub async fn delete(
     Ok(Json(serde_json::json!({"deleted": true})))
 }
 
+#[derive(Deserialize)]
+struct CreateDirectoryRequest {
+    parent: Option<String>,
+    name: String,
+}
+
+#[derive(Deserialize)]
+struct CopyDirectoryRequest {
+    path: String,
+    name: Option<String>,
+}
+
+fn valid_directory_name(name: &str) -> Result<&str, AppError> {
+    let name = name.trim();
+    if name.is_empty() || name == "." || name == ".." || name.contains('/') || name.contains('\\') {
+        return Err(AppError::BadRequest(
+            "Directory name must be a single path segment".into(),
+        ));
+    }
+    Ok(name)
+}
+
+#[handler]
+pub async fn list_directories(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let directory = normalized_directory(req.query::<String>("path").as_deref())?;
+    let path = directory_path(&state.config.upload_dir, &directory);
+    tokio::fs::create_dir_all(&path)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    let mut reader = tokio::fs::read_dir(&path)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    let mut entries = Vec::new();
+    while let Some(entry) = reader
+        .next_entry()
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+    {
+        if entry
+            .file_type()
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .is_dir()
+        {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let relative_path = if directory == "/" {
+                format!("/{name}")
+            } else {
+                format!("{directory}/{name}")
+            };
+            entries.push(serde_json::json!({"name": name, "path": relative_path}));
+        }
+    }
+    entries.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
+    Ok(Json(
+        serde_json::json!({"path": directory, "directories": entries}),
+    ))
+}
+
+#[handler]
+pub async fn create_directory(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let body = req
+        .parse_json::<CreateDirectoryRequest>()
+        .await
+        .map_err(|e| AppError::BadRequest(e.to_string()))?;
+    let parent = normalized_directory(body.parent.as_deref())?;
+    let name = valid_directory_name(&body.name)?;
+    let relative_path = if parent == "/" {
+        format!("/{name}")
+    } else {
+        format!("{parent}/{name}")
+    };
+    let path = directory_path(&state.config.upload_dir, &relative_path);
+    tokio::fs::create_dir(&path).await.map_err(|e| {
+        if e.kind() == std::io::ErrorKind::AlreadyExists {
+            AppError::Conflict("Directory already exists".into())
+        } else {
+            AppError::Internal(e.to_string())
+        }
+    })?;
+    Ok(Json(
+        serde_json::json!({"created": true, "name": name, "path": relative_path}),
+    ))
+}
+
+#[handler]
+pub async fn copy_directory(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let body = req
+        .parse_json::<CopyDirectoryRequest>()
+        .await
+        .map_err(|e| AppError::BadRequest(e.to_string()))?;
+    let source = normalized_directory(Some(&body.path))?;
+    if source == "/" {
+        return Err(AppError::BadRequest(
+            "Root directory cannot be copied".into(),
+        ));
+    }
+    let source_path = directory_path(&state.config.upload_dir, &source);
+    let parent = Path::new(&source)
+        .parent()
+        .and_then(Path::to_str)
+        .unwrap_or("/");
+    let original = Path::new(&source)
+        .file_name()
+        .and_then(|v| v.to_str())
+        .unwrap_or("directory");
+    let suggested_name = format!("{original} - copy");
+    let name = valid_directory_name(body.name.as_deref().unwrap_or(&suggested_name))?.to_owned();
+    let target = if parent == "/" {
+        format!("/{name}")
+    } else {
+        format!("{parent}/{name}")
+    };
+    let target_path = directory_path(&state.config.upload_dir, &target);
+    if !source_path.is_dir() {
+        return Err(AppError::NotFound("Directory not found".into()));
+    }
+    if target_path.exists() {
+        return Err(AppError::Conflict("Target directory already exists".into()));
+    }
+    // Indexed files cannot safely be duplicated without creating new document/vector IDs.
+    let has_content = std::fs::read_dir(&source_path)
+        .map_err(|e| AppError::Internal(e.to_string()))?
+        .next()
+        .is_some();
+    if has_content {
+        return Err(AppError::Conflict(
+            "Only empty directories can be copied; copy documents separately".into(),
+        ));
+    }
+    tokio::fs::create_dir(&target_path)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(Json(serde_json::json!({"copied": true, "path": target})))
+}
+
+#[handler]
+pub async fn delete_directory(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    let directory = normalized_directory(req.query::<String>("path").as_deref())?;
+    if directory == "/" {
+        return Err(AppError::BadRequest(
+            "Root directory cannot be deleted".into(),
+        ));
+    }
+    let path = directory_path(&state.config.upload_dir, &directory);
+    tokio::fs::remove_dir(&path)
+        .await
+        .map_err(|e| match e.kind() {
+            std::io::ErrorKind::NotFound => AppError::NotFound("Directory not found".into()),
+            std::io::ErrorKind::DirectoryNotEmpty => {
+                AppError::Conflict("Directory is not empty".into())
+            }
+            _ => AppError::Internal(e.to_string()),
+        })?;
+    Ok(Json(
+        serde_json::json!({"deleted": true, "path": directory}),
+    ))
+}
+
 pub fn router() -> Router {
     Router::with_path("documents")
         .get(list)
         .push(Router::with_path("upload").post(upload))
         .push(Router::with_path("ws/upload").get(upload_stream))
+        .push(
+            Router::with_path("directories")
+                .get(list_directories)
+                .post(create_directory)
+                .delete(delete_directory),
+        )
+        .push(Router::with_path("directories/copy").post(copy_directory))
+        .push(Router::with_path("<id>/preview").get(preview))
         .push(Router::with_path("<id>").get(get).delete(delete))
 }

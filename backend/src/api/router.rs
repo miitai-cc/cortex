@@ -1,4 +1,6 @@
-use crate::api::{admin, auth, chat, documents, graph, health, indexing, rag, research};
+use crate::api::{
+    admin, auth, chat, content, documents, graph, health, indexing, knowledge, rag, research,
+};
 use crate::core::state::AppState;
 use crate::middleware::error_handler::handle_error;
 use salvo::cors::Cors;
@@ -14,6 +16,8 @@ pub fn build_router(state: AppState) -> Router {
             Router::with_path(API_PREFIX)
                 .push(auth::router())
                 .push(documents::router())
+                .push(content::router())
+                .push(knowledge::router())
                 .push(rag::router())
                 .push(health::router())
                 .push(admin::router())

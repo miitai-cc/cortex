@@ -69,6 +69,9 @@ pub struct AppConfig {
     pub jwt_secret: String,
     pub openai_api_key: Option<String>,
     pub openai_base_url: String,
+    pub pageindex_api_key: Option<String>,
+    pub pageindex_base_url: String,
+    pub pageindex_model: String,
     pub anthropic_api_key: Option<String>,
     pub embedding_model: String,
     pub reranking_model: String,
@@ -144,6 +147,19 @@ impl AppConfig {
                 db_name,
             ),
         });
+        let openai_api_key = env::var("OPENAI_API_KEY")
+            .ok()
+            .filter(|value| !value.trim().is_empty());
+        let openai_base_url =
+            env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
+        let pageindex_api_key = env::var("PAGEINDEX_API_KEY")
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+            .or_else(|| openai_api_key.clone());
+        let pageindex_base_url = env::var("PAGEINDEX_BASE_URL")
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or_else(|| openai_base_url.clone());
 
         Self {
             login_type,
@@ -157,9 +173,12 @@ impl AppConfig {
             qdrant_url: qdrant_grpc_url(),
             jwt_secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "change-me-in-production".to_string()),
-            openai_api_key: env::var("OPENAI_API_KEY").ok(),
-            openai_base_url: env::var("OPENAI_BASE_URL")
-                .unwrap_or_else(|_| "https://api.openai.com/v1".to_string()),
+            openai_api_key,
+            openai_base_url,
+            pageindex_api_key,
+            pageindex_base_url,
+            pageindex_model: env::var("PAGEINDEX_MODEL")
+                .unwrap_or_else(|_| "gpt-4o-2024-11-20".to_string()),
             anthropic_api_key: env::var("ANTHROPIC_API_KEY").ok(),
             embedding_model: env::var("EMBEDDING_MODEL")
                 .unwrap_or_else(|_| "BAAI/bge-small-zh-v1.5".to_string()),

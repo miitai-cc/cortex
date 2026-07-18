@@ -36,6 +36,14 @@ import {
   Cpu,
   ArrowUpDown,
   FolderSearch,
+  Sparkles,
+  Library,
+  Award,
+  Bookmark,
+  CircleHelp,
+  ClipboardCheck,
+  UserRoundSearch,
+  FolderCog,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
@@ -57,9 +65,10 @@ const navItems: NavItem[] = [
   {
     to: '/cortex',
     icon: LayoutDashboard,
-    labelKey: 'nav.dashboard',
+    labelKey: 'nav.workspace',
     children: [
-      { labelKey: 'nav.dashboard.overview', icon: BarChart3, to: '/cortex' },
+      { labelKey: 'nav.workspace.aiDocumentQuery', icon: Sparkles, to: '/cortex' },
+      { labelKey: 'nav.dashboard.overview', icon: BarChart3, to: '/cortex/dashboard' },
       { labelKey: 'nav.dashboard.health', icon: Heart, to: '/cortex/dashboard/health' },
       { labelKey: 'nav.dashboard.activity', icon: Activity, to: '/cortex/dashboard/activity' },
     ],
@@ -79,6 +88,7 @@ const navItems: NavItem[] = [
     labelKey: 'nav.documents',
     children: [
       { labelKey: 'nav.documents.upload', icon: Upload, to: '/cortex/documents' },
+      { labelKey: 'nav.documents.content', icon: Library, to: '/cortex/documents/content' },
       { labelKey: 'nav.documents.list', icon: List, to: '/cortex/documents/list' },
       { labelKey: 'nav.documents.recent', icon: Clock, to: '/cortex/documents/recent' },
       { labelKey: 'nav.documents.indexing', icon: FolderSearch, to: '/cortex/documents/indexing' },
@@ -91,6 +101,29 @@ const navItems: NavItem[] = [
     children: [
       { labelKey: 'nav.search.fulltext', icon: Search, to: '/cortex/search' },
       { labelKey: 'nav.search.hybrid', icon: Layers, to: '/cortex/search/hybrid' },
+    ],
+  },
+  {
+    to: '/cortex/knowledge',
+    icon: Library,
+    labelKey: 'nav.knowledgeCenter',
+    children: [
+      { labelKey: 'nav.knowledgeCenter.documents', icon: FileText, to: '/cortex/knowledge/documents' },
+      { labelKey: 'nav.knowledgeCenter.categories', icon: FolderCog, to: '/cortex/knowledge-categories' },
+      { labelKey: 'nav.knowledgeCenter.review', icon: ClipboardCheck, to: '/cortex/knowledge/review' },
+      { labelKey: 'nav.knowledgeCenter.faq', icon: CircleHelp, to: '/cortex/knowledge/faq' },
+      { labelKey: 'nav.knowledgeCenter.experts', icon: UserRoundSearch, to: '/cortex/knowledge/experts' },
+      { labelKey: 'nav.knowledgeCenter.community', icon: Users, to: '/cortex/knowledge/community' },
+    ],
+  },
+  {
+    to: '/cortex/workspace',
+    icon: UserRoundSearch,
+    labelKey: 'nav.personalWorkspace',
+    children: [
+      { labelKey: 'nav.personalWorkspace.following', icon: Bookmark, to: '/cortex/workspace/following' },
+      { labelKey: 'nav.personalWorkspace.review', icon: ClipboardCheck, to: '/cortex/workspace/review' },
+      { labelKey: 'nav.personalWorkspace.points', icon: Award, to: '/cortex/workspace/points' },
     ],
   },
   {

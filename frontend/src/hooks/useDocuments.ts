@@ -27,12 +27,13 @@ export function useDocument(id: string) {
 
 export function useUploadDocument(
   onEvent: (file: File, event: DocumentIndexEvent) => void,
+  directory = '/',
 ) {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: (file: File) => documentApi.upload(file, (event) => onEvent(file, event)),
+    mutationFn: (file: File) => documentApi.upload(file, (event) => onEvent(file, event), directory),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast.success(t('common.success'));

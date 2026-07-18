@@ -38,17 +38,61 @@ export default api;
 export const documentApi = {
   list: (params?: any) => api.get('/documents', { params }),
   get: (id: string) => api.get(`/documents/${id}`),
-  upload: (file: File, onEvent: (event: DocumentIndexEvent) => void) =>
+  preview: (id: string) => api.get(`/documents/${id}/preview`),
+  upload: (file: File, onEvent: (event: DocumentIndexEvent) => void, directory = '/') =>
     uploadDocumentStream(
-      `${WS_BASE_URL}/documents/ws/upload?filename=${encodeURIComponent(file.name)}&content_type=${encodeURIComponent(file.type || 'application/octet-stream')}`,
+      `${WS_BASE_URL}/documents/ws/upload?filename=${encodeURIComponent(file.name)}&content_type=${encodeURIComponent(file.type || 'application/octet-stream')}&directory=${encodeURIComponent(directory)}`,
       file,
       onEvent,
     ),
   delete: (id: string) => api.delete(`/documents/${id}`),
 };
 
+export const directoryApi = {
+  list: (path = '/') => api.get('/documents/directories', { params: { path } }),
+  create: (parent: string, name: string) => api.post('/documents/directories', { parent, name }),
+  copy: (path: string) => api.post('/documents/directories/copy', { path }),
+  delete: (path: string) => api.delete('/documents/directories', { params: { path } }),
+};
+
+export type ContentSaveRequest = {
+  title: string;
+  content_kind: 'markdown' | 'web' | 'database';
+  directory: string;
+  content?: string;
+  source_url?: string;
+  sql_query?: string;
+  change_note?: string;
+  rag_enabled: boolean;
+  pageindex_enabled: boolean;
+};
+
+export const contentApi = {
+  list: () => api.get('/content'),
+  create: (data: ContentSaveRequest) => api.post('/content', data),
+  update: (id: string, data: ContentSaveRequest) => api.put(`/content/${id}`, data),
+  versions: (id: string) => api.get(`/content/${id}/versions`),
+  importVersion: (data: { content_id?: string; document_id: string; title: string; directory: string; change_note?: string }) => api.post('/content/import-version', data),
+};
+
+export const knowledgeApi = {
+  overview: () => api.get('/knowledge/overview'),
+  createRecord: (data: any) => api.post('/knowledge/records', data),
+  updateRecord: (id: string, data: any) => api.put(`/knowledge/records/${id}`, data),
+  deleteRecord: (id: string) => api.delete(`/knowledge/records/${id}`),
+  reviewRecord: (id: string, data: { status: string; reviewer_id?: string; comment?: string }) => api.put(`/knowledge/records/${id}/review`, data),
+  interact: (data: any) => api.post('/knowledge/interactions', data),
+  saveExpert: (data: any) => api.post('/knowledge/experts', data),
+  comments: (id: string) => api.get(`/knowledge/records/${id}/comments`),
+  addComment: (id: string, data: { content: string; parent_id?: string }) => api.post(`/knowledge/records/${id}/comments`, data),
+  bestAnswer: (id: string, comment_id: string) => api.put(`/knowledge/records/${id}/best-answer`, { comment_id }),
+  createCategory: (data: any) => api.post('/knowledge/categories', data),
+  updateCategory: (id: string, data: any) => api.put(`/knowledge/categories/${id}`, data),
+  deleteCategory: (id: string) => api.delete(`/knowledge/categories/${id}`),
+};
+
 export const searchApi = {
-  query: (params: { query: string; top_k?: number; use_hybrid?: boolean }) =>
+  query: (params: { query: string; top_k?: number; use_hybrid?: boolean; document_ids?: string[] }) =>
     api.post('/rag/query', params),
 };
 
@@ -102,4 +146,3 @@ export const indexingApi = {
   graphifyExtractWsUrl: (relative_path: string): string =>
     `${WS_BASE_URL}/indexing/ws/graphify/extract?relative_path=${encodeURIComponent(relative_path)}`,
 };
-
