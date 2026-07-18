@@ -73,6 +73,7 @@ pub struct AppConfig {
     pub embedding_model: String,
     pub reranking_model: String,
     pub upload_dir: String,
+    pub work_root: String,
     pub log_level: String,
     pub server_host: String,
     pub server_port: u16,
@@ -106,19 +107,17 @@ impl AppConfig {
         let db_user = env::var("DB_USER").unwrap_or_else(|_| "cortex".to_string());
         let db_password = env::var("DB_PASSWORD").unwrap_or_default();
 
-        let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
-            match db_type {
-                DbType::Sqlite => "sqlite:./data/cortex.db?mode=rwc".to_string(),
-                _ => format!(
-                    "{}://{}:{}@{}:{}/{}",
-                    db_type.url_scheme(),
-                    db_user,
-                    db_password,
-                    db_host,
-                    db_port,
-                    db_name,
-                ),
-            }
+        let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| match db_type {
+            DbType::Sqlite => "sqlite:./data/cortex.db?mode=rwc".to_string(),
+            _ => format!(
+                "{}://{}:{}@{}:{}/{}",
+                db_type.url_scheme(),
+                db_user,
+                db_password,
+                db_host,
+                db_port,
+                db_name,
+            ),
         });
 
         Self {
@@ -142,24 +141,20 @@ impl AppConfig {
                 .unwrap_or_else(|_| "BAAI/bge-small-zh-v1.5".to_string()),
             reranking_model: env::var("RERANKING_MODEL")
                 .unwrap_or_else(|_| "BAAI/bge-reranker-v2-m3".to_string()),
-            upload_dir: env::var("UPLOAD_DIR")
-                .unwrap_or_else(|_| "./uploads".to_string()),
-            log_level: env::var("LOG_LEVEL")
-                .unwrap_or_else(|_| "info".to_string()),
-            server_host: env::var("SERVER_HOST")
-                .unwrap_or_else(|_| "0.0.0.0".to_string()),
+            upload_dir: env::var("UPLOAD_DIR").unwrap_or_else(|_| "./uploads".to_string()),
+            work_root: env::var("WORK_ROOT").unwrap_or_else(|_| "./".to_string()),
+            log_level: env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()),
+            server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
             server_port: env::var("SERVER_PORT")
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(8080),
             keycloak_url: env::var("KEYCLOAK_URL")
                 .unwrap_or_else(|_| "http://localhost:8080".to_string()),
-            keycloak_realm: env::var("KEYCLOAK_REALM")
-                .unwrap_or_else(|_| "cortex".to_string()),
+            keycloak_realm: env::var("KEYCLOAK_REALM").unwrap_or_else(|_| "cortex".to_string()),
             keycloak_client_id: env::var("KEYCLOAK_CLIENT_ID")
                 .unwrap_or_else(|_| "cortex-backend".to_string()),
-            keycloak_client_secret: env::var("KEYCLOAK_CLIENT_SECRET")
-                .unwrap_or_default(),
+            keycloak_client_secret: env::var("KEYCLOAK_CLIENT_SECRET").unwrap_or_default(),
         }
     }
 }

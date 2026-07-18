@@ -106,7 +106,10 @@ pub async fn create_powerpoint(titles: Vec<String>, output_path: &str) -> Result
                     </p:sp>
                 </p:spTree>
             </p:sld>"#,
-            title.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+            title
+                .replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;")
         );
         archive.write_all(slide_xml.as_bytes())?;
     }

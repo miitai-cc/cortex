@@ -1,6 +1,6 @@
+use crate::core::state::AppState;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::core::state::AppState;
 
 #[derive(Deserialize)]
 pub struct ResearchRequest {
@@ -17,30 +17,43 @@ pub struct ResearchResult {
 }
 
 fn url_encode(s: &str) -> String {
-    s.chars().map(|c| match c {
-        'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => c.to_string(),
-        ' ' => "+".to_string(),
-        _ => format!("%{:02X}", c as u8),
-    }).collect()
+    s.chars()
+        .map(|c| match c {
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => c.to_string(),
+            ' ' => "+".to_string(),
+            _ => format!("%{:02X}", c as u8),
+        })
+        .collect()
 }
 
 #[handler]
-pub async fn start_research(depot: &mut Depot, req: &mut Request) -> Result<Json<ResearchResult>, StatusError> {
+pub async fn start_research(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<ResearchResult>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let research_req: ResearchRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().detail("Invalid request body")
-    })?;
+    let research_req: ResearchRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
 
     let mut sources = Vec::new();
 
     for query in &research_req.queries {
         let encoded = url_encode(query);
-        let search_url = format!("https://api.duckduckgo.com/?q={}&format=json&no_html=1&skip_disambig=1", encoded);
+        let search_url = format!(
+            "https://api.duckduckgo.com/?q={}&format=json&no_html=1&skip_disambig=1",
+            encoded
+        );
 
         match reqwest::get(&search_url).await {
             Ok(resp) => {
                 if let Ok(text) = resp.text().await {
-                    sources.push(format!("Query '{}': {}", query, &text[..text.len().min(500)]));
+                    sources.push(format!(
+                        "Query '{}': {}",
+                        query,
+                        &text[..text.len().min(500)]
+                    ));
                 }
             }
             Err(e) => {
@@ -76,23 +89,28 @@ pub async fn start_research(depot: &mut Depot, req: &mut Request) -> Result<Json
 }
 
 #[handler]
-pub async fn list_researches(depot: &mut Depot) -> Result<Json<Vec<serde_json::Value>>, StatusError> {
+pub async fn list_researches(
+    depot: &mut Depot,
+) -> Result<Json<Vec<serde_json::Value>>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
 
     let rows = sqlx::query_as::<_, (String, String, String)>(
-        "SELECT id, topic, created_at FROM researches ORDER BY created_at DESC LIMIT 20"
+        "SELECT id, topic, created_at FROM researches ORDER BY created_at DESC LIMIT 20",
     )
     .fetch_all(&state.db.pool)
     .await
     .map_err(|_| StatusError::internal_server_error())?;
 
-    let researches: Vec<serde_json::Value> = rows.iter().map(|(id, topic, created_at)| {
-        serde_json::json!({
-            "id": id,
-            "topic": topic,
-            "created_at": created_at,
+    let researches: Vec<serde_json::Value> = rows
+        .iter()
+        .map(|(id, topic, created_at)| {
+            serde_json::json!({
+                "id": id,
+                "topic": topic,
+                "created_at": created_at,
+            })
         })
-    }).collect();
+        .collect();
 
     Ok(Json(researches))
 }

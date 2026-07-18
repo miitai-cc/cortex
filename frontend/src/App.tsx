@@ -22,6 +22,7 @@ import DeepResearchPage from './pages/DeepResearchPage';
 import ResearchHistoryPage from './pages/ResearchHistoryPage';
 import ResearchPanel from './pages/ResearchPanel';
 import AiModelsPage from './pages/AiModelsPage';
+import IndexingPage from './pages/IndexingPage';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -40,6 +41,7 @@ function App() {
           <Route path="/cortex/documents" element={<DocumentsPage />} />
           <Route path="/cortex/documents/list" element={<DocumentListPage />} />
           <Route path="/cortex/documents/recent" element={<RecentDocumentsPage />} />
+          <Route path="/cortex/documents/indexing" element={<IndexingPage />} />
           <Route path="/cortex/documents/:id" element={<DocumentDetailPage />} />
           <Route path="/cortex/search" element={<SearchPage />} />
           <Route path="/cortex/search/hybrid" element={<SearchHybridPage />} />

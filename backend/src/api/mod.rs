@@ -1,9 +1,10 @@
-pub mod auth;
-pub mod documents;
-pub mod rag;
-pub mod health;
-pub mod router;
 pub mod admin;
-pub mod graph;
+pub mod auth;
 pub mod chat;
+pub mod documents;
+pub mod graph;
+pub mod health;
+pub mod indexing;
+pub mod rag;
 pub mod research;
+pub mod router;

@@ -1,17 +1,17 @@
-use salvo::prelude::*;
-use salvo::sse::{self, SseEvent};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::ReceiverStream;
-use futures_util::StreamExt;
-use std::convert::Infallible;
 use crate::core::state::AppState;
 use crate::rag::embeddings::EmbeddingService;
 use crate::rag::llm::LLMService;
+use futures_util::StreamExt;
 use qdrant_client::qdrant::point_id::PointIdOptions;
 use qdrant_client::qdrant::SearchPointsBuilder;
 use qdrant_client::Payload;
+use salvo::prelude::*;
+use salvo::sse::{self, SseEvent};
+use serde::{Deserialize, Serialize};
+use std::convert::Infallible;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct ChatRequest {
@@ -40,13 +40,15 @@ async fn build_context_and_messages(
 ) -> Result<(Vec<serde_json::Value>, Vec<serde_json::Value>), StatusError> {
     let embedding = EmbeddingService::new(&state.config.embedding_model);
 
-    let query_embedding = embedding.embed(message).await
+    let query_embedding = embedding
+        .embed(message)
+        .await
         .map_err(|_| StatusError::internal_server_error())?;
 
-    let search_result = state.qdrant
+    let search_result = state
+        .qdrant
         .search_points(
-            SearchPointsBuilder::new("documents", query_embedding, 5u64)
-                .with_payload(true)
+            SearchPointsBuilder::new("documents", query_embedding, 5u64).with_payload(true),
         )
         .await
         .map_err(|_| StatusError::internal_server_error())?;
@@ -66,7 +68,8 @@ async fn build_context_and_messages(
         })
     }).collect();
 
-    let context: String = references.iter()
+    let context: String = references
+        .iter()
         .map(|r| r["content"].as_str().unwrap_or(""))
         .collect::<Vec<&str>>()
         .join("\n\n");
@@ -97,20 +100,26 @@ async fn build_context_and_messages(
 #[handler]
 pub async fn chat(depot: &mut Depot, req: &mut Request) -> Result<Json<ChatResponse>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let chat_req: ChatRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().detail("Invalid request body")
-    })?;
+    let chat_req: ChatRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
 
-    let conversation_id = chat_req.conversation_id.unwrap_or_else(|| Uuid::new_v4().to_string());
+    let conversation_id = chat_req
+        .conversation_id
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
 
-    let (messages, references) = build_context_and_messages(&state, &chat_req.message, &chat_req.history).await?;
+    let (messages, references) =
+        build_context_and_messages(&state, &chat_req.message, &chat_req.history).await?;
 
     let llm = LLMService::new(
         state.config.openai_api_key.as_deref(),
         &state.config.openai_base_url,
     );
 
-    let answer = llm.generate_with_messages(&messages).await
+    let answer = llm
+        .generate_with_messages(&messages)
+        .await
         .unwrap_or_else(|_| "抱歉，無法生成回答。".to_string());
 
     sqlx::query(
@@ -136,26 +145,37 @@ pub async fn chat_stream(
     res: &mut Response,
 ) -> Result<(), StatusError> {
     let state = depot.obtain::<AppState>().unwrap().clone();
-    let chat_req: ChatRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().detail("Invalid request body")
-    })?;
+    let chat_req: ChatRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
 
-    let conversation_id = chat_req.conversation_id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+    let conversation_id = chat_req
+        .conversation_id
+        .clone()
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
 
-    let (messages, references) = build_context_and_messages(&state, &chat_req.message, &chat_req.history).await?;
+    let (messages, references) =
+        build_context_and_messages(&state, &chat_req.message, &chat_req.history).await?;
 
     let (tx, rx) = mpsc::channel::<SseEvent>(64);
 
     // Send meta event
-    let meta = SseEvent::default().name("meta").json(serde_json::json!({
-        "conversation_id": conversation_id
-    })).unwrap_or_default();
+    let meta = SseEvent::default()
+        .name("meta")
+        .json(serde_json::json!({
+            "conversation_id": conversation_id
+        }))
+        .unwrap_or_default();
     let _ = tx.send(meta).await;
 
     // Send references event
-    let ref_event = SseEvent::default().name("references").json(serde_json::json!({
-        "references": references
-    })).unwrap_or_default();
+    let ref_event = SseEvent::default()
+        .name("references")
+        .json(serde_json::json!({
+            "references": references
+        }))
+        .unwrap_or_default();
     let _ = tx.send(ref_event).await;
 
     let tx_clone = tx.clone();
@@ -165,15 +185,24 @@ pub async fn chat_stream(
             &state.config.openai_base_url,
         );
 
-        match llm.generate_streaming_sse(&messages, tx_clone.clone()).await {
+        match llm
+            .generate_streaming_sse(&messages, tx_clone.clone())
+            .await
+        {
             Ok(()) => {
-                let done = SseEvent::default().name("done").json(serde_json::json!({})).unwrap_or_default();
+                let done = SseEvent::default()
+                    .name("done")
+                    .json(serde_json::json!({}))
+                    .unwrap_or_default();
                 let _ = tx_clone.send(done).await;
             }
             Err(e) => {
-                let err = SseEvent::default().name("error").json(serde_json::json!({
-                    "message": format!("{}", e)
-                })).unwrap_or_default();
+                let err = SseEvent::default()
+                    .name("error")
+                    .json(serde_json::json!({
+                        "message": format!("{}", e)
+                    }))
+                    .unwrap_or_default();
                 let _ = tx_clone.send(err).await;
             }
         }
@@ -194,7 +223,9 @@ pub async fn chat_stream(
 }
 
 #[handler]
-pub async fn list_conversations(depot: &mut Depot) -> Result<Json<Vec<serde_json::Value>>, StatusError> {
+pub async fn list_conversations(
+    depot: &mut Depot,
+) -> Result<Json<Vec<serde_json::Value>>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
 
     let rows = sqlx::query_as::<_, (String, String, String, String)>(
@@ -204,14 +235,17 @@ pub async fn list_conversations(depot: &mut Depot) -> Result<Json<Vec<serde_json
     .await
     .map_err(|_| StatusError::internal_server_error())?;
 
-    let conversations: Vec<serde_json::Value> = rows.iter().map(|(id, title, created_at, updated_at)| {
-        serde_json::json!({
-            "id": id,
-            "title": title,
-            "created_at": created_at,
-            "updated_at": updated_at,
+    let conversations: Vec<serde_json::Value> = rows
+        .iter()
+        .map(|(id, title, created_at, updated_at)| {
+            serde_json::json!({
+                "id": id,
+                "title": title,
+                "created_at": created_at,
+                "updated_at": updated_at,
+            })
         })
-    }).collect();
+        .collect();
 
     Ok(Json(conversations))
 }

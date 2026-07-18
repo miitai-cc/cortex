@@ -1,6 +1,6 @@
+use crate::config::{AppConfig, DbType};
 use sqlx::any::AnyPoolOptions;
 use sqlx::{Any, Pool};
-use crate::config::{AppConfig, DbType};
 
 pub mod repository;
 
@@ -29,14 +29,18 @@ impl Database {
             .connect(&config.database_url)
             .await
             .expect("Failed to create database pool");
-        Self { pool, db_type: config.db_type.clone() }
+        Self {
+            pool,
+            db_type: config.db_type.clone(),
+        }
     }
 
     async fn ensure_data_dir(config: &AppConfig) {
         if config.db_type != DbType::Sqlite {
             return;
         }
-        let path_str = config.database_url
+        let path_str = config
+            .database_url
             .strip_prefix("sqlite:")
             .unwrap_or(&config.database_url)
             .split('?')
@@ -85,7 +89,9 @@ impl Database {
                 created_at {ts},
                 updated_at {ts}
             )",
-            id_col = id_column, text = text_type, ts = timestamp_default
+            id_col = id_column,
+            text = text_type,
+            ts = timestamp_default
         );
 
         let create_chunks = format!(
@@ -98,7 +104,8 @@ impl Database {
                 chunk_index INTEGER NOT NULL,
                 FOREIGN KEY (document_id) REFERENCES documents(id)
             )",
-            text = text_type, blob = blob_type
+            text = text_type,
+            blob = blob_type
         );
 
         let create_users = format!(
@@ -111,7 +118,10 @@ impl Database {
                 is_active {bool} NOT NULL DEFAULT 1,
                 created_at {ts}
             )",
-            id_col = id_column, text = text_type, ts = timestamp_default, bool = boolean_type
+            id_col = id_column,
+            text = text_type,
+            ts = timestamp_default,
+            bool = boolean_type
         );
 
         let create_conversations = format!(
@@ -121,7 +131,8 @@ impl Database {
                 created_at {ts},
                 updated_at {ts}
             )",
-            text = text_type, ts = timestamp_default
+            text = text_type,
+            ts = timestamp_default
         );
 
         let create_researches = format!(
@@ -131,13 +142,16 @@ impl Database {
                 synthesis {text},
                 created_at {ts}
             )",
-            text = text_type, ts = timestamp_default
+            text = text_type,
+            ts = timestamp_default
         );
 
         sqlx::query(&create_documents).execute(&self.pool).await?;
         sqlx::query(&create_chunks).execute(&self.pool).await?;
         sqlx::query(&create_users).execute(&self.pool).await?;
-        sqlx::query(&create_conversations).execute(&self.pool).await?;
+        sqlx::query(&create_conversations)
+            .execute(&self.pool)
+            .await?;
         sqlx::query(&create_researches).execute(&self.pool).await?;
 
         Ok(())

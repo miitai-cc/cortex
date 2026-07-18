@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from 'eiva-fe-security';
-import { API_BASE_URL } from '../config/env';
+import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,6 +14,9 @@ api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
   }
   return config;
 });
@@ -37,9 +40,7 @@ export const documentApi = {
   upload: (file: File) => {
     const form = new FormData();
     form.append('file', file);
-    return api.post('/documents/upload', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return api.post('/documents/upload', form);
   },
   delete: (id: string) => api.delete(`/documents/${id}`),
 };
@@ -84,3 +85,20 @@ export const aiModelApi = {
   embed: (text: string) => api.post('/rag/embed', { text }),
   rerank: (query: string, documents: string[]) => api.post('/rag/rerank', { query, documents }),
 };
+
+export const indexingApi = {
+  /** 建立索引：Returns the WebSocket URL for gitnexus index streaming */
+  gitNexusWsUrl: (relative_path: string): string =>
+    `${WS_BASE_URL}/indexing/ws/gitnexus?relative_path=${encodeURIComponent(relative_path)}`,
+  /** 建立索引：Returns the WebSocket URL for graphify index streaming */
+  graphifyWsUrl: (relative_path: string): string =>
+    `${WS_BASE_URL}/indexing/ws/graphify?relative_path=${encodeURIComponent(relative_path)}`,
+  /** 啟始：Starts the GitNexus HTTP server (gitnexus serve, port 4747, no path needed) */
+  gitNexusServeWsUrl: (): string =>
+    `${WS_BASE_URL}/indexing/ws/gitnexus/serve`,
+  /** 啟始：Runs full Graphify semantic extraction (graphify extract <path>) */
+  graphifyExtractWsUrl: (relative_path: string): string =>
+    `${WS_BASE_URL}/indexing/ws/graphify/extract?relative_path=${encodeURIComponent(relative_path)}`,
+};
+
+

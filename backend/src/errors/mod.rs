@@ -35,10 +35,14 @@ impl AppError {
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             AppError::Security(e) => match e {
-                eiva_be_security::errors::SecurityError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+                eiva_be_security::errors::SecurityError::Database(_) => {
+                    StatusCode::INTERNAL_SERVER_ERROR
+                }
                 eiva_be_security::errors::SecurityError::NotFound(_) => StatusCode::NOT_FOUND,
                 eiva_be_security::errors::SecurityError::Conflict(_) => StatusCode::CONFLICT,
-                eiva_be_security::errors::SecurityError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+                eiva_be_security::errors::SecurityError::Unauthorized(_) => {
+                    StatusCode::UNAUTHORIZED
+                }
             },
         }
     }

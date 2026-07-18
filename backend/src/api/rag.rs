@@ -1,13 +1,13 @@
 #![allow(dead_code)]
-use salvo::prelude::*;
-use serde::{Deserialize, Serialize};
 use crate::core::state::AppState;
 use crate::rag::embeddings::EmbeddingService;
-use crate::rag::reranker::RerankerService;
 use crate::rag::llm::LLMService;
+use crate::rag::reranker::RerankerService;
 use qdrant_client::qdrant::point_id::PointIdOptions;
 use qdrant_client::qdrant::SearchPointsBuilder;
 use qdrant_client::Payload;
+use salvo::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
 pub struct RagQueryRequest {
@@ -51,11 +51,15 @@ pub struct RerankResponse {
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, StatusError> {
+pub async fn query(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let query_req: RagQueryRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().detail("Invalid request body")
-    })?;
+    let query_req: RagQueryRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
 
     tracing::debug!("Received RAG query: {:?}", query_req.query);
 
@@ -70,20 +74,25 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
 
     // 1. Generate query embedding
     tracing::debug!("Generating embedding for query...");
-    let query_embedding = embedding.embed(&query_req.query).await
+    let query_embedding = embedding
+        .embed(&query_req.query)
+        .await
         .map_err(|_| StatusError::internal_server_error())?;
 
     // 2. Search Qdrant
     tracing::debug!("Searching Qdrant for top {} results...", top_k);
-    let search_result = state.qdrant
+    let search_result = state
+        .qdrant
         .search_points(
-            SearchPointsBuilder::new("documents", query_embedding, top_k as u64)
-                .with_payload(true)
+            SearchPointsBuilder::new("documents", query_embedding, top_k as u64).with_payload(true),
         )
         .await
         .map_err(|_| StatusError::internal_server_error())?;
-    
-    tracing::debug!("Found {} initial results from Qdrant", search_result.result.len());
+
+    tracing::debug!(
+        "Found {} initial results from Qdrant",
+        search_result.result.len()
+    );
 
     let mut chunks: Vec<serde_json::Value> = search_result.result.iter().map(|point| {
         let payload: Payload = point.payload.clone().into();
@@ -104,26 +113,35 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
 
     // 3. Re-rank if we have results
     if !chunks.is_empty() {
-        let texts: Vec<&str> = chunks.iter()
+        let texts: Vec<&str> = chunks
+            .iter()
             .map(|c| c["content"].as_str().unwrap_or(""))
             .collect();
 
         if let Ok(reranked_scores) = reranker.rerank(&query_req.query, &texts).await {
             // Re-sort by reranker scores
-            let mut scored: Vec<(usize, f64)> = reranked_scores.iter().enumerate().map(|(i, &s)| (i, s)).collect();
+            let mut scored: Vec<(usize, f64)> = reranked_scores
+                .iter()
+                .enumerate()
+                .map(|(i, &s)| (i, s))
+                .collect();
             scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
-            let reranked: Vec<serde_json::Value> = scored.iter().map(|(idx, score)| {
-                let mut item = chunks[*idx].clone();
-                item["score"] = serde_json::Value::from(*score);
-                item
-            }).collect();
+            let reranked: Vec<serde_json::Value> = scored
+                .iter()
+                .map(|(idx, score)| {
+                    let mut item = chunks[*idx].clone();
+                    item["score"] = serde_json::Value::from(*score);
+                    item
+                })
+                .collect();
             chunks = reranked;
         }
     }
 
     // 4. Generate LLM answer
-    let context: String = chunks.iter()
+    let context: String = chunks
+        .iter()
         .map(|c| c["content"].as_str().unwrap_or(""))
         .collect::<Vec<&str>>()
         .join("\n\n");
@@ -139,17 +157,23 @@ pub async fn query(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_js
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn embed(depot: &mut Depot, req: &mut Request) -> Result<Json<EmbedResponse>, StatusError> {
+pub async fn embed(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<EmbedResponse>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let embed_req: EmbedRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().detail("Invalid request body")
-    })?;
+    let embed_req: EmbedRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
 
     let embedding_service = EmbeddingService::new(&state.config.embedding_model);
 
     tracing::debug!("Embed request for text (len={})", embed_req.text.len());
 
-    let embedding = embedding_service.embed(&embed_req.text).await
+    let embedding = embedding_service
+        .embed(&embed_req.text)
+        .await
         .map_err(|e| {
             tracing::warn!("Embedding failed: {:?}", e);
             StatusError::internal_server_error().detail("Embedding model call failed")
@@ -168,11 +192,15 @@ pub async fn embed(depot: &mut Depot, req: &mut Request) -> Result<Json<EmbedRes
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn rerank_docs(depot: &mut Depot, req: &mut Request) -> Result<Json<RerankResponse>, StatusError> {
+pub async fn rerank_docs(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<RerankResponse>, StatusError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let rerank_req: RerankRequest = req.parse_json().await.map_err(|_| {
-        StatusError::bad_request().detail("Invalid request body")
-    })?;
+    let rerank_req: RerankRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
 
     if rerank_req.documents.is_empty() {
         return Err(StatusError::bad_request().detail("documents must not be empty"));
@@ -180,25 +208,37 @@ pub async fn rerank_docs(depot: &mut Depot, req: &mut Request) -> Result<Json<Re
 
     let reranker = RerankerService::new(&state.config.reranking_model);
 
-    tracing::debug!("Rerank request: query='{}', {} documents", rerank_req.query, rerank_req.documents.len());
+    tracing::debug!(
+        "Rerank request: query='{}', {} documents",
+        rerank_req.query,
+        rerank_req.documents.len()
+    );
 
     let texts: Vec<&str> = rerank_req.documents.iter().map(|s| s.as_str()).collect();
-    let scores = reranker.rerank(&rerank_req.query, &texts).await
+    let scores = reranker
+        .rerank(&rerank_req.query, &texts)
+        .await
         .map_err(|e| {
             tracing::warn!("Reranking failed: {:?}", e);
             StatusError::internal_server_error().detail("Reranking model call failed")
         })?;
 
-    let mut results: Vec<RerankResultItem> = scores.iter().enumerate().map(|(i, &score)| {
-        RerankResultItem {
+    let mut results: Vec<RerankResultItem> = scores
+        .iter()
+        .enumerate()
+        .map(|(i, &score)| RerankResultItem {
             index: i,
             document: rerank_req.documents[i].clone(),
             relevance_score: score,
-        }
-    }).collect();
+        })
+        .collect();
 
     // Sort by relevance_score descending
-    results.sort_by(|a, b| b.relevance_score.partial_cmp(&a.relevance_score).unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        b.relevance_score
+            .partial_cmp(&a.relevance_score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     Ok(Json(RerankResponse {
         model: state.config.reranking_model.clone(),

@@ -30,7 +30,10 @@ impl RerankerService {
 
         tracing::debug!(
             "Calling Reranking API: URL: {}, Host: {}, Port: {}, Params: {}",
-            api_url, host, port, params
+            api_url,
+            host,
+            port,
+            params
         );
 
         let resp = client
@@ -45,7 +48,8 @@ impl RerankerService {
 
         tracing::debug!(
             "Reranking API Result: Status: {}, Response: {}",
-            status, body_text
+            status,
+            body_text
         );
 
         let data: serde_json::Value = serde_json::from_str(&body_text)?;

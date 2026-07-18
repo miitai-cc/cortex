@@ -26,3 +26,5 @@ uploads/
 node_modules/**/*
 .eiva/models/*.gguf
 lib/react/**/node_modules/**/*
+**/graphify-out/**/*
+.eiva/workspace/**/*

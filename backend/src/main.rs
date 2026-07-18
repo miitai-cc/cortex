@@ -1,23 +1,23 @@
 use salvo::prelude::*;
-use tracing_subscriber::EnvFilter;
 use std::path::Path;
+use tracing_subscriber::EnvFilter;
 
 mod api;
-mod core;
-mod rag;
-mod ingestion;
-mod office;
-mod markdown;
-mod webdav;
-mod gsuite;
-mod i18n;
-mod middleware;
-mod monitoring;
 mod config;
+mod core;
 mod db;
 mod errors;
+mod gsuite;
+mod i18n;
+mod ingestion;
 mod logging;
+mod markdown;
+mod middleware;
 mod models;
+mod monitoring;
+mod office;
+mod rag;
+mod webdav;
 
 fn load_env() -> Option<String> {
     let candidates = [
@@ -49,7 +49,9 @@ async fn main() {
     let env_path = load_env();
 
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug")))
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug")),
+        )
         .init();
 
     if let Some(path) = env_path {
@@ -60,7 +62,7 @@ async fn main() {
 
     let app_state = core::state::AppState::new().await;
     tracing::debug!("App state initialized");
-    
+
     let _ = app_state.db.run_migrations().await;
     tracing::debug!("Database migrations completed");
 
@@ -74,4 +76,3 @@ async fn main() {
     tracing::info!("Server listening on {}", addr);
     Server::new(acceptor).serve(service).await;
 }
-

@@ -11,6 +11,7 @@
   "nav.documents.upload": "Upload Document",
   "nav.documents.list": "Document List",
   "nav.documents.recent": "Recently Processed",
+  "nav.documents.indexing": "Run Indexing",
   "nav.search": "Search",
   "nav.search.fulltext": "Full-text Search",
   "nav.search.hybrid": "Hybrid Search",

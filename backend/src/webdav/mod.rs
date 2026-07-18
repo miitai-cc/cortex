@@ -21,7 +21,8 @@ impl WebdavClient {
 
     pub async fn list_files(&self, path: &str) -> Result<Vec<String>> {
         let url = format!("{}/{}", self.base_url, path.trim_start_matches('/'));
-        let resp = self.client
+        let resp = self
+            .client
             .request(reqwest::Method::from_bytes(b"PROPFIND").unwrap(), &url)
             .header("Depth", "1")
             .basic_auth(&self.username, Some(&self.password))
@@ -35,7 +36,8 @@ impl WebdavClient {
 
     pub async fn download_file(&self, remote_path: &str, local_path: &str) -> Result<()> {
         let url = format!("{}/{}", self.base_url, remote_path.trim_start_matches('/'));
-        let resp = self.client
+        let resp = self
+            .client
             .get(&url)
             .basic_auth(&self.username, Some(&self.password))
             .send()

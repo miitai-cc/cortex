@@ -1,10 +1,10 @@
-use std::collections::{HashMap, HashSet};
-use salvo::prelude::*;
-use serde::Serialize;
-use qdrant_client::qdrant::point_id::PointIdOptions;
 use crate::core::state::AppState;
 use crate::rag::embeddings::EmbeddingService;
+use qdrant_client::qdrant::point_id::PointIdOptions;
 use qdrant_client::qdrant::SearchPointsBuilder;
+use salvo::prelude::*;
+use serde::Serialize;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Serialize, Clone)]
 pub struct GraphNode {
@@ -42,7 +42,7 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
          FROM documents d
          LEFT JOIN document_chunks dc ON dc.document_id = d.id
          GROUP BY d.id, d.filename, d.content_type
-         ORDER BY d.filename"
+         ORDER BY d.filename",
     )
     .fetch_all(&db.pool)
     .await
@@ -51,7 +51,7 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
     let chunk_rows = sqlx::query_as::<_, (String, String, String)>(
         "SELECT dc.id, dc.document_id, dc.content
          FROM document_chunks dc
-         ORDER BY dc.document_id"
+         ORDER BY dc.document_id",
     )
     .fetch_all(&db.pool)
     .await
@@ -59,11 +59,15 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
 
     let mut doc_chunks: HashMap<String, Vec<(String, String)>> = HashMap::new();
     for (chunk_id, doc_id, content) in &chunk_rows {
-        doc_chunks.entry(doc_id.clone()).or_default().push((chunk_id.clone(), content.clone()));
+        doc_chunks
+            .entry(doc_id.clone())
+            .or_default()
+            .push((chunk_id.clone(), content.clone()));
     }
 
-    let mut nodes: Vec<GraphNode> = doc_rows.iter().map(|(id, filename, content_type, cnt)| {
-        GraphNode {
+    let mut nodes: Vec<GraphNode> = doc_rows
+        .iter()
+        .map(|(id, filename, content_type, cnt)| GraphNode {
             id: id.clone(),
             label: filename.clone(),
             r#type: content_type.clone(),
@@ -71,8 +75,8 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
             link_count: *cnt as u32,
             community: 0,
             filename: filename.clone(),
-        }
-    }).collect();
+        })
+        .collect();
 
     let embedding = EmbeddingService::new(&state.config.embedding_model);
     let mut edges_map: HashMap<(String, String), (f64, Vec<String>)> = HashMap::new();
@@ -110,8 +114,11 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
                     Ok(e) => e,
                     Err(_) => continue,
                 };
-                let search = match state.qdrant
-                    .search_points(SearchPointsBuilder::new("documents", emb, 3u64).with_payload(true))
+                let search = match state
+                    .qdrant
+                    .search_points(
+                        SearchPointsBuilder::new("documents", emb, 3u64).with_payload(true),
+                    )
                     .await
                 {
                     Ok(s) => s,
@@ -127,13 +134,19 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
                         Some(PointIdOptions::Uuid(u)) => u.clone(),
                         None => String::new(),
                     };
-                    if found_id == *chunk_id { continue; }
+                    if found_id == *chunk_id {
+                        continue;
+                    }
                     let doc_b_id = match chunk_rows.iter().find(|r| r.0 == found_id) {
                         Some(row) => &row.1,
                         None => continue,
                     };
-                    if doc_b_id == &doc_a.id { continue; }
-                    if result.score <= 0.5 { continue; }
+                    if doc_b_id == &doc_a.id {
+                        continue;
+                    }
+                    if result.score <= 0.5 {
+                        continue;
+                    }
                     let key = if doc_a.id < *doc_b_id {
                         (doc_a.id.clone(), doc_b_id.clone())
                     } else {
@@ -147,30 +160,49 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
         }
     }
 
-    let mut edges: Vec<GraphEdge> = edges_map.into_iter()
+    let mut edges: Vec<GraphEdge> = edges_map
+        .into_iter()
         .filter(|(_, (weight, _))| *weight > 0.2)
         .map(|((source, target), (weight, signals))| {
             let label = signals.join(", ");
             let signal_type = signals.first().cloned().unwrap_or_default();
-            GraphEdge { source, target, weight, label, signal_type }
+            GraphEdge {
+                source,
+                target,
+                weight,
+                label,
+                signal_type,
+            }
         })
         .collect();
 
-    edges.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap_or(std::cmp::Ordering::Equal));
+    edges.sort_by(|a, b| {
+        b.weight
+            .partial_cmp(&a.weight)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     edges.truncate(nodes.len() * 3);
 
     let mut adj: HashMap<String, HashSet<String>> = HashMap::new();
-    for n in &nodes { adj.entry(n.id.clone()).or_default(); }
+    for n in &nodes {
+        adj.entry(n.id.clone()).or_default();
+    }
     for e in &edges {
-        adj.entry(e.source.clone()).or_default().insert(e.target.clone());
-        adj.entry(e.target.clone()).or_default().insert(e.source.clone());
+        adj.entry(e.source.clone())
+            .or_default()
+            .insert(e.target.clone());
+        adj.entry(e.target.clone())
+            .or_default()
+            .insert(e.source.clone());
     }
 
     let mut visited = HashSet::new();
     let mut community_id = 1u32;
     let node_ids: Vec<String> = nodes.iter().map(|n| n.id.clone()).collect();
     for id in &node_ids {
-        if visited.contains(id) { continue; }
+        if visited.contains(id) {
+            continue;
+        }
         let mut queue = vec![id.clone()];
         visited.insert(id.clone());
         while let Some(current) = queue.pop() {
@@ -193,6 +225,5 @@ pub async fn get_graph(depot: &mut Depot) -> Result<Json<GraphData>, StatusError
 }
 
 pub fn router() -> Router {
-    Router::with_path("graph")
-        .push(Router::with_path("data").get(get_graph))
+    Router::with_path("graph").push(Router::with_path("data").get(get_graph))
 }

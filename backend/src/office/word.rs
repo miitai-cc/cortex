@@ -44,7 +44,10 @@ pub async fn create_word(content: &str, output_path: &str) -> Result<()> {
                 <w:p><w:r><w:t>{}</w:t></w:r></w:p>
             </w:body>
         </w:document>"#,
-        content.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+        content
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
     );
     archive.write_all(doc_xml.as_bytes())?;
 
@@ -59,7 +62,10 @@ pub async fn word_to_pdf(word_path: &str, pdf_path: &str) -> Result<()> {
     let content = read_word(word_path).await?;
     let pdf_content = format!(
         r#"<html><body><pre>{}</pre></body></html>"#,
-        content.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+        content
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
     );
     tokio::fs::write(pdf_path, pdf_content).await?;
     Ok(())

@@ -11,7 +11,8 @@ pub async fn read_excel(file_path: &str) -> Result<Vec<Vec<String>>> {
     for sheet_name in sheet_names {
         if let Ok(range) = workbook.worksheet_range(&sheet_name) {
             for row in range.rows() {
-                let row_data: Vec<String> = row.iter()
+                let row_data: Vec<String> = row
+                    .iter()
                     .map(|cell| match cell {
                         calamine::Data::String(s) => s.clone(),
                         calamine::Data::Float(f) => f.to_string(),

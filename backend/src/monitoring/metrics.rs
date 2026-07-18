@@ -1,7 +1,7 @@
 #![allow(dead_code)]
+use chrono::Utc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use chrono::Utc;
 
 #[derive(Default)]
 pub struct QueryMetrics {

@@ -35,6 +35,7 @@ import {
   Moon,
   Cpu,
   ArrowUpDown,
+  FolderSearch,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
@@ -80,6 +81,7 @@ const navItems: NavItem[] = [
       { labelKey: 'nav.documents.upload', icon: Upload, to: '/cortex/documents' },
       { labelKey: 'nav.documents.list', icon: List, to: '/cortex/documents/list' },
       { labelKey: 'nav.documents.recent', icon: Clock, to: '/cortex/documents/recent' },
+      { labelKey: 'nav.documents.indexing', icon: FolderSearch, to: '/cortex/documents/indexing' },
     ],
   },
   {

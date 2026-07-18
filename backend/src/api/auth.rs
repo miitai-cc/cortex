@@ -1,12 +1,12 @@
-use salvo::prelude::*;
-use crate::core::state::AppState;
 use crate::config::LoginType;
-use eiva_be_security::repository::UserRepo;
+use crate::core::state::AppState;
 use crate::errors::AppError;
+use cortex_lib::utils::generate_id;
 use eiva_be_security::jwt::create_token;
 use eiva_be_security::password::{hash_password, verify_password};
-use cortex_lib::utils::generate_id;
-use eiva_be_sso::{KeycloakClient, SsoConfig, SsoProvider, SsoCallbackRequest};
+use eiva_be_security::repository::UserRepo;
+use eiva_be_sso::{KeycloakClient, SsoCallbackRequest, SsoConfig, SsoProvider};
+use salvo::prelude::*;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -24,11 +24,15 @@ pub struct RegisterRequest {
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn login(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
+pub async fn login(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let login_req: LoginRequest = req.parse_json().await.map_err(|_| {
-        AppError::BadRequest("Invalid request body".into())
-    })?;
+    let login_req: LoginRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| AppError::BadRequest("Invalid request body".into()))?;
 
     match state.config.login_type {
         LoginType::Mock => Ok(mock_login(&state, &login_req)),
@@ -50,7 +54,10 @@ fn mock_login(state: &AppState, req: &LoginRequest) -> Json<serde_json::Value> {
     }))
 }
 
-async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_json::Value>, AppError> {
+async fn db_login(
+    state: &AppState,
+    req: &LoginRequest,
+) -> Result<Json<serde_json::Value>, AppError> {
     let result = UserRepo::find_with_password(&state.db.pool, &req.username).await?;
 
     match result {
@@ -58,7 +65,12 @@ async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_jso
             if !verify_password(&req.password, &password_hash) {
                 return Err(AppError::Unauthorized("Invalid credentials".into()));
             }
-            let token = create_token(&user.id, &user.username, &user.role, &state.config.jwt_secret);
+            let token = create_token(
+                &user.id,
+                &user.username,
+                &user.role,
+                &state.config.jwt_secret,
+            );
             Ok(Json(serde_json::json!({
                 "token": token,
                 "user": user
@@ -70,11 +82,15 @@ async fn db_login(state: &AppState, req: &LoginRequest) -> Result<Json<serde_jso
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
+pub async fn register(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let reg_req: RegisterRequest = req.parse_json().await.map_err(|_| {
-        AppError::BadRequest("Invalid request body".into())
-    })?;
+    let reg_req: RegisterRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| AppError::BadRequest("Invalid request body".into()))?;
 
     let id = generate_id();
     let password_hash = hash_password(&reg_req.password);
@@ -85,9 +101,15 @@ pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde
         &reg_req.email,
         &password_hash,
         "user",
-    ).await?;
+    )
+    .await?;
 
-    let token = create_token(&user.id, &user.username, &user.role, &state.config.jwt_secret);
+    let token = create_token(
+        &user.id,
+        &user.username,
+        &user.role,
+        &state.config.jwt_secret,
+    );
     Ok(Json(serde_json::json!({
         "token": token,
         "user": user
@@ -96,16 +118,20 @@ pub async fn register(depot: &mut Depot, req: &mut Request) -> Result<Json<serde
 
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
-pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<serde_json::Value>, AppError> {
+pub async fn sso_callback(
+    depot: &mut Depot,
+    req: &mut Request,
+) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
 
     if state.config.login_type != LoginType::Sso {
         return Err(AppError::Unauthorized("SSO login is not enabled".into()));
     }
 
-    let callback: SsoCallbackRequest = req.parse_json().await.map_err(|_| {
-        AppError::BadRequest("Invalid request body".into())
-    })?;
+    let callback: SsoCallbackRequest = req
+        .parse_json()
+        .await
+        .map_err(|_| AppError::BadRequest("Invalid request body".into()))?;
 
     let sso_config = SsoConfig {
         enabled: true,
@@ -119,16 +145,31 @@ pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<s
     };
 
     let client = KeycloakClient::new(sso_config);
-    let auth_result = client.authenticate(&callback.code, &callback.redirect_uri).await
+    let auth_result = client
+        .authenticate(&callback.code, &callback.redirect_uri)
+        .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
     let user_id = &auth_result.user.sub;
-    let username = auth_result.user.preferred_username.as_deref().unwrap_or("sso_user");
+    let username = auth_result
+        .user
+        .preferred_username
+        .as_deref()
+        .unwrap_or("sso_user");
     let email = auth_result.user.email.as_deref().unwrap_or("");
-    let role = if auth_result.user.roles.contains(&"admin".to_string()) { "admin" } else { "user" };
+    let role = if auth_result.user.roles.contains(&"admin".to_string()) {
+        "admin"
+    } else {
+        "user"
+    };
 
     let user = UserRepo::upsert_sso(&state.db.pool, user_id, username, email, role).await?;
-    let token = create_token(&user.id, &user.username, &user.role, &state.config.jwt_secret);
+    let token = create_token(
+        &user.id,
+        &user.username,
+        &user.role,
+        &state.config.jwt_secret,
+    );
 
     Ok(Json(serde_json::json!({
         "token": token,
@@ -139,7 +180,9 @@ pub async fn sso_callback(depot: &mut Depot, req: &mut Request) -> Result<Json<s
 #[handler]
 #[tracing::instrument(level = "debug", skip_all)]
 pub async fn profile(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
-    let user_id = depot.obtain::<String>().map_err(|_| AppError::Unauthorized("Not authenticated".into()))?;
+    let user_id = depot
+        .obtain::<String>()
+        .map_err(|_| AppError::Unauthorized("Not authenticated".into()))?;
     let state = depot.obtain::<AppState>().unwrap();
     let user = UserRepo::find_by_id(&state.db.pool, &user_id).await?;
     Ok(Json(serde_json::json!(user)))

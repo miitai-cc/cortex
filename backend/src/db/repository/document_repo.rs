@@ -1,35 +1,53 @@
 #![allow(dead_code)]
-use sqlx::AnyPool;
 use crate::errors::AppError;
-use crate::models::document::{DocumentModel, DocumentChunkModel};
+use crate::models::document::{DocumentChunkModel, DocumentModel};
+use sqlx::AnyPool;
 
 pub struct DocumentRepo;
 
 impl DocumentRepo {
-#[tracing::instrument(level = "debug", skip(pool))]
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn find_by_id(pool: &AnyPool, id: &str) -> Result<DocumentModel, AppError> {
-        sqlx::query_as::<_, DocumentModel>(
-            "SELECT id, filename, content_type, file_size, metadata, status, created_at, updated_at
-             FROM documents WHERE id = ?"
+        tracing::debug!("[DocumentRepo::find_by_id] 查詢 id={}", id);
+        let result = sqlx::query_as::<_, DocumentModel>(
+            "SELECT id, filename, content_type, file_size, metadata, status,
+                    CAST(created_at AS TEXT) AS created_at,
+                    CAST(updated_at AS TEXT) AS updated_at
+             FROM documents WHERE id = ?",
         )
         .bind(id)
         .fetch_optional(pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Document {} not found", id)))
+        .ok_or_else(|| AppError::NotFound(format!("Document {} not found", id)))?;
+        tracing::debug!(
+            "[DocumentRepo::find_by_id] 查詢完成，result: id={}, filename={}, status={}",
+            result.id,
+            result.filename,
+            result.status
+        );
+        Ok(result)
     }
 
-#[tracing::instrument(level = "debug", skip(pool))]
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn list_all(pool: &AnyPool) -> Result<Vec<DocumentModel>, AppError> {
-        sqlx::query_as::<_, DocumentModel>(
-            "SELECT id, filename, content_type, file_size, metadata, status, created_at, updated_at
-             FROM documents ORDER BY created_at DESC"
+        tracing::debug!("[DocumentRepo::list_all] 查詢所有文件...");
+        let docs = sqlx::query_as::<_, DocumentModel>(
+            "SELECT id, filename, content_type, file_size, metadata, status,
+                    CAST(created_at AS TEXT) AS created_at,
+                    CAST(updated_at AS TEXT) AS updated_at
+             FROM documents ORDER BY created_at DESC",
         )
         .fetch_all(pool)
         .await
-        .map_err(AppError::from)
+        .map_err(AppError::from)?;
+        tracing::debug!(
+            "[DocumentRepo::list_all] 查詢完成，共 {} 筆",
+            docs.len()
+        );
+        Ok(docs)
     }
 
-#[tracing::instrument(level = "debug", skip(pool))]
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn create(
         pool: &AnyPool,
         id: &str,
@@ -37,8 +55,15 @@ impl DocumentRepo {
         content_type: &str,
         file_size: i64,
     ) -> Result<DocumentModel, AppError> {
+        tracing::debug!(
+            "[DocumentRepo::create] 新增文件 id={}, filename={}, content_type={}, file_size={}",
+            id,
+            filename,
+            content_type,
+            file_size
+        );
         sqlx::query(
-            "INSERT INTO documents (id, filename, content_type, file_size, status) VALUES (?, ?, ?, ?, 'pending')"
+            "INSERT INTO documents (id, filename, content_type, file_size, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
         )
         .bind(id)
         .bind(filename)
@@ -46,36 +71,63 @@ impl DocumentRepo {
         .bind(file_size)
         .execute(pool)
         .await?;
+        tracing::debug!("[DocumentRepo::create] INSERT 完成，查詢回傳結果...");
 
-        Self::find_by_id(pool, id).await
+        let result = Self::find_by_id(pool, id).await?;
+        tracing::debug!(
+            "[DocumentRepo::create] 新增完成，result: id={}, filename={}, status={}",
+            result.id,
+            result.filename,
+            result.status
+        );
+        Ok(result)
     }
 
-#[tracing::instrument(level = "debug", skip(pool))]
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn update_status(
         pool: &AnyPool,
         id: &str,
         status: &str,
     ) -> Result<DocumentModel, AppError> {
+        tracing::debug!(
+            "[DocumentRepo::update_status] 更新狀態 id={}, status={}",
+            id,
+            status
+        );
         sqlx::query("UPDATE documents SET status = ? WHERE id = ?")
             .bind(status)
             .bind(id)
             .execute(pool)
             .await?;
+        tracing::debug!("[DocumentRepo::update_status] UPDATE 完成，查詢回傳結果...");
 
-        Self::find_by_id(pool, id).await
+        let result = Self::find_by_id(pool, id).await?;
+        tracing::debug!(
+            "[DocumentRepo::update_status] 狀態更新完成，result: id={}, status={}",
+            result.id,
+            result.status
+        );
+        Ok(result)
     }
 
-#[tracing::instrument(level = "debug", skip(pool))]
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn delete(pool: &AnyPool, id: &str) -> Result<(), AppError> {
+        tracing::debug!("[DocumentRepo::delete] 刪除文件 id={}", id);
         let affected = sqlx::query("DELETE FROM documents WHERE id = ?")
             .bind(id)
             .execute(pool)
             .await?
             .rows_affected();
+        tracing::debug!(
+            "[DocumentRepo::delete] DELETE 完成，affected_rows={}",
+            affected
+        );
 
         if affected == 0 {
+            tracing::debug!("[DocumentRepo::delete] 找不到文件 id={}", id);
             return Err(AppError::NotFound(format!("Document {} not found", id)));
         }
+        tracing::debug!("[DocumentRepo::delete] 刪除成功 id={}", id);
         Ok(())
     }
 }
@@ -88,17 +140,26 @@ impl ChunkRepo {
         pool: &AnyPool,
         document_id: &str,
     ) -> Result<Vec<DocumentChunkModel>, AppError> {
-        sqlx::query_as::<_, DocumentChunkModel>(
+        tracing::debug!(
+            "[ChunkRepo::find_by_document_id] 查詢 chunks document_id={}",
+            document_id
+        );
+        let chunks = sqlx::query_as::<_, DocumentChunkModel>(
             "SELECT id, document_id, content, chunk_index, metadata
-             FROM document_chunks WHERE document_id = ? ORDER BY chunk_index"
+             FROM document_chunks WHERE document_id = ? ORDER BY chunk_index",
         )
         .bind(document_id)
         .fetch_all(pool)
         .await
-        .map_err(AppError::from)
+        .map_err(AppError::from)?;
+        tracing::debug!(
+            "[ChunkRepo::find_by_document_id] 查詢完成，共 {} 個 chunks",
+            chunks.len()
+        );
+        Ok(chunks)
     }
 
-#[tracing::instrument(level = "debug", skip(pool, content))]
+    #[tracing::instrument(level = "debug", skip(pool, content))]
     pub async fn create(
         pool: &AnyPool,
         id: &str,
@@ -106,6 +167,13 @@ impl ChunkRepo {
         content: &str,
         chunk_index: i32,
     ) -> Result<DocumentChunkModel, AppError> {
+        tracing::debug!(
+            "[ChunkRepo::create] 新增 chunk id={}, document_id={}, chunk_index={}, content_len={}",
+            id,
+            document_id,
+            chunk_index,
+            content.len()
+        );
         sqlx::query(
             "INSERT INTO document_chunks (id, document_id, content, chunk_index) VALUES (?, ?, ?, ?)"
         )
@@ -115,22 +183,37 @@ impl ChunkRepo {
         .bind(chunk_index)
         .execute(pool)
         .await?;
+        tracing::debug!("[ChunkRepo::create] INSERT 完成");
 
-        Ok(DocumentChunkModel {
+        let result = DocumentChunkModel {
             id: id.to_string(),
             document_id: document_id.to_string(),
             content: content.to_string(),
             chunk_index,
             metadata: None,
-        })
+        };
+        tracing::debug!(
+            "[ChunkRepo::create] 新增完成，result: id={}, chunk_index={}",
+            result.id,
+            result.chunk_index
+        );
+        Ok(result)
     }
 
-#[tracing::instrument(level = "debug", skip(pool))]
+    #[tracing::instrument(level = "debug", skip(pool))]
     pub async fn delete_by_document_id(pool: &AnyPool, document_id: &str) -> Result<(), AppError> {
-        sqlx::query("DELETE FROM document_chunks WHERE document_id = ?")
+        tracing::debug!(
+            "[ChunkRepo::delete_by_document_id] 刪除 chunks document_id={}",
+            document_id
+        );
+        let result = sqlx::query("DELETE FROM document_chunks WHERE document_id = ?")
             .bind(document_id)
             .execute(pool)
             .await?;
+        tracing::debug!(
+            "[ChunkRepo::delete_by_document_id] 刪除完成，affected_rows={}",
+            result.rows_affected()
+        );
         Ok(())
     }
 }
@@ -155,9 +238,9 @@ mod tests {
                 file_size BIGINT NOT NULL,
                 metadata TEXT,
                 status TEXT NOT NULL DEFAULT 'pending',
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )"
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )",
         )
         .execute(&pool)
         .await
@@ -172,7 +255,7 @@ mod tests {
                 metadata TEXT,
                 chunk_index INTEGER NOT NULL,
                 FOREIGN KEY (document_id) REFERENCES documents(id)
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -201,10 +284,14 @@ mod tests {
             .expect("Update should succeed");
         assert_eq!(updated.status, "indexed");
 
-        let list = DocumentRepo::list_all(&pool).await.expect("List should succeed");
+        let list = DocumentRepo::list_all(&pool)
+            .await
+            .expect("List should succeed");
         assert_eq!(list.len(), 1);
 
-        DocumentRepo::delete(&pool, "doc-1").await.expect("Delete should succeed");
+        DocumentRepo::delete(&pool, "doc-1")
+            .await
+            .expect("Delete should succeed");
 
         let not_found = DocumentRepo::find_by_id(&pool, "doc-1").await;
         assert!(not_found.is_err());
@@ -217,7 +304,9 @@ mod tests {
     #[tokio::test]
     async fn test_chunk_crud() {
         let pool = setup_pool().await;
-        DocumentRepo::create(&pool, "doc-chunk", "doc.txt", "text/plain", 100).await.unwrap();
+        DocumentRepo::create(&pool, "doc-chunk", "doc.txt", "text/plain", 100)
+            .await
+            .unwrap();
 
         let chunk = ChunkRepo::create(&pool, "chunk-1", "doc-chunk", "Hello world", 0)
             .await
