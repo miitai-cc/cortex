@@ -15,10 +15,7 @@ impl EmbeddingService {
     }
 
     pub async fn embed(&self, text: &str) -> Result<Vec<f32>> {
-        tracing::debug!(
-            "[embed] 開始 embedding，text_len={}",
-            text.len()
-        );
+        tracing::debug!("[embed] 開始 embedding，text_len={}", text.len());
         let client = reqwest::Client::new();
         let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
         let port = std::env::var("AI_EMBEDDING_PORT").unwrap_or_else(|_| "18321".to_string());
@@ -38,11 +35,11 @@ impl EmbeddingService {
             max_segment_chars
         );
 
-        let segments = split_text(text, max_segment_chars);
-        tracing::debug!(
-            "[embed] 分段完成，共 {} 段",
-            segments.len()
-        );
+        // Some llama.cpp GGUF tokenizers fail on CR/LF and common full-width
+        // punctuation. Normalize them to semantic ASCII equivalents.
+        let normalized_text = normalize_embedding_text(text);
+        let segments = split_text(&normalized_text, max_segment_chars);
+        tracing::debug!("[embed] 分段完成，共 {} 段", segments.len());
 
         if segments.is_empty() {
             tracing::debug!("[embed] 無法 embedding 空文字，回傳錯誤");
@@ -73,7 +70,15 @@ impl EmbeddingService {
             text.chars().count(),
             segments.len()
         );
-        tracing::debug!("[embed] 請求參數: model={}, input_type={}", self.model_name, if segments.len() == 1 { "string" } else { "array" });
+        tracing::debug!(
+            "[embed] 請求參數: model={}, input_type={}",
+            self.model_name,
+            if segments.len() == 1 {
+                "string"
+            } else {
+                "array"
+            }
+        );
 
         let resp = client
             .post(&api_url)
@@ -97,7 +102,11 @@ impl EmbeddingService {
                 .ok()
                 .and_then(|body| body.pointer("/error/message")?.as_str().map(str::to_owned))
                 .unwrap_or(body_text);
-            tracing::debug!("[embed] Embedding API 錯誤: status={}, message={}", status, upstream_message);
+            tracing::debug!(
+                "[embed] Embedding API 錯誤: status={}, message={}",
+                status,
+                upstream_message
+            );
             bail!("Embedding API returned {status}: {upstream_message}");
         }
 
@@ -142,7 +151,11 @@ impl EmbeddingService {
 }
 
 fn split_text(text: &str, max_chars: usize) -> Vec<&str> {
-    tracing::debug!("[split_text] 開始分段 text_len={}, max_chars={}", text.len(), max_chars);
+    tracing::debug!(
+        "[split_text] 開始分段 text_len={}, max_chars={}",
+        text.len(),
+        max_chars
+    );
     let mut segments = Vec::new();
     let mut start = 0;
     let mut chars = 0;
@@ -161,6 +174,22 @@ fn split_text(text: &str, max_chars: usize) -> Vec<&str> {
     }
     tracing::debug!("[split_text] 分段完成，共 {} 段", segments.len());
     segments
+}
+
+fn normalize_embedding_text(text: &str) -> String {
+    text.chars()
+        .map(|character| match character {
+            '\r' | '\n' => ' ',
+            '，' => ',',
+            '：' => ':',
+            '；' => ';',
+            '！' => '!',
+            '？' => '?',
+            '（' => '(',
+            '）' => ')',
+            other => other,
+        })
+        .collect()
 }
 
 fn parse_vector(value: &serde_json::Value) -> Result<Vec<f32>> {
@@ -217,6 +246,14 @@ mod tests {
     #[test]
     fn split_text_respects_unicode_character_boundaries() {
         assert_eq!(split_text("甲乙丙丁戊", 2), vec!["甲乙", "丙丁", "戊"]);
+    }
+
+    #[test]
+    fn normalizes_llama_cpp_incompatible_markdown_characters() {
+        assert_eq!(
+            normalize_embedding_text("# 標題：第一行，測試！（是）\r\n第二行？"),
+            "# 標題:第一行,測試!(是)  第二行?"
+        );
     }
 
     #[test]

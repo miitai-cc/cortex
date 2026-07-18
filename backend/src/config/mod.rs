@@ -83,6 +83,31 @@ pub struct AppConfig {
     pub keycloak_client_secret: String,
 }
 
+fn qdrant_grpc_url() -> String {
+    if let Ok(url) = env::var("QDRANT_GRPC_URL") {
+        return url;
+    }
+
+    let legacy_url = env::var("QDRANT_URL").unwrap_or_else(|_| "http://localhost:6334".to_string());
+    normalize_legacy_qdrant_url(&legacy_url)
+}
+
+fn normalize_legacy_qdrant_url(raw_url: &str) -> String {
+    let Ok(mut url) = reqwest::Url::parse(raw_url) else {
+        return raw_url.to_string();
+    };
+
+    // QDRANT_URL historically pointed at the REST port. qdrant-client uses
+    // tonic exclusively, so sending it to 6333 produces HTTP/1 parse errors.
+    if url.port() == Some(6333) && url.set_port(Some(6334)).is_ok() {
+        tracing::warn!(
+            "QDRANT_URL points to REST port 6333; using gRPC endpoint {}. Set QDRANT_GRPC_URL to override.",
+            url
+        );
+    }
+    url.to_string().trim_end_matches('/').to_string()
+}
+
 impl AppConfig {
     pub fn from_env() -> Self {
         let login_type = match env::var("LOGIN_TYPE").as_deref() {
@@ -129,8 +154,7 @@ impl AppConfig {
             db_name,
             db_user,
             db_password,
-            qdrant_url: env::var("QDRANT_URL")
-                .unwrap_or_else(|_| "http://localhost:6333".to_string()),
+            qdrant_url: qdrant_grpc_url(),
             jwt_secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "change-me-in-production".to_string()),
             openai_api_key: env::var("OPENAI_API_KEY").ok(),
@@ -156,5 +180,26 @@ impl AppConfig {
                 .unwrap_or_else(|_| "cortex-backend".to_string()),
             keycloak_client_secret: env::var("KEYCLOAK_CLIENT_SECRET").unwrap_or_default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_legacy_qdrant_url;
+
+    #[test]
+    fn converts_qdrant_rest_port_to_grpc_port() {
+        assert_eq!(
+            normalize_legacy_qdrant_url("http://qdrant:6333"),
+            "http://qdrant:6334"
+        );
+    }
+
+    #[test]
+    fn preserves_explicit_qdrant_grpc_endpoint() {
+        assert_eq!(
+            normalize_legacy_qdrant_url("https://vectors.example.com:7443"),
+            "https://vectors.example.com:7443"
+        );
     }
 }

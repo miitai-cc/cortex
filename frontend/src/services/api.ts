@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from 'eiva-fe-security';
 import { API_BASE_URL, WS_BASE_URL } from '../config/env';
+import { uploadDocumentStream, type DocumentIndexEvent } from '../grpc/documentWsClient';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -37,11 +38,12 @@ export default api;
 export const documentApi = {
   list: (params?: any) => api.get('/documents', { params }),
   get: (id: string) => api.get(`/documents/${id}`),
-  upload: (file: File) => {
-    const form = new FormData();
-    form.append('file', file);
-    return api.post('/documents/upload', form);
-  },
+  upload: (file: File, onEvent: (event: DocumentIndexEvent) => void) =>
+    uploadDocumentStream(
+      `${WS_BASE_URL}/documents/ws/upload?filename=${encodeURIComponent(file.name)}&content_type=${encodeURIComponent(file.type || 'application/octet-stream')}`,
+      file,
+      onEvent,
+    ),
   delete: (id: string) => api.delete(`/documents/${id}`),
 };
 
@@ -100,5 +102,4 @@ export const indexingApi = {
   graphifyExtractWsUrl: (relative_path: string): string =>
     `${WS_BASE_URL}/indexing/ws/graphify/extract?relative_path=${encodeURIComponent(relative_path)}`,
 };
-
 

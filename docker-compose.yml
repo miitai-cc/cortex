@@ -36,7 +36,7 @@ services:
       - DB_USER=${DB_USER:-cortex}
       - DB_PASSWORD=${DB_PASSWORD:-}
       - DATABASE_URL=${DATABASE_URL:-sqlite:/app/data/cortex.db?mode=rwc}
-      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_GRPC_URL=http://qdrant:6334
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}

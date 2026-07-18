@@ -8,6 +8,9 @@ import {
 import { useDocuments, useUploadDocument, useDeleteDocument } from '../hooks/useDocuments';
 import { Link } from 'react-router-dom';
 import CommonHeroTitle from '../components/common/CommonHeroTitle';
+import type { DocumentIndexEvent } from '../grpc/documentWsClient';
+
+type DisplayEvent = DocumentIndexEvent & { id: number; filename: string };
 
 // ──────────────────────────────────────────────────────────────
 // Helpers
@@ -57,8 +60,14 @@ function StatusBadge({ status }: { status: string }) {
 export default function DocumentsPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  const [indexEvents, setIndexEvents] = useState<DisplayEvent[]>([]);
   const { data, isLoading } = useDocuments({ search });
-  const uploadMutation = useUploadDocument();
+  const uploadMutation = useUploadDocument((file, event) => {
+    setIndexEvents((current) => [
+      ...current,
+      { ...event, id: Date.now() + Math.random(), filename: file.name },
+    ]);
+  });
   const deleteMutation = useDeleteDocument();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -97,6 +106,58 @@ export default function DocumentsPage() {
           PDF → PageIndex (逐頁索引)　·　其他 → Chunker
         </p>
       </div>
+
+      {indexEvents.length > 0 && (
+        <section className="card mb-6" aria-live="polite">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">後端索引過程</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">gRPC-over-WebSocket 即時事件</p>
+            </div>
+            <button
+              type="button"
+              className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+              onClick={() => setIndexEvents([])}
+            >
+              清除
+            </button>
+          </div>
+          <div className="max-h-72 overflow-y-auto space-y-2">
+            {indexEvents.map((event) => (
+              <div
+                key={event.id}
+                className={`rounded-lg border px-3 py-2 text-sm ${
+                  event.type === 'ERROR'
+                    ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30'
+                    : event.type === 'COMPLETE'
+                      ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30'
+                      : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/60'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium truncate">{event.filename}</span>
+                  <span className="text-xs tabular-nums">{event.progress}%</span>
+                </div>
+                <div className="h-1.5 my-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className={`h-full transition-all ${event.type === 'ERROR' ? 'bg-red-500' : 'bg-primary-500'}`}
+                    style={{ width: `${Math.max(0, Math.min(100, event.progress))}%` }}
+                  />
+                </div>
+                <p className="text-gray-600 dark:text-gray-300">[{event.stage}] {event.message}</p>
+                {event.documentId && (
+                  <p className="mt-1 text-xs text-gray-400 break-all">doc_id={event.documentId}</p>
+                )}
+                {event.result && (
+                  <pre className="mt-2 overflow-x-auto text-xs text-gray-500 dark:text-gray-400">
+                    {JSON.stringify(event.result, null, 2)}
+                  </pre>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Search */}
       <div className="relative mb-4">

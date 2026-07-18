@@ -45,8 +45,8 @@ spec:
                 secretKeyRef:
                   name: cortex-secrets
                   key: database-url
-            - name: QDRANT_URL
-              value: "http://qdrant:6333"
+            - name: QDRANT_GRPC_URL
+              value: "http://qdrant:6334"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
