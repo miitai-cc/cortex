@@ -38,6 +38,22 @@ import KnowledgeCategoriesPage from './pages/KnowledgeCategoriesPage';
 import CollaborationPage from './pages/CollaborationPage';
 import DepartmentPortalPage from './pages/DepartmentPortalPage';
 import ProjectManagementPage from './pages/ProjectManagementPage';
+import ProjectInfoPage from './components/projects/ProjectInfoPage';
+import ProjectGanttPage from './components/projects/ProjectGanttPage';
+import ProjectCalendarPage from './components/projects/ProjectCalendarPage';
+import ProjectMilestonesPage from './components/projects/ProjectMilestonesPage';
+import ProjectKanbanPage from './components/projects/ProjectKanbanPage';
+import ProjectMeetingsPage from './components/projects/ProjectMeetingsPage';
+import ProjectEmailsPage from './components/projects/ProjectEmailsPage';
+import ProjectBudgetPage from './components/projects/ProjectBudgetPage';
+import ProjectPeoplePage from './components/projects/ProjectPeoplePage';
+import ProjectRequirementsPage from './components/projects/ProjectRequirementsPage';
+import ProjectRisksPage from './components/projects/ProjectRisksPage';
+import ProjectAuditsPage from './components/projects/ProjectAuditsPage';
+import ProjectReportsPage from './components/projects/ProjectReportsPage';
+import ProjectResourcesPage from './components/projects/ProjectResourcesPage';
+import ProjectCustomersPage from './components/projects/ProjectCustomersPage';
+import ProjectVendorsPage from './components/projects/ProjectVendorsPage';
 import WorkflowManagementPage from './pages/WorkflowManagementPage';
 import NotFoundPage from './pages/NotFoundPage';
 import {
@@ -116,7 +132,23 @@ function App() {
           <Route path="/cortex/dashboard/enterprise-systems" element={<EnterpriseSystemsPage />} />
           <Route path="/cortex/departments/:department" element={<DepartmentPortalPage />} />
           <Route path="/cortex/documents" element={<DocumentsPage />} />
-          <Route path="/cortex/projects/:section?" element={<ProjectManagementPage />} />
+          <Route path="/cortex/projects" element={<Navigate to="/cortex/projects/information" replace />} />
+          <Route path="/cortex/projects/information" element={<ProjectInfoPage />} />
+          <Route path="/cortex/projects/gantt" element={<ProjectGanttPage />} />
+          <Route path="/cortex/projects/calendar" element={<ProjectCalendarPage />} />
+          <Route path="/cortex/projects/milestones" element={<ProjectMilestonesPage />} />
+          <Route path="/cortex/projects/kanban" element={<ProjectKanbanPage />} />
+          <Route path="/cortex/projects/meetings" element={<ProjectMeetingsPage />} />
+          <Route path="/cortex/projects/emails" element={<ProjectEmailsPage />} />
+          <Route path="/cortex/projects/budget" element={<ProjectBudgetPage />} />
+          <Route path="/cortex/projects/people" element={<ProjectPeoplePage />} />
+          <Route path="/cortex/projects/requirements" element={<ProjectRequirementsPage />} />
+          <Route path="/cortex/projects/risks" element={<ProjectRisksPage />} />
+          <Route path="/cortex/projects/audits" element={<ProjectAuditsPage />} />
+          <Route path="/cortex/projects/reports" element={<ProjectReportsPage />} />
+          <Route path="/cortex/projects/resources" element={<ProjectResourcesPage />} />
+          <Route path="/cortex/projects/customers" element={<ProjectCustomersPage />} />
+          <Route path="/cortex/projects/vendors" element={<ProjectVendorsPage />} />
           <Route path="/cortex/workflows/designer" element={<Suspense fallback={<div className="card m-6 py-14 text-center text-gray-500">載入流程設計器…</div>}><WorkflowDesignerPage /></Suspense>} />
           <Route path="/cortex/workflows/screen-designer" element={<Suspense fallback={<div className="card m-6 py-14 text-center text-gray-500">載入畫面設計器…</div>}><ScreenDesignerPage /></Suspense>} />
           <Route path="/cortex/workflows/:section?" element={<WorkflowManagementPage />} />
