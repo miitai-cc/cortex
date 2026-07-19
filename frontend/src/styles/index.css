@@ -43,12 +43,86 @@
   }
 
   .topToolArea {
-    @apply px-4 py-4 border-b border-gray-200 bg-white;
-    padding: 16px;
+    @apply border-b border-gray-200 bg-white;
+    padding: 8px 12px;
     min-height: 54px;
   }
 
   .dark .topToolArea {
     @apply border-gray-700 bg-gray-800;
+  }
+
+  .SysJobsTabs {
+    @apply flex min-w-0 shrink-0 items-center gap-2 border-b border-gray-200 bg-white;
+    min-height: 46px;
+    padding: 6px 12px;
+  }
+
+  .dark .SysJobsTabs {
+    @apply border-gray-700 bg-gray-800;
+  }
+
+  .SysJobsTabsScroller {
+    @apply flex min-w-0 flex-1 items-center gap-1 overflow-x-auto;
+    scrollbar-color: rgb(156 163 175 / 45%) transparent;
+    scrollbar-width: thin;
+  }
+
+  .SysJobsTabsScroller::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .SysJobsTabsScroller::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175 / 45%);
+    border-radius: 9999px;
+  }
+
+  .bottomToolArea {
+    @apply flex min-h-10 shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border-t border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-500;
+  }
+
+  .dark .bottomToolArea {
+    @apply border-gray-700 bg-gray-800 text-gray-400;
+  }
+
+  .userGuideContent {
+    @apply text-sm leading-7 text-gray-700 dark:text-gray-200;
+  }
+
+  .userGuideContent h1 {
+    @apply mb-5 border-b border-gray-200 pb-3 text-2xl font-bold text-gray-900 dark:border-gray-700 dark:text-white;
+  }
+
+  .userGuideContent h2 {
+    @apply mb-2 mt-7 text-lg font-semibold text-gray-900 dark:text-white;
+  }
+
+  .userGuideContent h3 {
+    @apply mb-1 mt-5 font-semibold text-gray-800 dark:text-gray-100;
+  }
+
+  .userGuideContent p {
+    @apply my-2;
+  }
+
+  .userGuideContent ul,
+  .userGuideContent ol {
+    @apply my-2 ml-6 space-y-1;
+  }
+
+  .userGuideContent ul {
+    @apply list-disc;
+  }
+
+  .userGuideContent ol {
+    @apply list-decimal;
+  }
+
+  .userGuideContent code {
+    @apply rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-primary-700 dark:bg-gray-700 dark:text-primary-300;
+  }
+
+  .userGuideContent strong {
+    @apply font-semibold text-gray-900 dark:text-white;
   }
 }

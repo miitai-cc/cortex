@@ -52,6 +52,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
+import BottomToolArea from './BottomToolArea';
+import TopQuickActions from './TopQuickActions';
+import SystemJobsTabs, { type SystemJobDefinition } from './SystemJobsTabs';
 import { DEFAULT_AUTHENTICATED_PATH } from '../utils/authNavigation';
 import { departmentConfigs } from '../config/departments';
 
@@ -89,6 +92,16 @@ const navItems: NavItem[] = [
       icon: department.icon,
       to: `/cortex/departments/${department.slug}`,
     })),
+  },
+  {
+    to: '/cortex/workspace',
+    icon: UserRoundSearch,
+    labelKey: 'nav.personalWorkspace',
+    children: [
+      { labelKey: 'nav.personalWorkspace.following', icon: Bookmark, to: '/cortex/workspace/following' },
+      { labelKey: 'nav.personalWorkspace.review', icon: ClipboardCheck, to: '/cortex/workspace/review' },
+      { labelKey: 'nav.personalWorkspace.points', icon: Award, to: '/cortex/workspace/points' },
+    ],
   },
   {
     to: '/cortex/chat',
@@ -144,16 +157,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    to: '/cortex/workspace',
-    icon: UserRoundSearch,
-    labelKey: 'nav.personalWorkspace',
-    children: [
-      { labelKey: 'nav.personalWorkspace.following', icon: Bookmark, to: '/cortex/workspace/following' },
-      { labelKey: 'nav.personalWorkspace.review', icon: ClipboardCheck, to: '/cortex/workspace/review' },
-      { labelKey: 'nav.personalWorkspace.points', icon: Award, to: '/cortex/workspace/points' },
-    ],
-  },
-  {
     to: '/cortex/graph',
     icon: Share2,
     labelKey: 'nav.graph',
@@ -191,6 +194,12 @@ const navItems: NavItem[] = [
     ],
   },
 ];
+
+const systemJobs: SystemJobDefinition[] = navItems.flatMap((item) => item.children.map((child) => ({
+  path: child.to,
+  labelKey: child.labelKey,
+  icon: child.icon,
+})));
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
@@ -237,7 +246,7 @@ export default function Layout() {
         <div className="mb-4 p-2">
           <Brain className="w-7 h-7 text-primary-600" />
         </div>
-        <nav className="flex-1 flex flex-col items-center gap-1">
+        <nav className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto">
           {navItems.map((item) => (
             <Link
               key={item.to}
@@ -312,8 +321,8 @@ export default function Layout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="topToolArea shrink-0 flex items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div>{/* 頁面工具列留空 */}</div>
-          <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1" />
+          <div className="flex shrink-0 items-center gap-3">
             <button
               onClick={toggleTheme}
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -321,6 +330,7 @@ export default function Layout() {
             >
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
+            <TopQuickActions />
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -344,9 +354,15 @@ export default function Layout() {
             </button>
           </div>
         </div>
+        <SystemJobsTabs
+          currentPath={location.pathname}
+          jobs={systemJobs}
+          storageKey={`cortex.systemJobsTabs.${user?.id ?? user?.username ?? 'anonymous'}`}
+        />
         <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
+        <BottomToolArea />
       </main>
 
       {/* Right Panel (Research toggle) */}

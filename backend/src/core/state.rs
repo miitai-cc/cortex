@@ -34,6 +34,7 @@ impl AppState {
                 "pageindex_model" => self.config.pageindex_model = value,
                 "openai_base_url" => self.config.openai_base_url = value,
                 "pageindex_base_url" => self.config.pageindex_base_url = value,
+                "contact_name" | "contact_email" | "contact_phone" | "common_links" => {}
                 _ => tracing::warn!("Ignoring unknown persisted setting: {key}"),
             }
         }

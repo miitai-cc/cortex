@@ -331,6 +331,31 @@ impl Database {
             text = text_type,
             ts = portable_timestamp_default
         );
+        let create_projects = format!(
+            "CREATE TABLE IF NOT EXISTS projects (
+                id {text} PRIMARY KEY, code {text} NOT NULL UNIQUE, name {text} NOT NULL,
+                description {text}, status {text} NOT NULL DEFAULT 'planning',
+                priority {text} NOT NULL DEFAULT 'medium', manager_id {text}, manager_name {text} NOT NULL,
+                start_date {text}, end_date {text}, budget_total BIGINT NOT NULL DEFAULT 0,
+                collaboration_workspace_id {text}, collaboration_channel_id {text},
+                related_links {text} NOT NULL DEFAULT '[]', created_by {text} NOT NULL,
+                created_at {ts}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_project_records = format!(
+            "CREATE TABLE IF NOT EXISTS project_records (
+                id {text} PRIMARY KEY, project_id {text} NOT NULL, record_type {text} NOT NULL,
+                title {text} NOT NULL, description {text}, status {text} NOT NULL,
+                priority {text} NOT NULL DEFAULT 'medium', assignee_id {text}, assignee_name {text},
+                start_date {text}, end_date {text}, amount BIGINT, progress INTEGER NOT NULL DEFAULT 0,
+                metadata {text} NOT NULL DEFAULT '{{}}', created_by {text} NOT NULL,
+                created_at {ts}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
 
         sqlx::query(&create_documents).execute(&self.pool).await?;
         sqlx::query(&create_chunks).execute(&self.pool).await?;
@@ -400,8 +425,27 @@ impl Database {
         sqlx::query(&create_department_items)
             .execute(&self.pool)
             .await?;
+        sqlx::query(&create_projects).execute(&self.pool).await?;
+        sqlx::query(&create_project_records)
+            .execute(&self.pool)
+            .await?;
         sqlx::query(
             "CREATE INDEX IF NOT EXISTS idx_department_items_department_updated ON department_items(department, updated_at)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_projects_status_updated ON projects(status, updated_at)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_project_records_project_type ON project_records(project_id, record_type)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_project_records_assignee ON project_records(assignee_id, status)",
         )
         .execute(&self.pool)
         .await?;

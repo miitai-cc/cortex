@@ -121,6 +121,10 @@ fn emit(channel_id: &str, event: serde_json::Value) {
     }
 }
 
+pub(crate) fn emit_project_event(channel_id: &str, event: serde_json::Value) {
+    emit(channel_id, event);
+}
+
 fn clean_name(value: &str) -> String {
     value
         .trim()

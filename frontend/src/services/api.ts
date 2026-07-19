@@ -3,6 +3,14 @@ import { useAuthStore } from 'eiva-fe-security';
 import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 import { uploadDocumentStream, type DocumentIndexEvent } from '../grpc/documentWsClient';
 import type { IssuePayload } from '../types/collaboration';
+import type {
+  PersonalProjectOverview,
+  ProjectOverview,
+  ProjectPayload,
+  ProjectRecord,
+  ProjectRecordPayload,
+  ProjectRecordType,
+} from '../types/projects';
 import {
   LOGIN_PATH,
   rememberCurrentHashRoute,
@@ -205,6 +213,11 @@ export const aiModelApi = {
   rerank: (query: string, documents: string[]) => api.post('/rag/rerank', { query, documents }),
 };
 
+export const codexApi = {
+  websocketUrl: (token: string) =>
+    `${WS_BASE_URL}/codex/ws/prompt?token=${encodeURIComponent(token)}`,
+};
+
 export const indexingApi = {
   /** 建立索引：Returns the WebSocket URL for gitnexus index streaming */
   gitNexusWsUrl: (relative_path: string): string =>
@@ -284,15 +297,52 @@ export const collaborationApi = {
     `${WS_BASE_URL}/collaboration/ws?channel_id=${encodeURIComponent(channelId)}&token=${encodeURIComponent(token)}`,
 };
 
-export type SystemSettingsPayload = {
+export const projectApi = {
+  overview: (projectId?: string) =>
+    api.get<ProjectOverview>('/projects', {
+      params: projectId ? { project_id: projectId } : undefined,
+    }),
+  personal: () => api.get<PersonalProjectOverview>('/projects/personal'),
+  createProject: (data: ProjectPayload) => api.post('/projects', data),
+  updateProject: (id: string, data: ProjectPayload) => api.put(`/projects/${id}`, data),
+  deleteProject: (id: string) => api.delete(`/projects/${id}`),
+  createRecord: (projectId: string, recordType: ProjectRecordType, data: ProjectRecordPayload) =>
+    api.post<ProjectRecord>(`/projects/${projectId}/records/${recordType}`, data),
+  updateRecord: (
+    projectId: string,
+    recordType: ProjectRecordType,
+    id: string,
+    data: ProjectRecordPayload,
+  ) => api.put<ProjectRecord>(`/projects/${projectId}/records/${recordType}/${id}`, data),
+  deleteRecord: (projectId: string, recordType: ProjectRecordType, id: string) =>
+    api.delete(`/projects/${projectId}/records/${recordType}/${id}`),
+};
+
+export interface CommonSystemLink {
+  label: string;
+  url: string;
+}
+
+export interface SystemSettingsPayload {
   embeddingModel: string;
   rerankingModel: string;
   pageindexModel: string;
   openaiBaseUrl: string;
   pageindexBaseUrl: string;
-};
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  commonLinks: CommonSystemLink[];
+}
+
+export interface SystemSettingsResponse extends SystemSettingsPayload {
+  openaiApiKeyConfigured: boolean;
+  pageindexApiKeyConfigured: boolean;
+  restartRequired: boolean;
+  systemVersion: string;
+}
 
 export const systemSettingsApi = {
-  get: () => api.get('/settings/system'),
+  get: () => api.get<SystemSettingsResponse>('/settings/system'),
   update: (data: SystemSettingsPayload) => api.put('/settings/system', data),
 };
