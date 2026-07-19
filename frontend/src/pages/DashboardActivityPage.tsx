@@ -26,7 +26,7 @@ export default function DashboardActivityPage() {
   const [kind, setKind] = useState('');
   const { data, isLoading, refetch } = useQuery({ queryKey: ['dashboard-activity'], queryFn: dashboardApi.activity });
   const activities = (data?.data?.activities ?? []).filter((item: any) => !kind || item.kind === kind);
-  return <div className="mx-auto max-w-6xl px-4 pb-10">
+  return <div className="mx-auto max-w-11xl px-4 pb-10">
     <CommonHeroTitle icon={Activity} title="最近活動" description="由文件、檢索、協作、Issue、研究與智慧對話的真實資料彙整" extraButtons={[{ label: '重新整理', icon: RefreshCw, onClick: () => refetch() }]} />
     <div className="card mb-4 flex flex-wrap items-center gap-2">
       <button onClick={() => setKind('')} className={`rounded-lg px-3 py-1.5 text-sm ${!kind ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>全部</button>

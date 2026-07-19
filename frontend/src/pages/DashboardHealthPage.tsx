@@ -24,7 +24,7 @@ export default function DashboardHealthPage() {
   const model = data?.data ?? { status: 'unknown', database: false, qdrant: false, services: [], queue: [], alerts: [], metrics: {}, querySamples: [] };
   const metrics = model.metrics ?? {};
   const samples = (model.querySamples ?? []).slice().reverse().map((sample: any) => ({ ...sample, time: formatTime(sample.timestamp).split(' ')[1] ?? formatTime(sample.timestamp) }));
-  return <div className="mx-auto max-w-7xl px-4 pb-10">
+  return <div className="mx-auto max-w-11xl px-4 pb-10">
     <CommonHeroTitle icon={Heart} title="系統健康" description="後端即時探測資料庫、Qdrant、文件索引佇列與已完成檢索延遲；未探測服務會明確標示" extraButtons={[{ label: '重新整理', icon: RefreshCw, onClick: () => refetch() }]} />
     <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <Metric label="整體狀態" value={isLoading ? '檢查中…' : model.status === 'healthy' ? '正常' : '降級'} ok={model.status === 'healthy'} icon={Heart} />

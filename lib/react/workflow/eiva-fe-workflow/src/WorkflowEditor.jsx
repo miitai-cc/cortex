@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect, memo, createContext, useContext } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ReactFlow,
@@ -20,7 +20,7 @@ export function useI18n() {
   return useContext(WorkflowI18nContext);
 }
 
-const API_BASE = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95`;
+const DEFAULT_API_BASE = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95`;
 
 const initialEdges = [];
 
@@ -268,18 +268,47 @@ const nodeTypes = {
   swimlaneNode: SwimlaneNode,
 };
 
-export default function WorkflowEditor() {
+export default function WorkflowEditor({
+  apiBase = DEFAULT_API_BASE,
+  authToken = '',
+  initialWorkflowId = 'default',
+  testPayload = {},
+  availableUsers = [],
+  onNotify,
+  onWorkflowChanged,
+  onRunResult,
+}) {
   const { t } = useI18n();
+  const API_BASE = apiBase.replace(/\/$/, '');
+
+  const notify = useCallback((message, type = 'info') => {
+    if (onNotify) onNotify(message, type);
+    else window.alert(message);
+  }, [onNotify]);
+
+  const requestJson = useCallback(async (path, options = {}) => {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body.error || body.message || `HTTP ${response.status}`);
+    }
+    return body;
+  }, [API_BASE, authToken]);
 
   const initialNodes = useMemo(() => [
     { id: '1', type: 'startNode', position: { x: 250, y: 50 }, data: { label: t('workflow.nodes.startNode'), prompt: '' } },
   ], [t]);
 
-  const LOCAL_STORAGE_KEY = 'eiva_workflow_data';
-
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [workflowId, setWorkflowId] = useState('default');
+  const [workflowId, setWorkflowId] = useState(initialWorkflowId);
   const [workflowList, setWorkflowList] = useState([]);
   const [propertyModalNodeId, setPropertyModalNodeId] = useState(null);
   const propertyModalNode = useMemo(() => nodes.find(n => n.id === propertyModalNodeId) || null, [nodes, propertyModalNodeId]);
@@ -291,15 +320,14 @@ export default function WorkflowEditor() {
   const editorContainerRef = useRef(null);
 
   const fetchWorkflowList = useCallback(() => {
-    fetch(`${API_BASE}/workflows`)
-      .then(res => res.json())
+    requestJson('/workflows')
       .then(data => {
         if (data.workflows) {
           setWorkflowList(data.workflows);
         }
       })
       .catch(err => console.error('Failed to fetch workflow list', err));
-  }, []);
+  }, [requestJson]);
 
   useEffect(() => {
     fetchWorkflowList();
@@ -323,8 +351,7 @@ export default function WorkflowEditor() {
   }, [setNodes]);
 
   const loadWorkflowData = useCallback(() => {
-    fetch(`${API_BASE}/workflow/${workflowId}`)
-      .then(res => res.json())
+    requestJson(`/workflow/${encodeURIComponent(workflowId)}`)
       .then(saved => {
         console.debug('Loaded workflow data from backend', saved);
         if (saved && saved.nodes && saved.edges) {
@@ -351,7 +378,7 @@ export default function WorkflowEditor() {
         })));
         setEdges(initialEdges);
       });
-  }, [setNodes, setEdges, handleNodeDataChange, workflowId, initialNodes]);
+  }, [setNodes, setEdges, handleNodeDataChange, workflowId, initialNodes, requestJson]);
 
   useEffect(() => {
     loadWorkflowData();
@@ -377,52 +404,58 @@ export default function WorkflowEditor() {
     const dataToSave = { nodes: nodesToSave, edges };
     console.debug('Saving workflow DAG', dataToSave);
 
-    fetch(`${API_BASE}/workflow/${workflowId}`, {
+    requestJson(`/workflow/${encodeURIComponent(workflowId)}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify(dataToSave)
     })
-      .then(res => res.json())
       .then(data => {
         if (data.ok) {
           console.info('Workflow saved successfully', data);
-          alert(t('workflow.saveSuccess'));
+          notify(t('workflow.saveSuccess'), 'success');
           fetchWorkflowList();
+          onWorkflowChanged?.(data);
         } else {
           console.error('Workflow save failed', data);
-          alert(t('workflow.saveFailed') + data.error);
+          notify(t('workflow.saveFailed') + (data.error || ''), 'error');
         }
       })
       .catch(err => {
         console.error('Save error:', err);
-        alert(t('workflow.saveError'));
+        notify(`${t('workflow.saveError')} ${err.message}`, 'error');
       });
   };
 
   const handleRun = () => {
     const payload = { ...testPayload };
     console.debug('Running workflow with payload', payload);
-    fetch(`${API_BASE}/workflow/${workflowId}/run`, {
+    requestJson(`/workflow/${encodeURIComponent(workflowId)}/run`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-      .then(res => res.json())
       .then(data => {
         if (data.ok) {
           console.info('Workflow execution successful', data);
-          alert(t('workflow.executeSuccess') + data.message);
+          notify(t('workflow.executeSuccess') + (data.message || ''), 'success');
+          onRunResult?.(data);
         } else {
           console.error('Workflow execution failed', data);
-          alert(t('workflow.executeFailed') + data.error);
+          notify(t('workflow.executeFailed') + (data.error || ''), 'error');
         }
       })
       .catch(err => {
         console.error(err);
-        alert(t('workflow.executeError'));
+        notify(`${t('workflow.executeError')} ${err.message}`, 'error');
       });
+  };
+
+  const handlePublish = () => {
+    requestJson(`/workflow/${encodeURIComponent(workflowId)}/publish`, { method: 'POST' })
+      .then(data => {
+        notify(t('workflow.publishSuccess'), 'success');
+        fetchWorkflowList();
+        onWorkflowChanged?.(data);
+      })
+      .catch(err => notify(`${t('workflow.publishFailed')} ${err.message}`, 'error'));
   };
 
   const handleCreateNew = () => {
@@ -449,26 +482,26 @@ export default function WorkflowEditor() {
 
   const handleDeleteWorkflow = () => {
     if (workflowId === 'default') {
-      alert(t('workflow.cannotDeleteDefault'));
+      notify(t('workflow.cannotDeleteDefault'), 'error');
       return;
     }
     if (confirm(t('workflow.confirmDeleteWorkflow', { name: workflowId }))) {
-      fetch(`${API_BASE}/workflow/${workflowId}`, {
+      requestJson(`/workflow/${encodeURIComponent(workflowId)}`, {
         method: 'DELETE'
       })
-        .then(res => res.json())
         .then(data => {
           if (data.ok) {
-            alert(t('workflow.deleteSuccess'));
+            notify(t('workflow.deleteSuccess'), 'success');
             setWorkflowId('default');
             fetchWorkflowList();
+            onWorkflowChanged?.(data);
           } else {
-            alert(t('workflow.deleteFailed') + data.error);
+            notify(t('workflow.deleteFailed') + (data.error || ''), 'error');
           }
         })
         .catch(err => {
           console.error('Delete error:', err);
-          alert(t('workflow.deleteError'));
+          notify(`${t('workflow.deleteError')} ${err.message}`, 'error');
         });
     }
   };
@@ -677,6 +710,43 @@ export default function WorkflowEditor() {
     );
 
     switch (type) {
+      case 'basicNode':
+        return (
+          <>
+            {commonLabel}
+            {commonPrompt}
+            <div className="modal-field">
+              <label>{t('workflow.properties.executionMode')}</label>
+              <select value={data.executionMode || 'automatic'} onChange={(e) => updateField('executionMode', e.target.value)} className="modal-select">
+                <option value="automatic">{t('workflow.properties.automatic')}</option>
+                <option value="humanTask">{t('workflow.properties.humanTask')}</option>
+              </select>
+            </div>
+            {data.executionMode === 'humanTask' && (
+              <>
+                <div className="modal-field">
+                  <label>{t('workflow.properties.assignee')}</label>
+                  <select
+                    value={data.assigneeId || ''}
+                    onChange={(e) => {
+                      const user = availableUsers.find((item) => item.id === e.target.value);
+                      updateField('assigneeId', e.target.value);
+                      updateField('assigneeName', user?.username || '');
+                    }}
+                    className="modal-select"
+                  >
+                    <option value="">{t('workflow.properties.initiator')}</option>
+                    {availableUsers.map((user) => <option key={user.id} value={user.id}>{user.username}</option>)}
+                  </select>
+                </div>
+                <div className="modal-field">
+                  <label>{t('workflow.properties.dueDays')}</label>
+                  <input type="number" min="0" max="365" value={data.dueDays || 0} onChange={(e) => updateField('dueDays', Number(e.target.value))} />
+                </div>
+              </>
+            )}
+          </>
+        );
       case 'startNode':
         return (
           <>
@@ -929,18 +999,11 @@ export default function WorkflowEditor() {
           <div className="wf-header-left">
             <div>
 	              <div className="wf-api-info">
-	                API: GET {API_BASE}/workflow/&#123;workflow-name&#125;/run
+	                API: POST {API_BASE}/workflow/&#123;workflow-name&#125;/run
 	              </div>
               <div className="wf-api-link">
-                <span>👉 實際: GET</span>
-                <a
-                  href={`${API_BASE}/workflow/${workflowId}/run`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-	                  title={t('workflow.clickToRun')}
-	                >
-	                  {API_BASE}/workflow/{workflowId}/run
-	                </a>
+                <span>👉 POST</span>
+                <code>{API_BASE}/workflow/{workflowId}/run</code>
               </div>
             </div>
             <div className="wf-header-right">
@@ -961,6 +1024,7 @@ export default function WorkflowEditor() {
             <button className="wf-action-btn" onClick={handleClear}>{'🗑️ ' + t('workflow.clear')}</button>
             <button className="wf-action-btn" onClick={handleReload}>{'🔄 ' + t('workflow.reload')}</button>
             <button className="wf-action-btn" onClick={handleSave}>{'💾 ' + t('workflow.save')}</button>
+            <button className="wf-action-btn" onClick={handlePublish}>{'🚀 ' + t('workflow.publish')}</button>
             <button className="wf-action-btn primary" onClick={handleRun}>{'▶️ ' + t('workflow.execute') + ' (Run)'}</button>
             <button className="wf-action-btn" onClick={toggleFullscreen}>{'⛶ ' + t('workflow.fullscreen')}</button>
           </div>

@@ -13,7 +13,7 @@ export default function DocumentListPage() {
   const deleteMutation = useDeleteDocument();
 
   return (
-    <div>
+    <div className="max-w-11xl mx-auto px-4 ">
       <CommonHeroTitle icon={List} title={t('nav.documents.list')} description="瀏覽所有已上傳的文件" />
 
       <div className="relative mb-4">

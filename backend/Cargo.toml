@@ -39,6 +39,7 @@ eiva-be-sso = { path = "../lib/rust/crates/common/eiva-be-sso" }
 eiva-be-security = { path = "../lib/rust/crates/common/eiva-be-security" }
 pageindex-core = { path = "package/pageindex-rs/crates/pageindex-core" }
 async-trait = "0.1"
+evalexpr = "13.1"
 
 [features]
 default = ["sqlite"]

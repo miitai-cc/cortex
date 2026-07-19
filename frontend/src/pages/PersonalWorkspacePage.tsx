@@ -4,12 +4,14 @@ import {
   Bookmark,
   ClipboardCheck,
   FileText,
+  Flag,
+  FolderKanban,
   UserRound,
 } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import CommonHeroTitle from "../components/common/CommonHeroTitle";
-import { knowledgeApi } from "../services/api";
+import { knowledgeApi, projectApi } from "../services/api";
 
 export default function PersonalWorkspacePage() {
   const { section = "following" } = useParams();
@@ -17,6 +19,11 @@ export default function PersonalWorkspacePage() {
   const { data, isLoading } = useQuery({
     queryKey: ["knowledge-overview"],
     queryFn: knowledgeApi.overview,
+  });
+  const personalProjects = useQuery({
+    queryKey: ["personal-projects"],
+    queryFn: projectApi.personal,
+    enabled: section === "projects",
   });
   const model = data?.data ?? {
     currentUser: {},
@@ -33,9 +40,9 @@ export default function PersonalWorkspacePage() {
   const records =
     section === "review"
       ? model.records.filter(
-          (item: any) =>
-            item.reviewerId === userId && item.status === "pending_review",
-        )
+        (item: any) =>
+          item.reviewerId === userId && item.status === "pending_review",
+      )
       : model.records.filter((item: any) => followed.has(item.id));
   const total = model.pointEvents.reduce(
     (sum: number, item: any) => sum + item.points,
@@ -51,13 +58,64 @@ export default function PersonalWorkspacePage() {
     onError: (e: any) => toast.error(e.response?.data?.error || "審核失敗"),
   });
   return (
-    <div className="max-w-6xl mx-auto px-4 pb-10">
+    <div className={`${section === "projects" ? "max-w-[1600px]" : "max-w-11xl"} mx-auto px-4 pb-10`}>
       <CommonHeroTitle
         icon={UserRound}
         title="個人化專區"
-        description="我關注的文件、等我審核及個人知識貢獻積分"
+        description="我關注的文件、等我審核、個人知識貢獻積分與專案工作"
       />
-      {section === "points" ? (
+      {section === "projects" ? (
+        <div className="space-y-6">
+          {personalProjects.isLoading && (
+            <div className="card py-14 text-center text-gray-500">載入我的專案工作…</div>
+          )}
+          {personalProjects.isError && (
+            <div className="card border-red-200 py-14 text-center text-red-600">
+              無法載入專案資料，請確認後端服務已完成更新。
+            </div>
+          )}
+          {personalProjects.data && (
+            <>
+              <section>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 font-semibold"><FolderKanban className="h-5 w-5 text-primary-600" />參與的專案</h2>
+                  <Link className="text-sm text-primary-600 hover:underline" to="/cortex/projects/information">開啟專案管理</Link>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {personalProjects.data.data.projects.map((project) => (
+                    <Link className="card transition hover:border-primary-400" key={project.id} to={`/cortex/projects/information?project=${encodeURIComponent(project.id)}`}>
+                      <span className="text-xs font-bold text-primary-600">{project.code}</span>
+                      <h3 className="mt-1 font-semibold">{project.name}</h3>
+                      <p className="mt-2 text-sm text-gray-500">{project.managerName} · {project.status}</p>
+                    </Link>
+                  ))}
+                  {!personalProjects.data.data.projects.length && <div className="card col-span-full py-12 text-center text-gray-500">目前尚未參與任何專案</div>}
+                </div>
+              </section>
+              <div className="grid gap-6 xl:grid-cols-3">
+                {[
+                  { title: "指派給我的工作", icon: ClipboardCheck, items: personalProjects.data.data.tasks, route: "kanban" },
+                  { title: "即將到來的里程碑", icon: Flag, items: personalProjects.data.data.milestones, route: "milestones" },
+                  { title: "待處理成果稽核", icon: ClipboardCheck, items: personalProjects.data.data.audits, route: "audits" },
+                ].map(({ title, icon: Icon, items, route }) => (
+                  <section className="card" key={title}>
+                    <h2 className="mb-3 flex items-center gap-2 font-semibold"><Icon className="h-5 w-5 text-violet-500" />{title}<span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-700">{items.length}</span></h2>
+                    <div className="space-y-2">
+                      {items.slice(0, 8).map((item) => (
+                        <Link className="block rounded-lg border border-gray-200 p-3 text-sm hover:border-primary-400 dark:border-gray-700" key={item.id} to={`/cortex/projects/${route}?project=${encodeURIComponent(item.projectId)}`}>
+                          <p className="font-medium">{item.title}</p>
+                          <p className="mt-1 text-xs text-gray-500">{item.status} · {item.endDate || "未設定期限"}</p>
+                        </Link>
+                      ))}
+                      {!items.length && <p className="py-8 text-center text-sm text-gray-500">目前沒有項目</p>}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      ) : section === "points" ? (
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           <div className="card self-start">
             <Award className="h-9 w-9 text-amber-500" />

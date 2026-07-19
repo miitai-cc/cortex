@@ -31,6 +31,7 @@ import PersonalWorkspacePage from './pages/PersonalWorkspacePage';
 import KnowledgeCategoriesPage from './pages/KnowledgeCategoriesPage';
 import CollaborationPage from './pages/CollaborationPage';
 import DepartmentPortalPage from './pages/DepartmentPortalPage';
+import ProjectManagementPage from './pages/ProjectManagementPage';
 import NotFoundPage from './pages/NotFoundPage';
 import {
   clearRememberedReturnPath,
@@ -103,6 +104,7 @@ function App() {
           <Route path="/cortex/dashboard/health" element={<DashboardHealthPage />} />
           <Route path="/cortex/dashboard/activity" element={<DashboardActivityPage />} />
           <Route path="/cortex/departments/:department" element={<DepartmentPortalPage />} />
+          <Route path="/cortex/projects/:section?" element={<ProjectManagementPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
           <Route path="/cortex/chat/history" element={<ChatHistoryPage />} />
           <Route path="/cortex/collaboration/:section?" element={<CollaborationPage />} />

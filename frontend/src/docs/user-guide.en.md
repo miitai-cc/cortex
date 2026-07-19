@@ -62,13 +62,27 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Creators and administrators can edit or delete items.
 - CFO, Sales, Procurement, and selected project modules support working amounts.
 
-## 6. Personal Workspace
+## 6. Project Management
+
+- Project Information creates and maintains project metadata, manager, schedule, budget, and links. Creating a project also creates its collaboration channel.
+- Gantt Chart shows tasks and milestones on a timeline. Select a bar to edit the item.
+- Milestones manages important gates, deliverables, owners, and due dates.
+- Kanban Work supports dragging tasks between Backlog, To Do, In Progress, Review, and Done.
+- Project Budget tracks planned, approved, committed, and spent amounts with a utilization indicator.
+- Project People manages roles and allocation. Adding a member also adds that user to the project channel.
+- Requirements stores sources, acceptance criteria, status, priority, and progress.
+- Delivery Audits stores evidence, findings, results, and follow-up work.
+- Use the Project selector at the top of each screen. The `project` URL parameter preserves the current project.
+- Project changes are posted to the matching channel under Team Collaboration → Project Collaboration.
+
+## 7. Personal Workspace
 
 - Following manages bookmarked and monitored documents.
 - My Reviews lists reviews waiting for the current user.
 - Contributions & Points shows personal knowledge contributions.
+- My Project Work summarizes participating projects, assigned tasks, upcoming milestones, and pending audits.
 
-## 7. AI Chat and Team Collaboration
+## 8. AI Chat and Team Collaboration
 
 ### AI Chat
 
@@ -86,7 +100,12 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Create issues with status, priority, assignee, and due date.
 - Add comments, inspect history, and use Issues Assigned to Me to track personal work.
 
-## 8. Documents and content
+### Project collaboration
+
+- Lists projects and their automatically managed channels.
+- Open the exact project channel or return to project information. Project changes notify channel users through WebSocket.
+
+## 9. Documents and content
 
 ### Working directories
 
@@ -108,20 +127,20 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Each edit creates a version and may enable RAG and PageIndex.
 - Use the delete icon beside a document to remove it.
 
-## 9. Search, Knowledge Center, and Knowledge Graph
+## 10. Search, Knowledge Center, and Knowledge Graph
 
 - Full-text Search uses textual conditions.
 - Hybrid Search combines keywords with vector semantics.
 - Knowledge Center manages documents, categories, drafts, reviews, FAQs, experts, and community ratings.
 - Knowledge Graph visualizes document and concept relationships. Community and isolated-node views help improve knowledge connectivity.
 
-## 10. Deep Research and AI Models
+## 11. Deep Research and AI Models
 
 - Deep Research runs multi-step research tasks and preserves their history.
 - AI Models tests Embedding and Reranking endpoints.
 - Indexing tools run GitNexus or Graphify while streaming output.
 
-## 11. System Settings
+## 12. System Settings
 
 ### Language and theme
 
@@ -134,11 +153,11 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Administrators maintain the footer contact and common links. Links must use HTTP or HTTPS.
 - Model settings require a backend restart. Footer settings update immediately.
 
-## 12. Footer information
+## 13. Footer information
 
 The bottom area shows copyright, system version, support contact, and common links. Select an email, phone number, or link to open the appropriate application.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 - **Returned to sign-in after login:** Clear an expired session, sign in again, and verify matching backend JWT settings.
 - **A document remains Processing:** Check System Health and upload events, then verify Embedding, PageIndex, and Qdrant services.
@@ -146,10 +165,9 @@ The bottom area shows copyright, system version, support contact, and common lin
 - **Real-time messages disconnect:** Verify the WebSocket proxy, backend connectivity, and login token.
 - **Settings cannot be saved:** Only administrators can edit settings. Model endpoints and common links must use HTTP or HTTPS.
 
-## 14. Security guidance
+## 15. Security guidance
 
 - Do not paste passwords, API keys, tokens, or sensitive personal data into messages, prompts, or documents.
 - AI Prompt can operate on the configured workspace. Review the task scope and expected changes before running it.
 - Confirm targets and impact before deleting documents, directories, work items, or issues.
 - Continue to follow organizational access policies for private channels and department information.
-

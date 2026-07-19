@@ -196,19 +196,19 @@ export default function KnowledgeCenterPage() {
     setEditor(
       record
         ? {
-            id: record.id,
-            title: record.title,
-            category: record.category,
-            record_type: record.recordType,
-            tags: record.tags.join(", "),
-            reviewer_id: record.reviewerId || "",
-            document_id: record.documentId || "",
-            content_id: record.contentId || "",
-            question: record.question || "",
-            answer: record.answer || "",
-            project_summary: record.projectSummary || "",
-            deliverables: record.deliverables.join("\n"),
-          }
+          id: record.id,
+          title: record.title,
+          category: record.category,
+          record_type: record.recordType,
+          tags: record.tags.join(", "),
+          reviewer_id: record.reviewerId || "",
+          document_id: record.documentId || "",
+          content_id: record.contentId || "",
+          question: record.question || "",
+          answer: record.answer || "",
+          project_summary: record.projectSummary || "",
+          deliverables: record.deliverables.join("\n"),
+        }
         : emptyEditor,
     );
   const submitRecord = () => {
@@ -239,7 +239,7 @@ export default function KnowledgeCenterPage() {
       .map((x: any) => x.targetId),
   );
   return (
-    <div className="max-w-7xl mx-auto px-4 pb-10">
+    <div className="max-w-11xl mx-auto px-4 pb-10">
       <CommonHeroTitle
         icon={Library}
         title="知識中心"

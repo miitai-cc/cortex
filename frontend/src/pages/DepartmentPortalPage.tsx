@@ -245,7 +245,7 @@ export default function DepartmentPortalPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-12">
+    <div className="mx-auto max-w-11xl px-4 pb-12">
       <CommonHeroTitle
         icon={config.icon}
         title={isEnglish ? config.titleEn : config.title}

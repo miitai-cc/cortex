@@ -11,6 +11,12 @@ import type {
   ProjectRecordPayload,
   ProjectRecordType,
 } from '../types/projects';
+import type {
+  WorkflowDefinition,
+  WorkflowInstanceDetail,
+  WorkflowOverview,
+  WorkflowTask,
+} from '../types/workflows';
 import {
   LOGIN_PATH,
   rememberCurrentHashRoute,
@@ -316,6 +322,20 @@ export const projectApi = {
   ) => api.put<ProjectRecord>(`/projects/${projectId}/records/${recordType}/${id}`, data),
   deleteRecord: (projectId: string, recordType: ProjectRecordType, id: string) =>
     api.delete(`/projects/${projectId}/records/${recordType}/${id}`),
+};
+
+export const workflowApi = {
+  overview: () => api.get<WorkflowOverview>('/workflows'),
+  definition: (key: string) => api.get<WorkflowDefinition>(`/workflow/${encodeURIComponent(key)}`),
+  publish: (key: string) => api.post(`/workflow/${encodeURIComponent(key)}/publish`),
+  archive: (key: string) => api.delete(`/workflow/${encodeURIComponent(key)}`),
+  run: (key: string, input: Record<string, unknown>) =>
+    api.post(`/workflow/${encodeURIComponent(key)}/run`, input),
+  instances: (all = false) => api.get('/workflow/instances', { params: all ? { all: true } : undefined }),
+  instance: (id: string) => api.get<WorkflowInstanceDetail>(`/workflow/instances/${id}`),
+  tasks: (all = false) => api.get<{ tasks: WorkflowTask[] }>('/workflow/tasks', { params: all ? { all: true } : undefined }),
+  decideTask: (id: string, data: { action: 'approved' | 'rejected'; comment?: string; formData?: Record<string, unknown> }) =>
+    api.put(`/workflow/tasks/${id}`, data),
 };
 
 export interface CommonSystemLink {

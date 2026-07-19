@@ -356,6 +356,55 @@ impl Database {
             text = text_type,
             ts = portable_timestamp_default
         );
+        let create_workflow_definitions = format!(
+            "CREATE TABLE IF NOT EXISTS workflow_definitions (
+                id {text} PRIMARY KEY, workflow_key {text} NOT NULL UNIQUE, name {text} NOT NULL,
+                description {text}, status {text} NOT NULL DEFAULT 'draft', current_version INTEGER NOT NULL DEFAULT 0,
+                nodes {text} NOT NULL DEFAULT '[]', edges {text} NOT NULL DEFAULT '[]',
+                created_by {text} NOT NULL, created_at {ts}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_workflow_versions = format!(
+            "CREATE TABLE IF NOT EXISTS workflow_versions (
+                id {text} PRIMARY KEY, workflow_id {text} NOT NULL, version INTEGER NOT NULL,
+                nodes {text} NOT NULL, edges {text} NOT NULL, created_by {text} NOT NULL,
+                created_at {ts}, UNIQUE(workflow_id,version)
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_workflow_instances = format!(
+            "CREATE TABLE IF NOT EXISTS workflow_instances (
+                id {text} PRIMARY KEY, workflow_id {text} NOT NULL, workflow_key {text} NOT NULL,
+                version INTEGER NOT NULL, status {text} NOT NULL DEFAULT 'queued', input_data {text} NOT NULL DEFAULT '{{}}',
+                context_data {text} NOT NULL DEFAULT '{{}}', current_node_id {text}, started_by {text} NOT NULL,
+                started_by_name {text} NOT NULL, started_at {ts}, updated_at {ts}, completed_at {text}, error_message {text}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_workflow_step_runs = format!(
+            "CREATE TABLE IF NOT EXISTS workflow_step_runs (
+                id {text} PRIMARY KEY, instance_id {text} NOT NULL, node_id {text} NOT NULL,
+                node_type {text} NOT NULL, node_label {text} NOT NULL, status {text} NOT NULL,
+                input_data {text}, output_data {text}, error_message {text}, started_at {ts}, completed_at {text}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_workflow_tasks = format!(
+            "CREATE TABLE IF NOT EXISTS workflow_tasks (
+                id {text} PRIMARY KEY, instance_id {text} NOT NULL, node_id {text} NOT NULL,
+                title {text} NOT NULL, instructions {text}, assignee_id {text} NOT NULL,
+                assignee_name {text} NOT NULL, status {text} NOT NULL DEFAULT 'pending', due_date {text},
+                form_data {text} NOT NULL DEFAULT '{{}}', decision_comment {text}, created_at {ts},
+                updated_at {ts}, completed_at {text}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
 
         sqlx::query(&create_documents).execute(&self.pool).await?;
         sqlx::query(&create_chunks).execute(&self.pool).await?;
@@ -429,6 +478,21 @@ impl Database {
         sqlx::query(&create_project_records)
             .execute(&self.pool)
             .await?;
+        sqlx::query(&create_workflow_definitions)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_workflow_versions)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_workflow_instances)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_workflow_step_runs)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_workflow_tasks)
+            .execute(&self.pool)
+            .await?;
         sqlx::query(
             "CREATE INDEX IF NOT EXISTS idx_department_items_department_updated ON department_items(department, updated_at)",
         )
@@ -446,6 +510,21 @@ impl Database {
         .await?;
         sqlx::query(
             "CREATE INDEX IF NOT EXISTS idx_project_records_assignee ON project_records(assignee_id, status)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_workflow_definitions_status_updated ON workflow_definitions(status, updated_at)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_workflow_instances_workflow_started ON workflow_instances(workflow_id, started_at)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assignee_status ON workflow_tasks(assignee_id, status)",
         )
         .execute(&self.pool)
         .await?;

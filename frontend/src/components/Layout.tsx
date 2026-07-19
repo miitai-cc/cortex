@@ -49,6 +49,11 @@ import {
   ClipboardList,
   UserCheck,
   Building2,
+  CalendarDays,
+  CircleDollarSign,
+  Flag,
+  FolderKanban,
+  Link2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
@@ -101,6 +106,22 @@ const navItems: NavItem[] = [
       { labelKey: 'nav.personalWorkspace.following', icon: Bookmark, to: '/cortex/workspace/following' },
       { labelKey: 'nav.personalWorkspace.review', icon: ClipboardCheck, to: '/cortex/workspace/review' },
       { labelKey: 'nav.personalWorkspace.points', icon: Award, to: '/cortex/workspace/points' },
+      { labelKey: 'nav.personalWorkspace.projects', icon: FolderKanban, to: '/cortex/workspace/projects' },
+    ],
+  },
+  {
+    to: '/cortex/projects',
+    icon: FolderKanban,
+    labelKey: 'nav.projects',
+    children: [
+      { labelKey: 'nav.projects.information', icon: Link2, to: '/cortex/projects/information' },
+      { labelKey: 'nav.projects.gantt', icon: BarChart3, to: '/cortex/projects/gantt' },
+      { labelKey: 'nav.projects.milestones', icon: Flag, to: '/cortex/projects/milestones' },
+      { labelKey: 'nav.projects.kanban', icon: FolderKanban, to: '/cortex/projects/kanban' },
+      { labelKey: 'nav.projects.budget', icon: CircleDollarSign, to: '/cortex/projects/budget' },
+      { labelKey: 'nav.projects.people', icon: Users, to: '/cortex/projects/people' },
+      { labelKey: 'nav.projects.requirements', icon: ClipboardList, to: '/cortex/projects/requirements' },
+      { labelKey: 'nav.projects.audits', icon: ClipboardCheck, to: '/cortex/projects/audits' },
     ],
   },
   {
@@ -120,6 +141,7 @@ const navItems: NavItem[] = [
       { labelKey: 'nav.collaboration.channels', icon: Hash, to: '/cortex/collaboration/channels' },
       { labelKey: 'nav.collaboration.issues', icon: ClipboardList, to: '/cortex/collaboration/issues' },
       { labelKey: 'nav.collaboration.myIssues', icon: UserCheck, to: '/cortex/collaboration/my-issues' },
+      { labelKey: 'nav.collaboration.projects', icon: CalendarDays, to: '/cortex/collaboration/projects' },
     ],
   },
   {

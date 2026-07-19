@@ -16,7 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collaborationApi } from '../../services/api';
 import type {
   CollaborationChannel,
@@ -144,13 +144,16 @@ function MessageCard({
 
 export default function TeamChannels({ overview, token }: { overview: CollaborationOverview; token: string }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [workspaceId, setWorkspaceId] = useState(overview.workspaces[0]?.id ?? '');
+  const requestedChannelId = searchParams.get('channel') ?? '';
+  const requestedChannel = overview.channels.find((channel) => channel.id === requestedChannelId);
+  const [workspaceId, setWorkspaceId] = useState(requestedChannel?.workspaceId ?? overview.workspaces[0]?.id ?? '');
   const workspaceChannels = useMemo(
     () => overview.channels.filter((channel) => channel.workspaceId === workspaceId),
     [overview.channels, workspaceId],
   );
-  const [channelId, setChannelId] = useState(workspaceChannels[0]?.id ?? '');
+  const [channelId, setChannelId] = useState(requestedChannel?.id ?? workspaceChannels[0]?.id ?? '');
   const selectedChannel = overview.channels.find((channel) => channel.id === channelId);
   const [messageText, setMessageText] = useState('');
   const [threadText, setThreadText] = useState('');
@@ -161,6 +164,14 @@ export default function TeamChannels({ overview, token }: { overview: Collaborat
   const [channelModal, setChannelModal] = useState<CollaborationChannel | 'new' | null>(null);
   const [membersModal, setMembersModal] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (requestedChannel) {
+      setWorkspaceId(requestedChannel.workspaceId);
+      setChannelId(requestedChannel.id);
+      setSelectedThread(null);
+    }
+  }, [requestedChannel?.id, requestedChannel?.workspaceId]);
 
   useEffect(() => {
     if (!overview.workspaces.some((workspace) => workspace.id === workspaceId)) {

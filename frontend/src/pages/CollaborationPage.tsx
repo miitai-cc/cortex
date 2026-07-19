@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 import CommonHeroTitle from '../components/common/CommonHeroTitle';
 import IssueTracker from '../components/collaboration/IssueTracker';
 import TeamChannels from '../components/collaboration/TeamChannels';
+import ProjectCollaborationPanel from '../components/collaboration/ProjectCollaborationPanel';
 import { collaborationApi } from '../services/api';
 import type { CollaborationOverview } from '../types/collaboration';
 
@@ -20,7 +21,7 @@ export default function CollaborationPage() {
   const model = overview.data?.data as CollaborationOverview | undefined;
 
   useEffect(() => {
-    if (!token || section === 'channels') return;
+    if (!token || (section !== 'issues' && section !== 'my-issues')) return;
     const socket = new WebSocket(collaborationApi.websocketUrl('__issues__', token));
     socket.onmessage = () => {
       queryClient.invalidateQueries({ queryKey: ['collaboration-issues'] });
@@ -29,14 +30,17 @@ export default function CollaborationPage() {
   }, [queryClient, section, token]);
 
   const issueMode = section === 'issues' || section === 'my-issues';
+  const projectMode = section === 'projects';
   return (
     <div className="mx-auto max-w-[1680px] px-4 pb-8">
       <CommonHeroTitle
         icon={issueMode ? ClipboardList : MessagesSquare}
-        title={issueMode ? 'Issue 工作追蹤' : '團隊協作'}
+        title={issueMode ? 'Issue 工作追蹤' : projectMode ? '專案協作' : '團隊協作'}
         description={
           issueMode
             ? '規劃、指派與追蹤工作，並保留留言及完整狀態歷程'
+            : projectMode
+              ? '集中開啟專案頻道，專案管理異動會即時同步至團隊通訊'
             : 'Cortex 內建的多人頻道、討論串、提及、表情、搜尋與即時訊息'
         }
         onRefresh={() => {
@@ -51,7 +55,9 @@ export default function CollaborationPage() {
         </div>
       )}
       {model &&
-        (issueMode ? (
+        (projectMode ? (
+          <ProjectCollaborationPanel />
+        ) : issueMode ? (
           <IssueTracker overview={model} onlyMine={section === 'my-issues'} />
         ) : (
           <TeamChannels overview={model} token={token} />

@@ -63,7 +63,7 @@ export default function DashboardPage() {
     { label: '完成檢索', value: stats.totalQueries, icon: Search, color: 'text-violet-600', bg: 'bg-violet-50', detail: '已完成 RAG 查詢' },
     { label: 'Issue', value: stats.issues, icon: ClipboardList, color: 'text-orange-600', bg: 'bg-orange-50', detail: `${stats.messages} 則團隊訊息` },
   ];
-  return <div className="mx-auto max-w-7xl space-y-6 px-4 pb-10">
+  return <div className="mx-auto max-w-11xl space-y-6 px-4 pb-10">
     <CommonHeroTitle icon={LayoutDashboard} title="系統總覽" description="文件、檢索、知識圖譜、團隊協作與系統服務的即時統計" onRefresh={() => { statsQuery.refetch(); trendQuery.refetch(); activityQuery.refetch(); healthQuery.refetch(); graphQuery.refetch(); }} />
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{kpis.map((item) => <div key={item.label} className="card flex items-center gap-4"><span className={`rounded-xl p-3 ${item.bg} dark:bg-opacity-20`}><item.icon className={`h-6 w-6 ${item.color}`} /></span><div><p className="text-xs uppercase tracking-wider text-gray-500">{item.label}</p><p className="text-2xl font-bold">{item.value}</p><p className="text-xs text-gray-400">{item.detail}</p></div></div>)}</div>
 

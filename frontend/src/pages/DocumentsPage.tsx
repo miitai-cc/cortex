@@ -25,11 +25,10 @@ function IndexMethodBadge({ method }: { method?: string }) {
   const isPageindex = method === 'pageindex';
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-        isPageindex
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isPageindex
           ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'
           : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-      }`}
+        }`}
     >
       {isPageindex ? <BookOpen className="w-3 h-3" /> : <AlignLeft className="w-3 h-3" />}
       {isPageindex ? 'PageIndex' : 'Chunker'}
@@ -39,10 +38,10 @@ function IndexMethodBadge({ method }: { method?: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { icon: any; cls: string; label: string }> = {
-    pending:    { icon: Clock,        cls: 'text-amber-500',             label: 'Pending' },
-    processing: { icon: Loader2,      cls: 'text-blue-500 animate-spin', label: 'Processing' },
-    indexed:    { icon: CheckCircle2, cls: 'text-emerald-500',           label: 'Indexed' },
-    failed:     { icon: FileText,     cls: 'text-red-500',               label: 'Failed' },
+    pending: { icon: Clock, cls: 'text-amber-500', label: 'Pending' },
+    processing: { icon: Loader2, cls: 'text-blue-500 animate-spin', label: 'Processing' },
+    indexed: { icon: CheckCircle2, cls: 'text-emerald-500', label: 'Indexed' },
+    failed: { icon: FileText, cls: 'text-red-500', label: 'Failed' },
   };
   const entry = map[status] ?? map['pending'];
   const Icon = entry.icon;
@@ -91,18 +90,17 @@ export default function DocumentsPage() {
   const docs: any[] = data?.data ?? [];
 
   return (
-    <div>
+    <div className="max-w-11xl mx-auto px-4 pb-10">
       <CommonHeroTitle icon={FileText} title={t('documents.title')} />
       <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">操作目錄：<span className="font-medium text-primary-600">{directory}</span></p>
 
       {/* Drop zone */}
       <div
         {...getRootProps()}
-        className={`mb-6 p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors ${
-          isDragActive
+        className={`mb-6 p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors ${isDragActive
             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
             : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
-        }`}
+          }`}
       >
         <input {...getInputProps()} />
         <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
@@ -134,13 +132,12 @@ export default function DocumentsPage() {
             {indexEvents.map((event) => (
               <div
                 key={event.id}
-                className={`rounded-lg border px-3 py-2 text-sm ${
-                  event.type === 'ERROR'
+                className={`rounded-lg border px-3 py-2 text-sm ${event.type === 'ERROR'
                     ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30'
                     : event.type === 'COMPLETE'
                       ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30'
                       : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/60'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium truncate">{event.filename}</span>
