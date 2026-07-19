@@ -14,7 +14,7 @@ export default function AiManagementSettingsPage() {
         <CommonHeroTitle
           icon={Cpu}
           title={t('nav.settings.aiManagement')}
-          description="管理 AI 模型端點與預設的 Context 模板"
+          description={t('settings.aiManagement.description')}
         />
       </div>
       
@@ -29,7 +29,7 @@ export default function AiManagementSettingsPage() {
             }`}
           >
             <Cpu className="h-4 w-4" />
-            AI Model 管理
+            {t('settings.aiManagement.modelsTab')}
           </button>
           <button
             onClick={() => setActiveTab('contexts')}
@@ -40,7 +40,7 @@ export default function AiManagementSettingsPage() {
             }`}
           >
             <Brain className="h-4 w-4" />
-            上下文管理
+            {t('settings.aiManagement.contextsTab')}
           </button>
           <button
             onClick={() => setActiveTab('ai-providers')}
@@ -51,7 +51,7 @@ export default function AiManagementSettingsPage() {
             }`}
           >
             <CloudCog className="h-4 w-4" />
-            AI Providers 管理
+            {t('settings.aiManagement.providersTab')}
           </button>
         </nav>
       </div>

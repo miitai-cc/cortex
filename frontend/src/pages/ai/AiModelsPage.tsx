@@ -86,14 +86,14 @@ function EmbeddingTab() {
         <div className="flex items-center gap-2 mb-1">
           <Layers className="w-4 h-4 text-primary-500" />
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            輸入文字 (Text to Embed)
+            {t('aiModels.embedding.inputLabel')}
           </span>
         </div>
         <textarea
           id="embed-input-text"
           className="input-field w-full resize-none"
           rows={4}
-          placeholder="輸入要向量化的文字，例如：Rust 的借用規則是什麼？"
+          placeholder={t('aiModels.embedding.placeholder')}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -101,7 +101,7 @@ function EmbeddingTab() {
           }}
         />
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400 dark:text-gray-500">Ctrl+Enter 送出</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{t('aiModels.embedding.shortcut')}</span>
           <button
             id="embed-submit-btn"
             onClick={handleEmbed}
@@ -109,7 +109,7 @@ function EmbeddingTab() {
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {loading ? '向量化中…' : 'Embed'}
+            {loading ? t('aiModels.embedding.vectorizing') : t('aiModels.embedding.embed')}
           </button>
         </div>
       </div>
@@ -129,16 +129,16 @@ function EmbeddingTab() {
           <div className="card">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-gray-400 dark:text-gray-500">模型</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{t('aiModels.embedding.model')}</span>
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{result.model}</span>
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-gray-400 dark:text-gray-500">向量維度</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{t('aiModels.embedding.dimension')}</span>
                 <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{result.dimension}</span>
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-gray-400 dark:text-gray-500">預覽</span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">前 {result.preview.length} 個維度</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{t('aiModels.embedding.preview')}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('aiModels.embedding.previewCount', { count: result.preview.length })}</span>
               </div>
             </div>
           </div>
@@ -149,7 +149,7 @@ function EmbeddingTab() {
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-primary-500" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Embedding 向量視覺化（前 {result.preview.length} 維）
+                  {t('aiModels.embedding.visualization', { count: result.preview.length })}
                 </span>
               </div>
               <button
@@ -158,7 +158,7 @@ function EmbeddingTab() {
                 className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                {copied ? '已複製' : '複製完整向量'}
+                {copied ? t('aiModels.embedding.copied') : t('aiModels.embedding.copyFull')}
               </button>
             </div>
 
@@ -199,10 +199,10 @@ function EmbeddingTab() {
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 dark:text-gray-500">
               <span className="flex items-center gap-1">
-                <span className="inline-block w-3 h-2 rounded-sm bg-blue-500" /> 正值
+                <span className="inline-block w-3 h-2 rounded-sm bg-blue-500" /> {t('aiModels.embedding.positive')}
               </span>
               <span className="flex items-center gap-1">
-                <span className="inline-block w-3 h-2 rounded-sm bg-red-400" /> 負值
+                <span className="inline-block w-3 h-2 rounded-sm bg-red-400" /> {t('aiModels.embedding.negative')}
               </span>
             </div>
           </div>
@@ -215,7 +215,7 @@ function EmbeddingTab() {
               className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline"
             >
               {showFull ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              {showFull ? '收起完整向量' : `展開完整向量 (${result.dimension} 個值)`}
+              {showFull ? t('aiModels.embedding.collapse') : t('aiModels.embedding.expand', { count: result.dimension })}
             </button>
             {showFull && (
               <pre className="mt-3 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto max-h-48 overflow-y-auto">
@@ -269,9 +269,9 @@ function RerankingTab() {
   };
 
   const scoreLabel = (score: number) => {
-    if (score >= 0.7) return { text: '高度相關', cls: 'text-emerald-600 dark:text-emerald-400' };
-    if (score >= 0.4) return { text: '部分相關', cls: 'text-amber-600 dark:text-amber-400' };
-    return { text: '低度相關', cls: 'text-rose-500 dark:text-rose-400' };
+    if (score >= 0.7) return { textKey: 'aiModels.reranking.highlyRelevant', cls: 'text-emerald-600 dark:text-emerald-400' };
+    if (score >= 0.4) return { textKey: 'aiModels.reranking.partiallyRelevant', cls: 'text-amber-600 dark:text-amber-400' };
+    return { textKey: 'aiModels.reranking.lowRelevance', cls: 'text-rose-500 dark:text-rose-400' };
   };
 
   const rankBadge = (rank: number) => {
@@ -287,13 +287,13 @@ function RerankingTab() {
       <div className="card space-y-4">
         <div className="flex items-center gap-2">
           <ArrowUpDown className="w-4 h-4 text-primary-500" />
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">查詢語句 (Query)</span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('aiModels.reranking.queryLabel')}</span>
         </div>
         <input
           id="rerank-query-input"
           type="text"
           className="input-field w-full"
-          placeholder="輸入查詢，例如：Rust 記憶體安全機制"
+          placeholder={t('aiModels.reranking.queryPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -305,7 +305,7 @@ function RerankingTab() {
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-primary-500" />
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              候選文件 (Documents)
+              {t('aiModels.reranking.documentsLabel')}
             </span>
           </div>
           <button
@@ -314,7 +314,7 @@ function RerankingTab() {
             className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-md bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50 border border-primary-200 dark:border-primary-800 transition-colors"
           >
             <Plus className="w-3 h-3" />
-            新增文件
+            {t('aiModels.reranking.addDocument')}
           </button>
         </div>
         {documents.map((doc, idx) => (
@@ -326,7 +326,7 @@ function RerankingTab() {
               id={`rerank-doc-${idx}`}
               className="input-field flex-1 resize-none text-sm"
               rows={2}
-              placeholder={`候選文件 ${idx + 1}`}
+              placeholder={t('aiModels.reranking.documentPlaceholder', { count: idx + 1 })}
               value={doc}
               onChange={(e) => updateDoc(idx, e.target.value)}
             />
@@ -348,7 +348,7 @@ function RerankingTab() {
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpDown className="w-4 h-4" />}
-            {loading ? 'Reranking…' : 'Rerank'}
+            {loading ? t('aiModels.reranking.reranking') : t('aiModels.reranking.rerank')}
           </button>
         </div>
       </div>
@@ -366,9 +366,9 @@ function RerankingTab() {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 px-1">
             <Cpu className="w-3.5 h-3.5" />
-            <span>模型：{result.model}</span>
+            <span>{t('aiModels.reranking.modelLabel', { model: result.model })}</span>
             <span className="mx-1">·</span>
-            <span>共 {result.results.length} 個文件排序結果</span>
+            <span>{t('aiModels.reranking.resultsLabel', { count: result.results.length })}</span>
           </div>
           {result.results.map((item, rank) => {
             const label = scoreLabel(item.relevance_score);
@@ -392,7 +392,7 @@ function RerankingTab() {
                       <span className={`text-xs font-semibold tabular-nums ${label.cls}`}>
                         {(item.relevance_score * 100).toFixed(1)}%
                       </span>
-                      <span className={`text-xs ${label.cls}`}>{label.text}</span>
+                      <span className={`text-xs ${label.cls}`}>{t(label.textKey)}</span>
                     </div>
                   </div>
                 </div>
@@ -416,6 +416,7 @@ const TABS: { id: TabId; label: string; icon: typeof Cpu }[] = [
 ];
 
 export default function AiModelsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { tab } = useParams<{ tab: string }>();
   const activeTab: TabId = tab === 'reranking' ? 'reranking' : 'embedding';
@@ -431,7 +432,7 @@ export default function AiModelsPage() {
       <CommonHeroTitle
         icon={Cpu}
         title="AI Models"
-        description="直接呼叫 Embedding 與 Reranking 模型進行測試"
+        description={t('aiModels.description')}
       />
 
       {/* Tab bar */}

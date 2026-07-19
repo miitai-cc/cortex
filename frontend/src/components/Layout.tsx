@@ -21,6 +21,9 @@ import {
 import DirectoryBrowser from './DirectoryBrowser';
 import BottomToolArea from './BottomToolArea';
 import TopQuickActions from './TopQuickActions';
+import TopNewsTicker from './common/TopNewsTicker';
+import TopApiStatus from './common/TopApiStatus';
+
 import SystemJobsTabs, { type SystemJobDefinition } from './SystemJobsTabs';
 import { DEFAULT_AUTHENTICATED_PATH } from '../utils/authNavigation';
 import { departmentConfigs } from '../config/departments';
@@ -194,7 +197,14 @@ export default function Layout() {
             project={selectedProject.name || '未選專案'}
             directory={directory}
           />
+          
+          <div className="flex-1 flex justify-center px-4">
+            <TopNewsTicker />
+          </div>
+
           <div className="flex shrink-0 items-center gap-3">
+            <TopApiStatus systemContext={systemContext} />
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
             <button
               onClick={toggleTheme}
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

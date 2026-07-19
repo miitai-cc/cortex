@@ -14,10 +14,12 @@ import {
   X,
   FileText,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import CommonHeroTitle from '../../components/common/CommonHeroTitle';
 import ContextPanel from '../../components/ContextPanel';
 
 export default function ChatPage() {
+  const { t } = useTranslation();
   const {
     conversations,
     activeConversationId,
@@ -178,8 +180,8 @@ export default function ChatPage() {
                 break;
               case 'done':
                 break;
-              case 'error':
-                appendStreamingContent(`\n\n錯誤：${data.message}`);
+               case 'error':
+                appendStreamingContent(`\n\n${t('chat.error')}${data.message}`);
                 break;
               default:
                 if (data.content) appendStreamingContent(data.content);
@@ -190,7 +192,7 @@ export default function ChatPage() {
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        appendStreamingContent('抱歉，連線發生錯誤，請稍後重試。');
+        appendStreamingContent(t('chat.connectionError'));
       }
     } finally {
       setLoading(false);
@@ -221,7 +223,7 @@ export default function ChatPage() {
             className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            新增對話
+            {t('chat.newChat')}
           </button>
         </div>
         <div className="flex-1 overflow-auto p-2 space-y-1">
@@ -245,7 +247,7 @@ export default function ChatPage() {
             </div>
           ))}
           {conversations.length === 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">尚無對話，點擊上方開始</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">{t('chat.noConversations')}</p>
           )}
         </div>
       </div>
@@ -253,7 +255,7 @@ export default function ChatPage() {
       {/* Chat area */}
       <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
         <div className="px-4 pt-4">
-          <CommonHeroTitle icon={MessageSquare} title="對話" description="與您的知識庫對話，支援多輪上下文理解與即時串流回覆" />
+          <CommonHeroTitle icon={MessageSquare} title={t('chat.title')} description={t('chat.description')} />
         </div>
         <div className="flex-1 overflow-auto">
           <div className="max-w-4xl mx-auto px-4 py-6">
@@ -262,16 +264,16 @@ export default function ChatPage() {
                 <div className="w-20 h-20 bg-primary-50 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mb-6">
                   <Sparkles className="w-10 h-10 text-primary-500" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Cortex 智慧檢索</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('chat.heroTitle')}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-md text-center">
-                  與您的知識庫對話，支援多輪上下文理解與即時串流回覆
+                  {t('chat.heroDescription')}
                 </p>
                 <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                   {[
-                    { q: '文件中有哪些重點概念？', desc: '知識摘要' },
-                    { q: '比較最近上傳文件的異同', desc: '文件比較' },
-                    { q: '整理相關研究主題的發展脈絡', desc: '脈絡分析' },
-                    { q: '根據文件回答具體問題', desc: '精確問答' },
+                    { q: '文件中有哪些重點概念？', desc: t('chat.suggestion.summary') },
+                    { q: '比較最近上傳文件的異同', desc: t('chat.suggestion.compare') },
+                    { q: '整理相關研究主題的發展脈絡', desc: t('chat.suggestion.context') },
+                    { q: '根據文件回答具體問題', desc: t('chat.suggestion.precise') },
                   ].map(({ q, desc }) => (
                     <button
                       key={q}
@@ -305,7 +307,7 @@ export default function ChatPage() {
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                   {msg.references && msg.references.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
-                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">參考來源：</p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('chat.references')}</p>
                       <div className="space-y-1">
                         {msg.references.slice(0, 3).map((ref: any, i: number) => (
                           <div key={i} className="text-xs text-gray-400 dark:text-gray-500 flex items-start gap-1">
@@ -344,13 +346,13 @@ export default function ChatPage() {
                         <span className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <span className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">思考中</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{t('chat.thinking')}</span>
                     </div>
                   )}
 
                   {hasRefs && (
                     <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
-                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">參考來源：</p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('chat.references')}</p>
                       <div className="space-y-1">
                         {streamingRefs.slice(0, 3).map((ref: any, i: number) => (
                           <div key={i} className="text-xs text-gray-400 dark:text-gray-500 flex items-start gap-1">
@@ -377,7 +379,7 @@ export default function ChatPage() {
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <div className="flex items-center gap-1.5 text-xs text-primary-600 bg-primary-50 dark:bg-primary-900/30 px-2.5 py-1 rounded-full">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span className="font-medium">{selectedDocs.length} 個上下文文件</span>
+                  <span className="font-medium">{selectedDocs.length}{t('chat.contextDocs')}</span>
                 </div>
                 {selectedDocs.slice(0, 3).map((doc) => (
                   <div
@@ -395,7 +397,7 @@ export default function ChatPage() {
                   </div>
                 ))}
                 {selectedDocs.length > 3 && (
-                  <span className="text-xs text-gray-400 dark:text-gray-500">+{selectedDocs.length - 3} 更多</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">+{selectedDocs.length - 3} {t('chat.more')}</span>
                 )}
               </div>
             )}
@@ -407,7 +409,7 @@ export default function ChatPage() {
                     ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400'
                     : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
-                title="上下文庫管理"
+                title={t('chat.contextManagement')}
               >
                 <BookOpen className="w-5 h-5" />
               </button>
@@ -415,7 +417,7 @@ export default function ChatPage() {
                 ref={inputRef}
                 type="text"
                 className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                placeholder="輸入您的問題... (Enter 發送)"
+                placeholder={t('chat.inputPlaceholder')}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
@@ -426,7 +428,7 @@ export default function ChatPage() {
                   onClick={handleStopStreaming}
                   className="px-5 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
                 >
-                  停止
+                  {t('chat.stop')}
                 </button>
               ) : (
                 <button

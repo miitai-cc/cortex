@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit3, FolderCog, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -6,6 +7,7 @@ import CommonHeroTitle from "../../components/common/CommonHeroTitle";
 import { knowledgeApi } from "../../services/api";
 
 export default function KnowledgeCategoriesPage() {
+  const { t } = useTranslation();
   const client = useQueryClient();
   const [form, setForm] = useState({
     name: "",
@@ -24,7 +26,7 @@ export default function KnowledgeCategoriesPage() {
     onSuccess: () => {
       setForm({ name: "", description: "", color: "#6366f1" });
       refresh();
-      toast.success("分類已建立");
+      toast.success(t("knowledge.categoryCreated"));
     },
   });
   const edit = async (item: any) => {

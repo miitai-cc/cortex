@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Award,
@@ -70,6 +71,7 @@ const emptyEditor: Editor = {
 };
 
 export default function KnowledgeCenterPage() {
+  const { t } = useTranslation();
   const { section = "documents" } = useParams();
   const client = useQueryClient();
   const [search, setSearch] = useState("");
@@ -120,9 +122,9 @@ export default function KnowledgeCenterPage() {
     onSuccess: () => {
       refresh();
       setEditor(null);
-      toast.success("知識資料已儲存");
+      toast.success(t("knowledge.saved"));
     },
-    onError: (e: any) => toast.error(e.response?.data?.error || "儲存失敗"),
+    onError: (e: any) => toast.error(e.response?.data?.error || t("knowledge.saveFailed")),
   });
   const review = useMutation({
     mutationFn: ({
@@ -135,7 +137,7 @@ export default function KnowledgeCenterPage() {
       reviewer_id?: string;
     }) => knowledgeApi.reviewRecord(id, { status, reviewer_id }),
     onSuccess: refresh,
-    onError: (e: any) => toast.error(e.response?.data?.error || "審核操作失敗"),
+    onError: (e: any) => toast.error(e.response?.data?.error || t("knowledge.reviewFailed")),
   });
   const interact = useMutation({
     mutationFn: (payload: any) => knowledgeApi.interact(payload),
@@ -162,7 +164,7 @@ export default function KnowledgeCenterPage() {
     onSuccess: () => {
       setExpertOpen(false);
       refresh();
-      toast.success("專家資料已更新");
+      toast.success(t("knowledge.expertUpdated"));
     },
   });
   const saveCategory = useMutation({
@@ -242,13 +244,13 @@ export default function KnowledgeCenterPage() {
     <div className="max-w-11xl mx-auto px-4 pb-10">
       <CommonHeroTitle
         icon={Library}
-        title="知識中心"
-        description="文件治理、FAQ、專案成果、專家協作、討論與知識評價"
+        title={t("knowledge.title")}
+        description={t("knowledge.description")}
       />
       <div className="mb-5 flex flex-wrap gap-3">
         <input
           className="input-field min-w-64 flex-1"
-          placeholder="搜尋標題或標籤…"
+          placeholder={t("knowledge.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -258,7 +260,7 @@ export default function KnowledgeCenterPage() {
             className="btn-secondary flex items-center gap-2"
           >
             <FolderCog className="h-4 w-4" />
-            分類設定
+            {t("knowledge.categorySettings")}
           </button>
         )}
         {section === "experts" ? (
@@ -278,7 +280,7 @@ export default function KnowledgeCenterPage() {
             className="btn-primary flex items-center gap-2"
           >
             <Edit3 className="h-4 w-4" />
-            編輯我的專家資料
+            {t("knowledge.editMyExpertProfile")}
           </button>
         ) : (
           <button
@@ -286,7 +288,7 @@ export default function KnowledgeCenterPage() {
             className="btn-primary flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
-            新增知識
+            {t("knowledge.addKnowledge")}
           </button>
         )}
       </div>
@@ -297,7 +299,7 @@ export default function KnowledgeCenterPage() {
               <UserRoundSearch className="h-9 w-9 text-primary-600" />
               <h2 className="mt-2 font-semibold">{item.displayName}</h2>
               <p className="mt-1 text-sm text-gray-500">
-                {item.bio || "尚未填寫簡介"}
+                {item.bio || t("knowledge.noBio")}
               </p>
               <div className="mt-3 flex flex-wrap gap-1">
                 {item.expertise.map((tag: string) => (
@@ -313,21 +315,21 @@ export default function KnowledgeCenterPage() {
                 <span>{item.contact}</span>
                 <span className="flex items-center gap-1 text-amber-600">
                   <Award className="h-4 w-4" />
-                  {item.points} 點
+                  {t("knowledge.points", { count: item.points })}
                 </span>
               </div>
             </article>
           ))}
           {!model.experts.length && (
             <div className="card col-span-full py-12 text-center text-gray-500">
-              尚無專家資料，請建立您的專家檔案。
+              {t("knowledge.noExperts")}
             </div>
           )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {isLoading ? (
-            <p>載入中…</p>
+            <p>{t("knowledge.loading")}</p>
           ) : (
             records.map((record: RecordItem) => (
               <article className="card flex flex-col" key={record.id}>
@@ -345,15 +347,15 @@ export default function KnowledgeCenterPage() {
                   </div>
                   {record.ownerId === current.id && (
                     <div className="flex gap-2">
-                      <button onClick={() => edit(record)} title="編輯">
+                      <button onClick={() => edit(record)} title={t("knowledge.edit")}>
                         <Edit3 className="h-4 w-4 text-gray-400" />
                       </button>
                       <button
                         onClick={() =>
-                          window.confirm(`確定刪除「${record.title}」？`) &&
+                          window.confirm(t("knowledge.deleteRecord", { title: record.title })) &&
                           knowledgeApi.deleteRecord(record.id).then(refresh)
                         }
-                        title="刪除"
+                        title={t("knowledge.delete")}
                       >
                         <Trash2 className="h-4 w-4 text-red-400" />
                       </button>
@@ -397,7 +399,7 @@ export default function KnowledgeCenterPage() {
                       followed.has(record.id) ? "text-primary-600" : ""
                     }
                   >
-                    <Bookmark className="inline h-4 w-4" /> 關注
+                    <Bookmark className="inline h-4 w-4" /> {t("knowledge.follow")}
                   </button>
                   <button
                     onClick={() =>
@@ -432,16 +434,16 @@ export default function KnowledgeCenterPage() {
                       disabled={!record.reviewerId}
                       className="btn-primary mt-3 disabled:opacity-50"
                     >
-                      送交指定審核人
-                    </button>
+                       {t("knowledge.submitToReviewer")}
+                     </button>
                   )}
               </article>
             ))
           )}
           {!records.length && (
             <div className="card col-span-full py-12 text-center text-gray-500">
-              此分類目前沒有內容
-            </div>
+              {t("knowledge.noContent")}
+             </div>
           )}
         </div>
       )}
@@ -450,7 +452,7 @@ export default function KnowledgeCenterPage() {
           <div className="max-h-[92vh] w-full max-w-4xl overflow-auto rounded-2xl bg-white p-5 dark:bg-gray-900">
             <div className="mb-4 flex justify-between">
               <h2 className="font-semibold">
-                {editor.id ? "編輯知識" : "新增知識"}
+                {editor.id ? t("knowledge.editKnowledge") : t("knowledge.addKnowledgeTitle")}
               </h2>
               <button onClick={() => setEditor(null)}>
                 <X className="h-5 w-5" />
@@ -459,7 +461,7 @@ export default function KnowledgeCenterPage() {
             <div className="grid gap-3 md:grid-cols-2">
               <input
                 className="input-field md:col-span-2"
-                placeholder="標題"
+                placeholder={t("knowledge.titleField")}
                 value={editor.title}
                 onChange={(e) =>
                   setEditor({ ...editor, title: e.target.value })
@@ -472,9 +474,9 @@ export default function KnowledgeCenterPage() {
                   setEditor({ ...editor, record_type: e.target.value })
                 }
               >
-                <option value="document">文件</option>
-                <option value="faq">FAQ</option>
-                <option value="project">專案產出</option>
+                <option value="document">{t("knowledge.document")}</option>
+                <option value="faq">{t("knowledge.faq")}</option>
+                <option value="project">{t("knowledge.project")}</option>
               </select>
               <select
                 className="input-field"
@@ -483,14 +485,14 @@ export default function KnowledgeCenterPage() {
                   setEditor({ ...editor, category: e.target.value })
                 }
               >
-                <option value="未分類">未分類</option>
+                <option value="未分類">{t("knowledge.uncategorized")}</option>
                 {model.categories.map((x: any) => (
                   <option key={x.id}>{x.name}</option>
                 ))}
               </select>
               <input
                 className="input-field md:col-span-2"
-                placeholder="標籤，以逗號分隔"
+                placeholder={t("knowledge.tagsPlaceholder")}
                 value={editor.tags}
                 onChange={(e) => setEditor({ ...editor, tags: e.target.value })}
               />
@@ -505,7 +507,7 @@ export default function KnowledgeCenterPage() {
                   })
                 }
               >
-                <option value="">不連結文件</option>
+                <option value="">{t("knowledge.noLinkDocument")}</option>
                 {model.documents.map((x: any) => (
                   <option value={x.id} key={x.id}>
                     {x.title}
@@ -523,7 +525,7 @@ export default function KnowledgeCenterPage() {
                   })
                 }
               >
-                <option value="">不連結內容版本</option>
+                <option value="">{t("knowledge.noLinkContent")}</option>
                 {model.contents.map((x: any) => (
                   <option value={x.id} key={x.id}>
                     {x.title} ({x.status})
@@ -537,7 +539,7 @@ export default function KnowledgeCenterPage() {
                   setEditor({ ...editor, reviewer_id: e.target.value })
                 }
               >
-                <option value="">選擇審核人</option>
+                <option value="">{t("knowledge.selectReviewer")}</option>
                 {model.users
                   .filter((x: any) => x.id !== current.id)
                   .map((x: any) => (
@@ -550,7 +552,7 @@ export default function KnowledgeCenterPage() {
                 <>
                   <textarea
                     className="input-field md:col-span-2"
-                    placeholder="FAQ 問題"
+                    placeholder={t("knowledge.faqQuestion")}
                     value={editor.question}
                     onChange={(e) =>
                       setEditor({ ...editor, question: e.target.value })
@@ -558,7 +560,7 @@ export default function KnowledgeCenterPage() {
                   />
                   <textarea
                     className="input-field min-h-32 md:col-span-2"
-                    placeholder="標準答案"
+                    placeholder={t("knowledge.standardAnswer")}
                     value={editor.answer}
                     onChange={(e) =>
                       setEditor({ ...editor, answer: e.target.value })
@@ -570,7 +572,7 @@ export default function KnowledgeCenterPage() {
                 <>
                   <textarea
                     className="input-field min-h-32 md:col-span-2"
-                    placeholder="專案摘要"
+                    placeholder={t("knowledge.projectSummary")}
                     value={editor.project_summary}
                     onChange={(e) =>
                       setEditor({ ...editor, project_summary: e.target.value })
@@ -578,7 +580,7 @@ export default function KnowledgeCenterPage() {
                   />
                   <textarea
                     className="input-field md:col-span-2"
-                    placeholder={"產出項目，每行一項"}
+                    placeholder={t("knowledge.deliverables")}
                     value={editor.deliverables}
                     onChange={(e) =>
                       setEditor({ ...editor, deliverables: e.target.value })
@@ -589,7 +591,7 @@ export default function KnowledgeCenterPage() {
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button className="btn-secondary" onClick={() => setEditor(null)}>
-                取消
+                {t("knowledge.cancel")}
               </button>
               <button
                 className="btn-primary flex items-center gap-2"
@@ -597,7 +599,7 @@ export default function KnowledgeCenterPage() {
                 onClick={submitRecord}
               >
                 <Save className="h-4 w-4" />
-                儲存草稿
+                {t("knowledge.saveDraft")}
               </button>
             </div>
           </div>
@@ -607,7 +609,7 @@ export default function KnowledgeCenterPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-5 dark:bg-gray-900">
             <div className="flex justify-between">
-              <h2 className="font-semibold">分類主題設定</h2>
+              <h2 className="font-semibold">{t("knowledge.categorySettingsTitle")}</h2>
               <button onClick={() => setCategoryOpen(false)}>
                 <X className="h-5 w-5" />
               </button>
@@ -627,7 +629,7 @@ export default function KnowledgeCenterPage() {
                     <div className="ml-auto flex gap-2">
                       <button
                         onClick={() => {
-                          const name = window.prompt("分類名稱", item.name);
+                          const name = window.prompt(t("knowledge.categoryName"), item.name);
                           if (name)
                             knowledgeApi
                               .updateCategory(item.id, {
@@ -642,7 +644,7 @@ export default function KnowledgeCenterPage() {
                       </button>
                       <button
                         onClick={() =>
-                          confirm(`刪除分類 ${item.name}？`) &&
+                          confirm(t("knowledge.confirmDeleteCategory", { name: item.name })) &&
                           knowledgeApi.deleteCategory(item.id).then(refresh)
                         }
                       >
@@ -655,7 +657,7 @@ export default function KnowledgeCenterPage() {
             </div>
             <input
               className="input-field mb-2"
-              placeholder="新分類名稱"
+              placeholder={t("knowledge.categoryName")}
               value={category.name}
               onChange={(e) =>
                 setCategory({ ...category, name: e.target.value })
@@ -663,7 +665,7 @@ export default function KnowledgeCenterPage() {
             />
             <input
               className="input-field mb-2"
-              placeholder="分類說明"
+              placeholder={t("knowledge.categoryDescription")}
               value={category.description}
               onChange={(e) =>
                 setCategory({ ...category, description: e.target.value })
@@ -682,7 +684,7 @@ export default function KnowledgeCenterPage() {
                 disabled={!category.name.trim()}
                 onClick={() => saveCategory.mutate()}
               >
-                新增分類
+                {t("knowledge.addCategory")}
               </button>
             </div>
           </div>
@@ -692,7 +694,7 @@ export default function KnowledgeCenterPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
           <div className="w-full max-w-xl rounded-2xl bg-white p-5 dark:bg-gray-900">
             <div className="flex justify-between">
-              <h2 className="font-semibold">我的專家資料</h2>
+              <h2 className="font-semibold">{t("knowledge.myExpertProfile")}</h2>
               <button onClick={() => setExpertOpen(false)}>
                 <X className="h-5 w-5" />
               </button>
@@ -700,7 +702,7 @@ export default function KnowledgeCenterPage() {
             <div className="mt-4 space-y-3">
               <input
                 className="input-field"
-                placeholder="顯示名稱"
+                placeholder={t("knowledge.displayName")}
                 value={expert.display_name}
                 onChange={(e) =>
                   setExpert({ ...expert, display_name: e.target.value })
@@ -708,7 +710,7 @@ export default function KnowledgeCenterPage() {
               />
               <input
                 className="input-field"
-                placeholder="專長，以逗號分隔"
+                placeholder={t("knowledge.expertise")}
                 value={expert.expertise}
                 onChange={(e) =>
                   setExpert({ ...expert, expertise: e.target.value })
@@ -716,13 +718,13 @@ export default function KnowledgeCenterPage() {
               />
               <textarea
                 className="input-field"
-                placeholder="專家簡介"
+                placeholder={t("knowledge.bio")}
                 value={expert.bio}
                 onChange={(e) => setExpert({ ...expert, bio: e.target.value })}
               />
               <input
                 className="input-field"
-                placeholder="聯絡方式"
+                placeholder={t("knowledge.contact")}
                 value={expert.contact}
                 onChange={(e) =>
                   setExpert({ ...expert, contact: e.target.value })
@@ -733,7 +735,7 @@ export default function KnowledgeCenterPage() {
               className="btn-primary mt-4 w-full"
               onClick={() => saveExpert.mutate()}
             >
-              儲存專家資料
+              {t("knowledge.saveExpertProfile")}
             </button>
           </div>
         </div>
@@ -744,7 +746,7 @@ export default function KnowledgeCenterPage() {
             <div className="flex justify-between">
               <div>
                 <h2 className="font-semibold">{discussion.title}</h2>
-                <p className="text-xs text-gray-500">討論、評價與最佳解</p>
+                <p className="text-xs text-gray-500">{t("knowledge.discussionSubtitle")}</p>
               </div>
               <button onClick={() => setDiscussion(null)}>
                 <X className="h-5 w-5" />
@@ -786,7 +788,7 @@ export default function KnowledgeCenterPage() {
                   <div className="flex text-xs text-gray-500">
                     <strong>{item.username}</strong>
                     {item.isBest && (
-                      <span className="ml-2 text-emerald-600">最佳解</span>
+                      <span className="ml-2 text-emerald-600">{t("knowledge.bestAnswer")}</span>
                     )}
                     {discussion.ownerId === current.id && !item.isBest && (
                       <button
@@ -801,7 +803,7 @@ export default function KnowledgeCenterPage() {
                             )
                         }
                       >
-                        設為最佳解
+                        {t("knowledge.setAsBestAnswer")}
                       </button>
                     )}
                   </div>
@@ -809,13 +811,13 @@ export default function KnowledgeCenterPage() {
                 </div>
               ))}
               {!comments.length && (
-                <p className="py-8 text-center text-gray-500">尚無討論內容</p>
+                <p className="py-8 text-center text-gray-500">{t("knowledge.noComments")}</p>
               )}
             </div>
             <div className="mt-4 flex gap-2">
               <input
                 className="input-field"
-                placeholder="輸入留言或解答…"
+                placeholder={t("knowledge.commentPlaceholder")}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onKeyDown={(e) =>
@@ -827,7 +829,7 @@ export default function KnowledgeCenterPage() {
                 disabled={!comment.trim()}
                 onClick={() => addComment.mutate()}
               >
-                送出
+                {t("knowledge.send")}
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useResearchStore } from '../../stores/researchStore';
 import { researchApi } from '../../services/api';
 import {
@@ -23,14 +24,6 @@ const STATUS_ICONS: Record<string, typeof Loader2> = {
   error: AlertCircle,
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  queued: '佇列中',
-  searching: '搜尋中',
-  synthesizing: '綜合分析中',
-  completed: '完成',
-  error: '錯誤',
-};
-
 const STATUS_COLORS: Record<string, string> = {
   queued: 'text-gray-400',
   searching: 'text-blue-500',
@@ -40,6 +33,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function DeepResearchPage() {
+  const { t } = useTranslation();
   const { tasks, addTask, updateTask, removeTask } = useResearchStore();
   const [topic, setTopic] = useState('');
   const [queriesText, setQueriesText] = useState('');
@@ -80,19 +74,19 @@ export default function DeepResearchPage() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <CommonHeroTitle icon={FlaskConical} title="深層研究" description="自動化網路搜尋與綜合分析，擴展知識邊界" />
+        <CommonHeroTitle icon={FlaskConical} title={t('research.title')} description={t('research.description')} />
         <div className="space-y-3">
           <input
             type="text"
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-900 dark:text-gray-100"
-            placeholder="輸入研究主題..."
+            placeholder={t('research.topicPlaceholder')}
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleStart()}
           />
           <textarea
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none dark:bg-gray-900 dark:text-gray-100"
-            placeholder="搜尋查詢（每行一組，留空則自動生成）"
+            placeholder={t('research.queriesPlaceholder')}
             rows={3}
             value={queriesText}
             onChange={(e) => setQueriesText(e.target.value)}
@@ -107,7 +101,7 @@ export default function DeepResearchPage() {
             ) : (
               <Plus className="w-4 h-4" />
             )}
-            {running ? '研究中...' : '開始研究'}
+            {running ? t('research.running') : t('research.start')}
           </button>
         </div>
       </div>
@@ -117,8 +111,8 @@ export default function DeepResearchPage() {
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
             <FlaskConical className="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-lg font-medium text-gray-500 dark:text-gray-400">尚無研究任務</p>
-            <p className="text-sm">輸入主題後點擊「開始研究」</p>
+            <p className="text-lg font-medium text-gray-500 dark:text-gray-400">{t('research.noTasks')}</p>
+            <p className="text-sm">{t('research.noTasksHint')}</p>
           </div>
         ) : (
           <div className="space-y-4 max-w-3xl">
@@ -151,7 +145,7 @@ export default function DeepResearchPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{task.topic}</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        {STATUS_LABELS[task.status]} · {task.queries.length} 個查詢
+                        {t(`research.status.${task.status}`)} · {task.queries.length}{t('research.queries')}
                       </p>
                     </div>
                     <button
@@ -167,7 +161,7 @@ export default function DeepResearchPage() {
                     <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
                       {task.results && task.results.length > 0 && (
                         <div className="mt-3 mb-3">
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">搜尋結果</p>
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('research.searchResults')}</p>
                           {task.results.map((src, i) => (
                             <div key={i} className="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded mb-1">
                               {src.length > 200 ? src.slice(0, 200) + '...' : src}
@@ -178,7 +172,7 @@ export default function DeepResearchPage() {
 
                       {synthesis && (
                         <div className="mt-2">
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">綜合分析</p>
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('research.synthesis')}</p>
                           <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                             {synthesis}
                           </div>

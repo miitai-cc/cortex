@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useResearchStore } from '../../stores/researchStore';
 import { researchApi } from '../../services/api';
 import {
@@ -14,15 +15,16 @@ import {
 } from 'lucide-react';
 import CommonHeroTitle from '../../components/common/CommonHeroTitle';
 
-const STATUS_CONFIG: Record<string, { icon: typeof Loader2; label: string; color: string }> = {
-  queued: { icon: Loader2, label: '佇列', color: 'text-gray-400' },
-  searching: { icon: Search, label: '搜尋', color: 'text-blue-500' },
-  synthesizing: { icon: FileText, label: '綜合', color: 'text-purple-500' },
-  completed: { icon: CheckCircle2, label: '完成', color: 'text-green-500' },
-  error: { icon: AlertCircle, label: '錯誤', color: 'text-red-500' },
+const STATUS_CONFIG: Record<string, { icon: typeof Loader2; color: string }> = {
+  queued: { icon: Loader2, color: 'text-gray-400' },
+  searching: { icon: Search, color: 'text-blue-500' },
+  synthesizing: { icon: FileText, color: 'text-purple-500' },
+  completed: { icon: CheckCircle2, color: 'text-green-500' },
+  error: { icon: AlertCircle, color: 'text-red-500' },
 };
 
 export default function ResearchPanel() {
+  const { t } = useTranslation();
   const { tasks, panelOpen, setPanelOpen, addTask, updateTask, removeTask } = useResearchStore();
   const [topic, setTopic] = useState('');
   const [running, setRunning] = useState(false);
@@ -48,7 +50,7 @@ export default function ResearchPanel() {
   return (
     <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-xl z-30 flex flex-col">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <CommonHeroTitle icon={FlaskConical} title="深層研究" description="自動化網路搜尋與綜合分析，擴展知識邊界" />
+        <CommonHeroTitle icon={FlaskConical} title={t('research.title')} description={t('research.description')} />
         <button onClick={() => setPanelOpen(false)} className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 z-10">
           <PanelRightClose className="w-4 h-4" />
         </button>
@@ -59,7 +61,7 @@ export default function ResearchPanel() {
           <input
             type="text"
             className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-900 dark:text-gray-100"
-            placeholder="輸入研究主題..."
+            placeholder={t('research.topicPlaceholder')}
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleStart()}
@@ -76,7 +78,7 @@ export default function ResearchPanel() {
 
       <div className="flex-1 overflow-auto p-3 space-y-2">
         {tasks.length === 0 ? (
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">尚無研究任務</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">{t('research.noTasks')}</p>
         ) : (
           tasks.map((task) => {
             const cfg = STATUS_CONFIG[task.status];
@@ -86,7 +88,7 @@ export default function ResearchPanel() {
                 <div className="flex items-center gap-2 mb-1">
                   <Icon className={`w-4 h-4 ${cfg.color} ${task.status === 'queued' || task.status === 'searching' || task.status === 'synthesizing' ? 'animate-spin' : ''}`} />
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate flex-1">{task.topic}</span>
-                  <span className={`text-xs ${cfg.color}`}>{cfg.label}</span>
+                  <span className={`text-xs ${cfg.color}`}>{t(`research.status.${task.status}Short`)}</span>
                   <button onClick={() => removeTask(task.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500">
                     <X className="w-3 h-3" />
                   </button>

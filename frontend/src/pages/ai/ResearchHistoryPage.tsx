@@ -4,12 +4,12 @@ import { Clock, CheckCircle2, AlertCircle, Search, FileText, Loader2 } from 'luc
 import { useResearchStore } from '../../stores/researchStore';
 import CommonHeroTitle from '../../components/common/CommonHeroTitle';
 
-const STATUS_CONFIG: Record<string, { icon: typeof Loader2; label: string; color: string; bg: string }> = {
-  queued: { icon: Loader2, label: '佇列', color: 'text-gray-400', bg: 'bg-gray-50' },
-  searching: { icon: Search, label: '搜尋中', color: 'text-blue-500', bg: 'bg-blue-50' },
-  synthesizing: { icon: FileText, label: '綜合分析中', color: 'text-purple-500', bg: 'bg-purple-50' },
-  completed: { icon: CheckCircle2, label: '完成', color: 'text-green-500', bg: 'bg-green-50' },
-  error: { icon: AlertCircle, label: '錯誤', color: 'text-red-500', bg: 'bg-red-50' },
+const STATUS_CONFIG: Record<string, { icon: typeof Loader2; color: string; bg: string }> = {
+  queued: { icon: Loader2, color: 'text-gray-400', bg: 'bg-gray-50' },
+  searching: { icon: Search, color: 'text-blue-500', bg: 'bg-blue-50' },
+  synthesizing: { icon: FileText, color: 'text-purple-500', bg: 'bg-purple-50' },
+  completed: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50' },
+  error: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50' },
 };
 
 export default function ResearchHistoryPage() {
@@ -21,17 +21,17 @@ export default function ResearchHistoryPage() {
 
   return (
     <div>
-      <CommonHeroTitle icon={Clock} title={t('nav.graph.history')} description="檢視所有已完成的研究任務" />
+      <CommonHeroTitle icon={Clock} title={t('nav.graph.history')} description={t('research.historyDescription')} />
 
       {sorted.length === 0 ? (
         <div className="card text-center py-12">
           <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">尚無研究紀錄</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('research.noHistory')}</p>
           <button
             onClick={() => navigate('/cortex/graph/research')}
             className="mt-4 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
-            開始研究
+            {t('research.startResearch')}
           </button>
         </div>
       ) : (
@@ -50,14 +50,14 @@ export default function ResearchHistoryPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{task.topic}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {cfg.label} · {task.queries.length} 個查詢 · {new Date(task.createdAt).toLocaleString()}
+                      {t(`research.status.${task.status}`)} · {task.queries.length}{t('research.queries')} · {new Date(task.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <button
                     onClick={() => removeTask(task.id)}
                     className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
                   >
-                    刪除
+                    {t('research.delete')}
                   </button>
                 </div>
                 {task.synthesis && (
