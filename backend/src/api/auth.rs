@@ -35,23 +35,48 @@ pub async fn login(
         .map_err(|_| AppError::BadRequest("Invalid request body".into()))?;
 
     match state.config.login_type {
-        LoginType::Mock => Ok(mock_login(&state, &login_req)),
+        LoginType::Mock => mock_login(&state, &login_req).await,
         LoginType::Normal | LoginType::Sso => db_login(&state, &login_req).await,
     }
 }
 
-fn mock_login(state: &AppState, req: &LoginRequest) -> Json<serde_json::Value> {
-    let id = generate_id();
-    let token = create_token(&id, &req.username, "admin", &state.config.jwt_secret);
-    Json(serde_json::json!({
-        "token": token,
-        "user": {
-            "id": id,
-            "username": req.username,
-            "email": format!("{}@cortex.local", req.username),
-            "role": "admin"
+async fn mock_login(
+    state: &AppState,
+    req: &LoginRequest,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let username = req.username.trim();
+    if username.is_empty() || username.chars().count() > 128 {
+        return Err(AppError::BadRequest("Invalid username".into()));
+    }
+    let user = match UserRepo::find_by_username(&state.db.pool, username).await? {
+        Some(user) => user,
+        None => {
+            let password = if req.password.is_empty() {
+                format!("mock-{}", generate_id())
+            } else {
+                req.password.clone()
+            };
+            UserRepo::create(
+                &state.db.pool,
+                &generate_id(),
+                username,
+                &format!("{username}@cortex.local"),
+                &hash_password(&password),
+                "admin",
+            )
+            .await?
         }
-    }))
+    };
+    let token = create_token(
+        &user.id,
+        &user.username,
+        &user.role,
+        &state.config.jwt_secret,
+    );
+    Ok(Json(serde_json::json!({
+        "token": token,
+        "user": user
+    })))
 }
 
 async fn db_login(

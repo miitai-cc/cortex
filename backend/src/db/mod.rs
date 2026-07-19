@@ -405,6 +405,27 @@ impl Database {
             text = text_type,
             ts = portable_timestamp_default
         );
+        let create_user_profiles = format!(
+            "CREATE TABLE IF NOT EXISTS user_profiles (
+                user_id {text} PRIMARY KEY, company {text} NOT NULL DEFAULT '',
+                department_key {text}, display_name {text}, job_title {text},
+                permission_summary {text}, updated_by {text}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_system_admin_records = format!(
+            "CREATE TABLE IF NOT EXISTS system_admin_records (
+                id {text} PRIMARY KEY, entity_type {text} NOT NULL,
+                record_key {text} NOT NULL, name {text} NOT NULL, description {text},
+                data {text} NOT NULL DEFAULT '{{}}', is_active {bool} NOT NULL DEFAULT 1,
+                sort_order INTEGER NOT NULL DEFAULT 0, created_by {text} NOT NULL,
+                created_at {ts}, updated_at {ts}, UNIQUE(entity_type, record_key)
+            )",
+            text = text_type,
+            bool = boolean_type,
+            ts = portable_timestamp_default
+        );
 
         sqlx::query(&create_documents).execute(&self.pool).await?;
         sqlx::query(&create_chunks).execute(&self.pool).await?;
@@ -493,6 +514,12 @@ impl Database {
         sqlx::query(&create_workflow_tasks)
             .execute(&self.pool)
             .await?;
+        sqlx::query(&create_user_profiles)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_system_admin_records)
+            .execute(&self.pool)
+            .await?;
         sqlx::query(
             "CREATE INDEX IF NOT EXISTS idx_department_items_department_updated ON department_items(department, updated_at)",
         )
@@ -525,6 +552,16 @@ impl Database {
         .await?;
         sqlx::query(
             "CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assignee_status ON workflow_tasks(assignee_id, status)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_system_admin_records_type_order ON system_admin_records(entity_type, sort_order, name)",
+        )
+        .execute(&self.pool)
+        .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_user_profiles_department ON user_profiles(department_key)",
         )
         .execute(&self.pool)
         .await?;

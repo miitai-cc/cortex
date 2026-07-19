@@ -15,7 +15,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::{any::AnyRow, Row};
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 const TASK_ACTIONS: &[&str] = &["approved", "rejected"];
 const EXECUTABLE_NODE_TYPES: &[&str] = &[
@@ -198,6 +198,79 @@ fn validate_publishable(graph: &WorkflowGraph) -> Result<(), AppError> {
     if !ends.iter().any(|node| reachable.contains(&node.id)) {
         return Err(AppError::BadRequest(
             "No end node is reachable from start".into(),
+        ));
+    }
+    for node in graph
+        .nodes
+        .iter()
+        .filter(|node| reachable.contains(&node.id) && !decorative(node))
+    {
+        let outgoing = graph
+            .edges
+            .iter()
+            .filter(|edge| edge.source == node.id)
+            .collect::<Vec<_>>();
+        if node.node_type == "conditionNode" {
+            let has_true = outgoing
+                .iter()
+                .any(|edge| edge.source_handle.as_deref() == Some("source-right"));
+            let has_false = outgoing
+                .iter()
+                .any(|edge| edge.source_handle.as_deref() == Some("source-bottom"));
+            if !has_true || !has_false {
+                return Err(AppError::BadRequest(
+                    "Every condition node requires right (true) and bottom (false) connections"
+                        .into(),
+                ));
+            }
+        } else if node.node_type == "endNode" && !outgoing.is_empty() {
+            return Err(AppError::BadRequest(
+                "End nodes cannot have outgoing connections".into(),
+            ));
+        } else if node.node_type != "endNode" && outgoing.len() != 1 {
+            return Err(AppError::BadRequest(format!(
+                "Node '{}' requires exactly one outgoing connection",
+                node.data
+                    .get("label")
+                    .and_then(Value::as_str)
+                    .unwrap_or(&node.id)
+            )));
+        }
+    }
+    let executable_ids = graph
+        .nodes
+        .iter()
+        .filter(|node| reachable.contains(&node.id) && !decorative(node))
+        .map(|node| node.id.clone())
+        .collect::<HashSet<_>>();
+    let mut indegree = executable_ids
+        .iter()
+        .map(|id| (id.clone(), 0_usize))
+        .collect::<HashMap<_, _>>();
+    for edge in &graph.edges {
+        if executable_ids.contains(&edge.source) && executable_ids.contains(&edge.target) {
+            *indegree.entry(edge.target.clone()).or_default() += 1;
+        }
+    }
+    let mut acyclic_queue = indegree
+        .iter()
+        .filter_map(|(id, degree)| (*degree == 0).then_some(id.clone()))
+        .collect::<VecDeque<_>>();
+    let mut visited = 0_usize;
+    while let Some(id) = acyclic_queue.pop_front() {
+        visited += 1;
+        for edge in graph.edges.iter().filter(|edge| edge.source == id) {
+            if let Some(degree) = indegree.get_mut(&edge.target) {
+                *degree -= 1;
+                if *degree == 0 {
+                    acyclic_queue.push_back(edge.target.clone());
+                }
+            }
+        }
+    }
+    if visited != executable_ids.len() {
+        return Err(AppError::BadRequest(
+            "Workflow cycles are not allowed; the graph must be a DAG".into(),
         ));
     }
     Ok(())
@@ -977,6 +1050,23 @@ mod tests {
             serde_json::json!({"id":"agent","type":"agentNode","data":{}}),
         ];
         let edges = vec![serde_json::json!({"source":"start","target":"end"})];
+        assert!(validate_publishable(&parse_graph(&nodes, &edges).unwrap()).is_err());
+    }
+
+    #[test]
+    fn rejects_cycles() {
+        let nodes = vec![
+            serde_json::json!({"id":"start","type":"startNode","data":{}}),
+            serde_json::json!({"id":"condition","type":"conditionNode","data":{}}),
+            serde_json::json!({"id":"work","type":"basicNode","data":{}}),
+            serde_json::json!({"id":"end","type":"endNode","data":{}}),
+        ];
+        let edges = vec![
+            serde_json::json!({"source":"start","target":"condition"}),
+            serde_json::json!({"source":"condition","sourceHandle":"source-right","target":"work"}),
+            serde_json::json!({"source":"condition","sourceHandle":"source-bottom","target":"end"}),
+            serde_json::json!({"source":"work","target":"condition"}),
+        ];
         assert!(validate_publishable(&parse_graph(&nodes, &edges).unwrap()).is_err());
     }
 }

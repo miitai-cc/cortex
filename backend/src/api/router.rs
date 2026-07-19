@@ -1,6 +1,6 @@
 use crate::api::{
     admin, auth, chat, codex, collaboration, content, dashboard, departments, documents, graph,
-    health, indexing, knowledge, projects, rag, research, settings, workflows,
+    health, indexing, knowledge, projects, rag, research, settings, system_admin, workflows,
 };
 use crate::core::state::AppState;
 use crate::middleware::error_handler::handle_error;
@@ -31,6 +31,7 @@ pub fn build_router(state: AppState) -> Router {
                 .push(collaboration::router())
                 .push(research::router())
                 .push(settings::router())
+                .push(system_admin::router())
                 .push(indexing::router())
                 .push(workflows::router()),
         )

@@ -17,6 +17,11 @@ import type {
   WorkflowOverview,
   WorkflowTask,
 } from '../types/workflows';
+import type {
+  AdminRecordPage,
+  AdminRecordPayload,
+  SystemContext,
+} from '../types/systemAdmin';
 import {
   LOGIN_PATH,
   rememberCurrentHashRoute,
@@ -365,4 +370,16 @@ export interface SystemSettingsResponse extends SystemSettingsPayload {
 export const systemSettingsApi = {
   get: () => api.get<SystemSettingsResponse>('/settings/system'),
   update: (data: SystemSettingsPayload) => api.put('/settings/system', data),
+};
+
+export const systemAdminApi = {
+  context: () => api.get<SystemContext>('/settings/context'),
+  list: (entity: string, params: { page: number; pageSize: number; search?: string }) =>
+    api.get<AdminRecordPage>(`/settings/admin/${encodeURIComponent(entity)}`, { params }),
+  create: (entity: string, data: AdminRecordPayload) =>
+    api.post(`/settings/admin/${encodeURIComponent(entity)}`, data),
+  update: (entity: string, id: string, data: AdminRecordPayload) =>
+    api.put(`/settings/admin/${encodeURIComponent(entity)}/${encodeURIComponent(id)}`, data),
+  delete: (entity: string, id: string) =>
+    api.delete(`/settings/admin/${encodeURIComponent(entity)}/${encodeURIComponent(id)}`),
 };

@@ -16,4 +16,5 @@ pub mod rag;
 pub mod research;
 pub mod router;
 pub mod settings;
+pub mod system_admin;
 pub mod workflows;

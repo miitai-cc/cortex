@@ -337,6 +337,12 @@ export default function ProjectManagementPage() {
   useEffect(() => {
     if (!selectedId && model?.selectedProject?.id) setSearchParams({ project: model.selectedProject.id }, { replace: true });
   }, [model?.selectedProject?.id, selectedId, setSearchParams]);
+  useEffect(() => {
+    if (!project) return;
+    const selection = { id: project.id, name: `[${project.code}] ${project.name}` };
+    localStorage.setItem('cortex-selected-project', JSON.stringify(selection));
+    window.dispatchEvent(new CustomEvent('cortex-project-changed', { detail: selection }));
+  }, [project?.code, project?.id, project?.name]);
   useEffect(() => setRecordType(config.recordType ?? 'task'), [config.recordType]);
 
   const refresh = () => {
@@ -351,7 +357,13 @@ export default function ProjectManagementPage() {
   });
   const deleteProject = useMutation({
     mutationFn: (id: string) => projectApi.deleteProject(id),
-    onSuccess: () => { toast.success('專案已刪除，協作頻道歷程已保留'); setSearchParams({}); refresh(); },
+    onSuccess: () => {
+      toast.success('專案已刪除，協作頻道歷程已保留');
+      localStorage.removeItem('cortex-selected-project');
+      window.dispatchEvent(new CustomEvent('cortex-project-changed', { detail: { name: '未選專案' } }));
+      setSearchParams({});
+      refresh();
+    },
     onError: (error) => toast.error(errorMessage(error, '專案刪除失敗')),
   });
   const saveRecord = useMutation({

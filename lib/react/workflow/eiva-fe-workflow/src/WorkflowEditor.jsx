@@ -944,7 +944,7 @@ export default function WorkflowEditor({
               <div className="modal-field">
                 <label>{t('workflow.properties.autoSize')}</label>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '32px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#fff', fontSize: '13px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--c-text)', fontSize: '13px' }}>
                     <input type="checkbox" checked={!!data.autoSize} onChange={(e) => updateField('autoSize', e.target.checked)} />
                     {t('workflow.properties.autoSizeDesc')}
                   </label>
@@ -953,11 +953,11 @@ export default function WorkflowEditor({
               <div className="modal-field">
                 <label>{t('workflow.properties.style')}</label>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '32px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#fff', fontSize: '13px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--c-text)', fontSize: '13px' }}>
                     <input type="checkbox" checked={data.fontWeight === 'bold'} onChange={(e) => updateField('fontWeight', e.target.checked ? 'bold' : 'normal')} />
                     {t('workflow.properties.bold')}
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#fff', fontSize: '13px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--c-text)', fontSize: '13px' }}>
                     <input type="checkbox" checked={data.fontStyle === 'italic'} onChange={(e) => updateField('fontStyle', e.target.checked ? 'italic' : 'normal')} />
                     {t('workflow.properties.italic')}
                   </label>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from 'eiva-fe-security';
 import Layout from './components/Layout';
@@ -12,8 +12,8 @@ import RecentDocumentsPage from './pages/RecentDocumentsPage';
 import SearchPage from './pages/SearchPage';
 import SearchHybridPage from './pages/SearchHybridPage';
 import DocumentDetailPage from './pages/DocumentDetailPage';
-import SettingsPage from './pages/SettingsPage';
 import SettingsSystemPage from './pages/SettingsSystemPage';
+import SystemAdministrationPage from './pages/SystemAdministrationPage';
 import ChatPage from './pages/ChatPage';
 import ChatHistoryPage from './pages/ChatHistoryPage';
 import KnowledgeGraphPage from './pages/KnowledgeGraphPage';
@@ -32,7 +32,6 @@ import KnowledgeCategoriesPage from './pages/KnowledgeCategoriesPage';
 import CollaborationPage from './pages/CollaborationPage';
 import DepartmentPortalPage from './pages/DepartmentPortalPage';
 import ProjectManagementPage from './pages/ProjectManagementPage';
-import WorkflowDesignerPage from './pages/WorkflowDesignerPage';
 import WorkflowManagementPage from './pages/WorkflowManagementPage';
 import NotFoundPage from './pages/NotFoundPage';
 import {
@@ -48,6 +47,8 @@ import {
 type LoginLocationState = {
   from?: string;
 };
+
+const WorkflowDesignerPage = lazy(() => import('./pages/WorkflowDesignerPage'));
 
 function ProtectedLayout() {
   const { isAuthenticated, token } = useAuthStore();
@@ -107,7 +108,7 @@ function App() {
           <Route path="/cortex/dashboard/activity" element={<DashboardActivityPage />} />
           <Route path="/cortex/departments/:department" element={<DepartmentPortalPage />} />
           <Route path="/cortex/projects/:section?" element={<ProjectManagementPage />} />
-          <Route path="/cortex/workflows/designer" element={<WorkflowDesignerPage />} />
+          <Route path="/cortex/workflows/designer" element={<Suspense fallback={<div className="card m-6 py-14 text-center text-gray-500">載入流程設計器…</div>}><WorkflowDesignerPage /></Suspense>} />
           <Route path="/cortex/workflows/:section?" element={<WorkflowManagementPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
           <Route path="/cortex/chat/history" element={<ChatHistoryPage />} />
@@ -128,8 +129,9 @@ function App() {
           <Route path="/cortex/graph/isolated" element={<GraphIsolatedPage />} />
           <Route path="/cortex/research" element={<DeepResearchPage />} />
           <Route path="/cortex/research/history" element={<ResearchHistoryPage />} />
-          <Route path="/cortex/settings" element={<SettingsPage />} />
+          <Route path="/cortex/settings" element={<Navigate to="/cortex/settings/system" replace />} />
           <Route path="/cortex/settings/system" element={<SettingsSystemPage />} />
+          <Route path="/cortex/settings/:section" element={<SystemAdministrationPage />} />
           <Route path="/cortex/ai-models" element={<Navigate to="/cortex/ai-models/embedding" replace />} />
           <Route path="/cortex/ai-models/:tab" element={<AiModelsPage />} />
           <Route path="*" element={<NotFoundPage />} />

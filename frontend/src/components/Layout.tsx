@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from 'eiva-fe-security';
@@ -57,6 +58,11 @@ import {
   FileClock,
   GitBranch,
   Workflow,
+  ShieldCheck,
+  Bell,
+  Box,
+  Server,
+  CloudCog,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
@@ -65,6 +71,8 @@ import TopQuickActions from './TopQuickActions';
 import SystemJobsTabs, { type SystemJobDefinition } from './SystemJobsTabs';
 import { DEFAULT_AUTHENTICATED_PATH } from '../utils/authNavigation';
 import { departmentConfigs } from '../config/departments';
+import { systemAdminApi } from '../services/api';
+import type { SystemUserContext } from '../types/systemAdmin';
 
 interface SubMenuItem {
   labelKey: string;
@@ -227,17 +235,28 @@ const navItems: NavItem[] = [
     icon: Settings,
     labelKey: 'nav.settings',
     children: [
-      { labelKey: 'nav.settings.language', icon: Globe, to: '/cortex/settings' },
       { labelKey: 'nav.settings.system', icon: Sliders, to: '/cortex/settings/system' },
+      { labelKey: 'nav.settings.users', icon: Users, to: '/cortex/settings/users' },
+      { labelKey: 'nav.settings.departments', icon: Building2, to: '/cortex/settings/departments' },
+      { labelKey: 'nav.settings.roles', icon: UserCheck, to: '/cortex/settings/roles' },
+      { labelKey: 'nav.settings.permissions', icon: ShieldCheck, to: '/cortex/settings/permissions' },
+      { labelKey: 'nav.settings.menus', icon: List, to: '/cortex/settings/menus' },
+      { labelKey: 'nav.settings.enterpriseSystems', icon: Server, to: '/cortex/settings/enterprise-systems' },
+      { labelKey: 'nav.settings.aiModels', icon: Cpu, to: '/cortex/settings/ai-models' },
+      { labelKey: 'nav.settings.contexts', icon: Brain, to: '/cortex/settings/contexts' },
+      { labelKey: 'nav.settings.channels', icon: Hash, to: '/cortex/settings/channels' },
+      { labelKey: 'nav.settings.schedules', icon: CalendarDays, to: '/cortex/settings/schedules' },
+      { labelKey: 'nav.settings.aiProviders', icon: CloudCog, to: '/cortex/settings/ai-providers' },
+      { labelKey: 'nav.settings.autoApprove', icon: UserCheck, to: '/cortex/settings/auto-approve' },
+      { labelKey: 'nav.settings.autoComplete', icon: Sparkles, to: '/cortex/settings/auto-complete' },
+      { labelKey: 'nav.settings.notifications', icon: Bell, to: '/cortex/settings/notifications' },
+      { labelKey: 'nav.settings.commitMessages', icon: GitBranch, to: '/cortex/settings/commit-messages' },
+      { labelKey: 'nav.settings.sandboxes', icon: Box, to: '/cortex/settings/sandboxes' },
+      { labelKey: 'nav.settings.languages', icon: Globe, to: '/cortex/settings/languages' },
+      { labelKey: 'nav.settings.about', icon: CircleHelp, to: '/cortex/settings/about' },
     ],
   },
 ];
-
-const systemJobs: SystemJobDefinition[] = navItems.flatMap((item) => item.children.map((child) => ({
-  path: child.to,
-  labelKey: child.labelKey,
-  icon: child.icon,
-})));
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
@@ -247,6 +266,54 @@ export default function Layout() {
   const { togglePanel, panelOpen: researchPanelOpen } = useResearchStore();
   const { theme, toggleTheme } = useThemeStore();
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
+  const [directory, setDirectory] = useState(() => localStorage.getItem('cortex-doc-directory') || '/');
+  const [selectedProject, setSelectedProject] = useState<{ id?: string; name: string }>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('cortex-selected-project') || '{"name":"未選專案"}');
+    } catch {
+      return { name: '未選專案' };
+    }
+  });
+  const systemContext = useQuery({ queryKey: ['system-context'], queryFn: systemAdminApi.context, staleTime: 60_000 });
+  const account = user as typeof user & { role?: string };
+  const admin = (user?.roles?.includes('admin') ?? false) || account?.role === 'admin';
+  const visibleNavItems = useMemo(() => {
+    const policies = systemContext.data?.data.menus ?? [];
+    if (!policies.length) return navItems;
+    return navItems
+      .filter((item) => item.to === '/cortex/settings' && admin
+        ? true
+        : policies.find((policy) => policy.path === item.to)?.enabled !== false)
+      .sort((left, right) => {
+        const leftOrder = policies.find((policy) => policy.path === left.to)?.sortOrder ?? navItems.indexOf(left);
+        const rightOrder = policies.find((policy) => policy.path === right.to)?.sortOrder ?? navItems.indexOf(right);
+        return leftOrder - rightOrder;
+      });
+  }, [admin, systemContext.data?.data.menus]);
+  const systemJobs: SystemJobDefinition[] = useMemo(() => visibleNavItems.flatMap((item) => item.children.map((child) => ({
+    path: child.to,
+    labelKey: child.labelKey,
+    icon: child.icon,
+  }))), [visibleNavItems]);
+
+  useEffect(() => {
+    const directoryChanged = (event: Event) => setDirectory((event as CustomEvent<string>).detail || localStorage.getItem('cortex-doc-directory') || '/');
+    const projectChanged = (event: Event) => setSelectedProject((event as CustomEvent<{ id?: string; name: string }>).detail || { name: '未選專案' });
+    const storageChanged = (event: StorageEvent) => {
+      if (event.key === 'cortex-doc-directory') setDirectory(event.newValue || '/');
+      if (event.key === 'cortex-selected-project') {
+        try { setSelectedProject(JSON.parse(event.newValue || '{"name":"未選專案"}')); } catch { setSelectedProject({ name: '未選專案' }); }
+      }
+    };
+    window.addEventListener('cortex-directory-changed', directoryChanged);
+    window.addEventListener('cortex-project-changed', projectChanged);
+    window.addEventListener('storage', storageChanged);
+    return () => {
+      window.removeEventListener('cortex-directory-changed', directoryChanged);
+      window.removeEventListener('cortex-project-changed', projectChanged);
+      window.removeEventListener('storage', storageChanged);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -267,7 +334,7 @@ export default function Layout() {
       || item.children.some((child) => location.pathname === child.to);
   };
 
-  const activeNavItem = navItems.find(matchesCurrentRoute);
+  const activeNavItem = visibleNavItems.find(matchesCurrentRoute);
 
   const handleNavClick = (item: NavItem) => {
     if (activeNavItem?.to === item.to && leftPanelOpen) {
@@ -285,7 +352,7 @@ export default function Layout() {
           <Brain className="w-7 h-7 text-primary-600" />
         </div>
         <nav className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.children[0].to}
@@ -359,7 +426,12 @@ export default function Layout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="topToolArea shrink-0 flex items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="min-w-0 flex-1" />
+          <CurrentWorkContext
+            context={systemContext.data?.data.currentUser}
+            fallbackUsername={user?.username ?? 'unknown'}
+            project={selectedProject.name || '未選專案'}
+            directory={directory}
+          />
           <div className="flex shrink-0 items-center gap-3">
             <button
               onClick={toggleTheme}
@@ -415,6 +487,26 @@ export default function Layout() {
       >
         {researchPanelOpen ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
       </button>
+    </div>
+  );
+}
+
+function CurrentWorkContext({ context, fallbackUsername, project, directory }: {
+  context?: SystemUserContext;
+  fallbackUsername: string;
+  project: string;
+  directory: string;
+}) {
+  const company = context?.company || '未設定公司';
+  const department = context?.departmentName || '未設定部門';
+  const username = context?.username || fallbackUsername;
+  const name = context?.displayName || fallbackUsername;
+  const title = context?.jobTitle || '未設定職稱';
+  const permission = context?.permissionLabel || context?.roleName || '未設定權限';
+  const text = `${company}/${department}/${username}:${name}-${title}:${permission} === ${project} : ${directory}`;
+  return (
+    <div className="min-w-0 flex-1 truncate text-xs font-medium text-gray-600 dark:text-gray-300" title={text} aria-label="目前使用者與工作上下文">
+      {text}
     </div>
   );
 }

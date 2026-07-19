@@ -125,4 +125,30 @@
   .userGuideContent strong {
     @apply font-semibold text-gray-900 dark:text-white;
   }
+
+  .workflow-editor-container {
+    --c-bg: #f8fafc;
+    --c-surface: #ffffff;
+    --c-surface-alt: #f1f5f9;
+    --c-border: #e2e8f0;
+    --c-border-focus: #94a3b8;
+    --c-text: #0f172a;
+    --c-text-muted: #64748b;
+    --c-primary: #2563eb;
+    --c-primary-hover: #1d4ed8;
+    --c-primary-ring: rgb(37 99 235 / 15%);
+  }
+
+  .dark .workflow-editor-container {
+    --c-bg: #111827;
+    --c-surface: #1f2937;
+    --c-surface-alt: #374151;
+    --c-border: #4b5563;
+    --c-border-focus: #9ca3af;
+    --c-text: #f3f4f6;
+    --c-text-muted: #9ca3af;
+    --c-primary: #3b82f6;
+    --c-primary-hover: #60a5fa;
+    --c-primary-ring: rgb(59 130 246 / 22%);
+  }
 }

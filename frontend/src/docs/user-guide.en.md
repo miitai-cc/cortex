@@ -75,14 +75,26 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Use the Project selector at the top of each screen. The `project` URL parameter preserves the current project.
 - Project changes are posted to the matching channel under Team Collaboration → Project Collaboration.
 
-## 7. Personal Workspace
+## 7. Workflow Management
+
+- Workflow Overview summarizes definitions, published workflows, running/waiting/failed instances, and pending tasks.
+- Workflow Designer integrates `eiva-fe-workflow` with draggable Start, AI Agent, Tool, Skill, MCP, Variable, Calculation, Condition, Human Task, End, Swimlane, and Note nodes.
+- Save a draft to create an immutable version, then Publish to run structural validation. Only published workflows can run.
+- A Condition node uses its right connector for true and bottom connector for false. Calculations and conditions can use scalar Payload fields.
+- Set a Basic Work node to Human Task / Approval, then select an assignee and due period. The instance pauses and appears in My Workflow Tasks.
+- Approving a task resumes execution at the next node. Rejecting it stops the instance while preserving the reason and audit trail.
+- Definitions & Versions supports designing, publishing, running, and archiving. Archiving preserves versions and execution audits.
+- Workflow Instances shows input, output, and step history. Execution Monitoring refreshes active and failed instances every five seconds.
+- External I/O tools, Skills, and MCP nodes run through governed Cortex adapters. An unconfigured connector never performs direct external I/O.
+
+## 8. Personal Workspace
 
 - Following manages bookmarked and monitored documents.
 - My Reviews lists reviews waiting for the current user.
 - Contributions & Points shows personal knowledge contributions.
 - My Project Work summarizes participating projects, assigned tasks, upcoming milestones, and pending audits.
 
-## 8. AI Chat and Team Collaboration
+## 9. AI Chat and Team Collaboration
 
 ### AI Chat
 
@@ -105,7 +117,7 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Lists projects and their automatically managed channels.
 - Open the exact project channel or return to project information. Project changes notify channel users through WebSocket.
 
-## 9. Documents and content
+## 10. Documents and content
 
 ### Working directories
 
@@ -127,20 +139,20 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Each edit creates a version and may enable RAG and PageIndex.
 - Use the delete icon beside a document to remove it.
 
-## 10. Search, Knowledge Center, and Knowledge Graph
+## 11. Search, Knowledge Center, and Knowledge Graph
 
 - Full-text Search uses textual conditions.
 - Hybrid Search combines keywords with vector semantics.
 - Knowledge Center manages documents, categories, drafts, reviews, FAQs, experts, and community ratings.
 - Knowledge Graph visualizes document and concept relationships. Community and isolated-node views help improve knowledge connectivity.
 
-## 11. Deep Research and AI Models
+## 12. Deep Research and AI Models
 
 - Deep Research runs multi-step research tasks and preserves their history.
 - AI Models tests Embedding and Reranking endpoints.
 - Indexing tools run GitNexus or Graphify while streaming output.
 
-## 12. System Settings
+## 13. System Settings
 
 ### Language and theme
 
@@ -153,19 +165,28 @@ Cortex includes CEO, CFO, CTO, Sales, Administration, Human Resources, Procureme
 - Administrators maintain the footer contact and common links. Links must use HTTP or HTTPS.
 - Model settings require a backend restart. Footer settings update immediately.
 
-## 13. Footer information
+### Organization and system administration
+
+- The left side of `topToolArea` displays “Company / Department / account: name-title: permission === active project : document directory”. It updates when the active project or directory changes.
+- User, Department, Role, Permission, and About management maintain the organization and identity values shown there. Role permission codes are comma-separated; `*` grants full access.
+- Menu Management controls main-category visibility and ordering. Administrators retain access to System Settings to prevent accidental lockout.
+- Enterprise Systems, AI Models, Contexts, Channels, Schedules, AI Providers, Auto-Approve, Auto complete, Notification, Commit Message, Sandbox, Languages, and About all provide paginated grids, live cross-field search, create, edit, and delete operations.
+- AI Provider records store only a secret name or secret-manager reference; never enter a plaintext API key in the settings data.
+
+## 14. Footer information
 
 The bottom area shows copyright, system version, support contact, and common links. Select an email, phone number, or link to open the appropriate application.
 
-## 14. Troubleshooting
+## 15. Troubleshooting
 
 - **Returned to sign-in after login:** Clear an expired session, sign in again, and verify matching backend JWT settings.
 - **A document remains Processing:** Check System Health and upload events, then verify Embedding, PageIndex, and Qdrant services.
 - **AI Prompt is unavailable:** The function is administrator-only. Verify that the backend can run `codex` and that Codex is authenticated.
 - **Real-time messages disconnect:** Verify the WebSocket proxy, backend connectivity, and login token.
 - **Settings cannot be saved:** Only administrators can edit settings. Model endpoints and common links must use HTTP or HTTPS.
+- **The top user context shows “not configured”:** Complete company, department, name, and title under System Settings → User Management, and verify that the assigned role is active.
 
-## 15. Security guidance
+## 16. Security guidance
 
 - Do not paste passwords, API keys, tokens, or sensitive personal data into messages, prompts, or documents.
 - AI Prompt can operate on the configured workspace. Review the task scope and expected changes before running it.

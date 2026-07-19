@@ -9,7 +9,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { systemSettingsApi } from '../services/api';
+import { systemAdminApi, systemSettingsApi } from '../services/api';
 
 export default function BottomToolArea() {
   const { t } = useTranslation();
@@ -19,6 +19,12 @@ export default function BottomToolArea() {
     staleTime: 60_000,
   });
   const model = settings.data?.data;
+  const systemContext = useQuery({
+    queryKey: ['system-context'],
+    queryFn: systemAdminApi.context,
+    staleTime: 60_000,
+  });
+  const about = systemContext.data?.data.about;
   const [linksOpen, setLinksOpen] = useState(false);
   const linksMenuRef = useRef<HTMLDivElement>(null);
   const commonLinks = model?.commonLinks ?? [];
@@ -42,9 +48,9 @@ export default function BottomToolArea() {
   return (
     <footer className="bottomToolArea" aria-label={t('bottom.systemInformation')}>
       <div className="flex shrink-0 items-center gap-2">
-        <span>© {new Date().getFullYear()} Cortex</span>
+        <span>{about?.copyright || `© ${new Date().getFullYear()} ${about?.companyName || about?.productName || 'Cortex'}`}</span>
         <span className="text-gray-300 dark:text-gray-600">|</span>
-        <span>{t('bottom.version')} v{model?.systemVersion ?? '…'}</span>
+        <span>{t('bottom.version')} v{about?.version || model?.systemVersion || '…'}</span>
       </div>
 
       <div className="flex min-w-0 items-center gap-2">
@@ -100,4 +106,3 @@ export default function BottomToolArea() {
     </footer>
   );
 }
-
