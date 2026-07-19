@@ -63,6 +63,7 @@ import {
   Boxes,
   Warehouse,
   CalendarClock,
+  LayoutGrid,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { DEFAULT_AUTHENTICATED_PATH } from '../utils/authNavigation';
@@ -258,6 +259,7 @@ export const navItems: NavItem[] = [
     children: [
       { labelKey: 'nav.workflows.overview', icon: Network, to: '/cortex/workflows/overview' },
       { labelKey: 'nav.workflows.designer', icon: Workflow, to: '/cortex/workflows/designer' },
+      { labelKey: 'nav.workflows.screenDesigner', icon: LayoutGrid, to: '/cortex/workflows/screen-designer' },
       { labelKey: 'nav.workflows.definitions', icon: GitBranch, to: '/cortex/workflows/definitions' },
       { labelKey: 'nav.workflows.tasks', icon: UserCheck, to: '/cortex/workflows/tasks' },
       { labelKey: 'nav.workflows.history', icon: FileClock, to: '/cortex/workflows/history' },

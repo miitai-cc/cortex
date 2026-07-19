@@ -23,6 +23,10 @@ const RECORD_TYPES: &[&str] = &[
     "member",
     "requirement",
     "audit",
+    "meeting",
+    "email",
+    "customer",
+    "vendor",
 ];
 
 #[derive(Deserialize)]
@@ -158,6 +162,10 @@ fn statuses_for(record_type: &str) -> Option<&'static [&'static str]> {
         "member" => Some(&["active", "pending", "inactive"]),
         "requirement" => Some(&["draft", "approved", "in_progress", "verified", "rejected"]),
         "audit" => Some(&["planned", "in_review", "passed", "failed", "follow_up"]),
+        "meeting" => Some(&["scheduled", "completed", "cancelled"]),
+        "email" => Some(&["inbox", "sent", "archived"]),
+        "customer" => Some(&["active", "inactive"]),
+        "vendor" => Some(&["active", "evaluating", "inactive"]),
         _ => None,
     }
 }
@@ -167,6 +175,10 @@ fn default_status(record_type: &str) -> &'static str {
         "task" => "backlog",
         "member" => "active",
         "requirement" => "draft",
+        "meeting" => "scheduled",
+        "email" => "inbox",
+        "customer" => "active",
+        "vendor" => "active",
         _ => "planned",
     }
 }

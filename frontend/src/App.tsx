@@ -55,6 +55,7 @@ type LoginLocationState = {
 };
 
 const WorkflowDesignerPage = lazy(() => import('./pages/WorkflowDesignerPage'));
+const ScreenDesignerPage = lazy(() => import('./pages/ScreenDesignerPage'));
 
 function ProtectedLayout() {
   const { isAuthenticated, token } = useAuthStore();
@@ -117,6 +118,7 @@ function App() {
           <Route path="/cortex/documents" element={<DocumentsPage />} />
           <Route path="/cortex/projects/:section?" element={<ProjectManagementPage />} />
           <Route path="/cortex/workflows/designer" element={<Suspense fallback={<div className="card m-6 py-14 text-center text-gray-500">載入流程設計器…</div>}><WorkflowDesignerPage /></Suspense>} />
+          <Route path="/cortex/workflows/screen-designer" element={<Suspense fallback={<div className="card m-6 py-14 text-center text-gray-500">載入畫面設計器…</div>}><ScreenDesignerPage /></Suspense>} />
           <Route path="/cortex/workflows/:section?" element={<WorkflowManagementPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
           <Route path="/cortex/chat/directory" element={<CommonFeaturesPage />} />

@@ -52,9 +52,10 @@ fn department_item_types(department: &str) -> Option<&'static [&'static str]> {
         "cto" => Some(&["roadmap", "architecture", "innovation", "technical_risk"]),
         "sales" => Some(&["opportunity", "pipeline", "forecast", "customer_action"]),
         "administration" => Some(&["announcement", "facility", "general_request", "asset"]),
-        "hr" => Some(&["recruitment", "onboarding", "training", "people_action"]),
+        "hr" => Some(&["recruitment", "onboarding", "training", "people_action", "personnel", "attendance", "payroll"]),
         "procurement" => Some(&["purchase_request", "supplier", "contract", "quotation"]),
         "mis" => Some(&["service_request", "incident", "it_asset", "maintenance"]),
+        "org_management" => Some(&["vendor", "customer", "product", "resource", "meeting", "finance", "contract", "asset", "inventory", "warehouse"]),
         "sales-projects" => Some(&[
             "customer_project",
             "milestone",
