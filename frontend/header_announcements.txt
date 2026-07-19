@@ -1,0 +1,9 @@
+      <header className="mb-12 pt-6 text-center">
+        <div className="inline-flex items-center justify-center p-4 bg-rose-100 dark:bg-rose-900/30 rounded-full mb-6 shadow-inner">
+          <Megaphone className="h-12 w-12 text-rose-500" />
+        </div>
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
+          {t('personal.announcements.title')}
+        </h1>
+        <p className="text-gray-500 mt-3 text-lg">{t('personal.announcements.desc')}</p>
+      </header>

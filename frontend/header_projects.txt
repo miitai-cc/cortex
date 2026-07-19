@@ -1,0 +1,15 @@
+      <header className="mb-10 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent inline-flex items-center gap-3">
+            <LayoutDashboard className="h-10 w-10 text-blue-600" />
+            {t('personal.projects.title')}
+          </h1>
+          <p className="text-gray-500 mt-2 text-lg">{t('personal.projects.desc')}</p>
+        </div>
+        <Link 
+          to="/cortex/projects/information" 
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-blue-600 font-semibold rounded-xl border-2 border-blue-100 dark:border-blue-900 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
+        >
+          {t('personal.projects.viewAll')} <ArrowRight className="h-5 w-5" />
+        </Link>
+      </header>

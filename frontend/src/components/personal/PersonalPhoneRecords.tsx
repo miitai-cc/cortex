@@ -1,3 +1,5 @@
+import CommonHeroTitle from '../../components/common/CommonHeroTitle';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { departmentApi } from '../../services/api';
 import { Phone, Search, Plus, PhoneIncoming, Clock } from 'lucide-react';
@@ -5,6 +7,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function PersonalPhoneRecords() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
@@ -43,31 +46,36 @@ export default function PersonalPhoneRecords() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="max-w-[1400px] mx-auto px-4 pb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <CommonHeroTitle
+        icon={Phone}
+        title={t('personal.phoneRecords.title')}
+        description={t('personal.phoneRecords.desc')}
+        theme={{ titleColor: '#2563eb' }}
+        extraButtons={[{ label: t('personal.phoneRecords.add'), icon: Plus, onClick: handleAdd }]}
+      />
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Search phone records..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:border-gray-700"
+            placeholder={t('personal.phoneRecords.search')} 
+            className="w-full pl-12 pr-4 py-3 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 dark:text-gray-200 shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button onClick={handleAdd} className="btn-primary whitespace-nowrap flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Add Record
-        </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 dark:border-gray-700/50 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500">Loading records...</div>
+          <div className="p-8 text-center text-gray-500">{t('personal.phoneRecords.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-gray-500 flex flex-col items-center">
             <Phone className="h-12 w-12 text-gray-300 mb-4" />
-            <p className="text-lg font-medium text-gray-700 dark:text-gray-300">No phone records found</p>
-            <p className="text-sm">Click "Add Record" to log your first call.</p>
+            <p className="text-lg font-medium text-gray-700 dark:text-gray-300">{t('personal.phoneRecords.empty')}</p>
+            <p className="text-sm">Click "{t('personal.phoneRecords.add')}" to log your first call.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-700">

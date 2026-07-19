@@ -1,0 +1,11 @@
+      <header className="mb-10 pt-6 flex items-center gap-5">
+        <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/20 transform -rotate-3">
+          <Settings className="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            {t('personal.settings.title')}
+          </h1>
+          <p className="text-gray-500 mt-1 text-lg">{t('personal.settings.desc')}</p>
+        </div>
+      </header>

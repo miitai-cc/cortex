@@ -1,0 +1,7 @@
+      <header className="mb-10 pt-6">
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent inline-flex items-center gap-3">
+          <ClipboardCheck className="h-10 w-10 text-violet-600" />
+          {t('personal.review.title')}
+        </h1>
+        <p className="text-gray-500 mt-2 text-lg">{t('personal.review.desc')}</p>
+      </header>

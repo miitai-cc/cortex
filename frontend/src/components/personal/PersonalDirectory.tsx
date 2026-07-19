@@ -1,9 +1,12 @@
+import CommonHeroTitle from '../../components/common/CommonHeroTitle';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { usersDirectoryApi } from '../../services/api';
 import { Search, UserCircle, Building2, Mail } from 'lucide-react';
 import { useState } from 'react';
 
 export default function PersonalDirectory() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
 
@@ -29,24 +32,32 @@ export default function PersonalDirectory() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="max-w-[1600px] mx-auto px-4 pb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <CommonHeroTitle
+        icon={Users}
+        title={t('personal.directory.title')}
+        description={t('personal.directory.desc')}
+        theme={{ titleColor: '#ea580c' }}
+      />
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/50 dark:border-gray-700/50 mb-8">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Search by name, email, or title..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:border-gray-700"
+            placeholder={t('personal.directory.search')} 
+            className="w-full pl-12 pr-4 py-3 bg-transparent border-none focus:ring-0 text-gray-700 dark:text-gray-200 placeholder-gray-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
         <select 
-          className="border rounded-lg px-4 py-2 bg-white dark:bg-gray-800 dark:border-gray-700 min-w-[200px]"
+          className="border-none bg-transparent py-3 pl-4 pr-10 text-gray-700 dark:text-gray-200 font-medium focus:ring-0 cursor-pointer min-w-[200px]"
           value={departmentFilter}
           onChange={(e) => setDepartmentFilter(e.target.value)}
         >
-          <option value="">All Departments</option>
+          <option value="">{t('personal.directory.allDepts')}</option>
           {departments.map(dept => (
             <option key={dept} value={dept}>{dept}</option>
           ))}

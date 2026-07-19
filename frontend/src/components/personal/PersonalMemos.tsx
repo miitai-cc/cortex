@@ -1,3 +1,5 @@
+import CommonHeroTitle from '../../components/common/CommonHeroTitle';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { departmentApi } from '../../services/api';
 import { StickyNote, Search, Plus, Trash2 } from 'lucide-react';
@@ -13,6 +15,7 @@ const COLORS = [
 ];
 
 export default function PersonalMemos() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
@@ -62,21 +65,26 @@ export default function PersonalMemos() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="max-w-[1600px] mx-auto px-4 pb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <CommonHeroTitle
+        icon={StickyNote}
+        title={t('personal.memos.title')}
+        description={t('personal.memos.desc')}
+        theme={{ titleColor: '#eab308' }}
+        extraButtons={[{ label: t('personal.memos.new'), icon: Plus, onClick: handleAdd }]}
+      />
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Search memos..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:border-gray-700"
+            placeholder={t('personal.memos.search')} 
+            className="w-full pl-12 pr-4 py-3 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all text-gray-700 dark:text-gray-200 shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button onClick={handleAdd} className="btn-primary whitespace-nowrap flex items-center gap-2">
-          <Plus className="h-4 w-4" /> New Memo
-        </button>
       </div>
 
       {isLoading ? (
@@ -84,8 +92,8 @@ export default function PersonalMemos() {
       ) : filtered.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center text-gray-500 flex flex-col items-center border border-gray-100 dark:border-gray-700 shadow-sm">
           <StickyNote className="h-12 w-12 text-gray-300 mb-4" />
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-300">No memos found</p>
-          <p className="text-sm">Click "New Memo" to add a sticky note.</p>
+          <p className="text-lg font-medium text-gray-700 dark:text-gray-300">{t('personal.memos.empty')}</p>
+          <p className="text-sm">Click "{t('personal.memos.new')}" to add a sticky note.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

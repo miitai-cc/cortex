@@ -1,0 +1,9 @@
+      <header className="mb-10 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent inline-flex items-center gap-3">
+            <UserCircle className="h-10 w-10 text-emerald-600" />
+            {t('personal.directory.title')}
+          </h1>
+          <p className="text-gray-500 mt-2 text-lg">{t('personal.directory.desc')}</p>
+        </div>
+      </header>

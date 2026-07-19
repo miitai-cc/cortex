@@ -1,0 +1,10 @@
+      <header className="mb-12 pt-6 text-center">
+        <div className="inline-flex items-center justify-center p-4 bg-amber-100 dark:bg-amber-900/30 rounded-full mb-6 shadow-inner">
+          <Trophy className="h-16 w-16 text-amber-500" />
+        </div>
+        <h1 className="text-5xl font-black bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent drop-shadow-sm mb-4">
+          {total} {t('personal.points.title')}
+        </h1>
+        <p className="text-gray-500 text-lg font-medium">{t('personal.points.desc')}</p>
+        <p className="text-sm text-gray-400 mt-2 max-w-md mx-auto">{t('personal.points.title')} are automatically awarded when your knowledge submissions are approved or when you assist others.</p>
+      </header>
