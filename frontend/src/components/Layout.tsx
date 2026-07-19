@@ -54,6 +54,9 @@ import {
   Flag,
   FolderKanban,
   Link2,
+  FileClock,
+  GitBranch,
+  Workflow,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
@@ -122,6 +125,19 @@ const navItems: NavItem[] = [
       { labelKey: 'nav.projects.people', icon: Users, to: '/cortex/projects/people' },
       { labelKey: 'nav.projects.requirements', icon: ClipboardList, to: '/cortex/projects/requirements' },
       { labelKey: 'nav.projects.audits', icon: ClipboardCheck, to: '/cortex/projects/audits' },
+    ],
+  },
+  {
+    to: '/cortex/workflows',
+    icon: Workflow,
+    labelKey: 'nav.workflows',
+    children: [
+      { labelKey: 'nav.workflows.overview', icon: Network, to: '/cortex/workflows/overview' },
+      { labelKey: 'nav.workflows.designer', icon: Workflow, to: '/cortex/workflows/designer' },
+      { labelKey: 'nav.workflows.definitions', icon: GitBranch, to: '/cortex/workflows/definitions' },
+      { labelKey: 'nav.workflows.tasks', icon: UserCheck, to: '/cortex/workflows/tasks' },
+      { labelKey: 'nav.workflows.instances', icon: FileClock, to: '/cortex/workflows/instances' },
+      { labelKey: 'nav.workflows.monitoring', icon: Activity, to: '/cortex/workflows/monitoring' },
     ],
   },
   {

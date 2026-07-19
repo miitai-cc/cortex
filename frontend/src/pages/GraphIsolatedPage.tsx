@@ -34,7 +34,7 @@ export default function GraphIsolatedPage() {
   }, []);
 
   return (
-    <div>
+    <div className='max-w-11xl mx-auto px-4 pb-10'>
       <CommonHeroTitle icon={AlertTriangle} title={t('nav.graph.isolated')} description="找出知識圖譜中孤立或連結稀少的節點" />
 
       {loading ? (

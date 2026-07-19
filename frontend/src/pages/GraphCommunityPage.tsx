@@ -62,7 +62,7 @@ export default function GraphCommunityPage() {
   const communityEntries = Object.entries(communities);
 
   return (
-    <div>
+    <div className='max-w-11xl mx-auto px-4 pb-10'>
       <CommonHeroTitle icon={Users} title={t('nav.graph.community')} description="分析知識圖譜中的社群結構" />
 
       {loading ? (

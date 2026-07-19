@@ -32,6 +32,8 @@ import KnowledgeCategoriesPage from './pages/KnowledgeCategoriesPage';
 import CollaborationPage from './pages/CollaborationPage';
 import DepartmentPortalPage from './pages/DepartmentPortalPage';
 import ProjectManagementPage from './pages/ProjectManagementPage';
+import WorkflowDesignerPage from './pages/WorkflowDesignerPage';
+import WorkflowManagementPage from './pages/WorkflowManagementPage';
 import NotFoundPage from './pages/NotFoundPage';
 import {
   clearRememberedReturnPath,
@@ -105,6 +107,8 @@ function App() {
           <Route path="/cortex/dashboard/activity" element={<DashboardActivityPage />} />
           <Route path="/cortex/departments/:department" element={<DepartmentPortalPage />} />
           <Route path="/cortex/projects/:section?" element={<ProjectManagementPage />} />
+          <Route path="/cortex/workflows/designer" element={<WorkflowDesignerPage />} />
+          <Route path="/cortex/workflows/:section?" element={<WorkflowManagementPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
           <Route path="/cortex/chat/history" element={<ChatHistoryPage />} />
           <Route path="/cortex/collaboration/:section?" element={<CollaborationPage />} />

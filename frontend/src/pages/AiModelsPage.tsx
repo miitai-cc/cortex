@@ -427,7 +427,7 @@ export default function AiModelsPage() {
   }, [navigate, tab]);
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-11xl mx-auto px-4 pb-10">
       <CommonHeroTitle
         icon={Cpu}
         title="AI Models"
@@ -441,11 +441,10 @@ export default function AiModelsPage() {
             key={id}
             id={`ai-models-tab-${id}`}
             onClick={() => navigate(`/cortex/ai-models/${id}`)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              activeTab === id
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === id
                 ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
+              }`}
           >
             <Icon className="w-4 h-4" />
             {label}
