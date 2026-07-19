@@ -3,38 +3,34 @@ import { CalendarClock, CalendarCheck2, Clock, AlertCircle, CalendarRange, Loade
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function HrAttendance() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'hr'],
-    () => departmentApi.overview('hr')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'hr'],
+    queryFn: () => departmentApi.overview('hr'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('hr', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'hr']);
-        toast.success(t('hr.attendance.add') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('hr', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'hr'] });
+      toast.success(t('hr.attendance.add') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
-  const approveMutation = useMutation(
-    ({ id, updatedItem }: { id: string, updatedItem: any }) => departmentApi.updateItem('hr', id, updatedItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'hr']);
-        toast.success(t('hr.attendance.approve') + ' - Success');
-      },
-      onError: () => toast.error('Failed to approve'),
-    }
-  );
+  const approveMutation = useMutation({
+    mutationFn: ({ id, updatedItem }: { id: string, updatedItem: DepartmentItemPayload }) => departmentApi.updateItem('hr', id, updatedItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'hr'] });
+      toast.success(t('hr.attendance.approve') + ' - Success');
+    },
+    onError: () => toast.error('Failed to approve'),
+  });
 
   const attendanceRecords = data?.data.items.filter(i => i.itemType === 'attendance') || [];
 
@@ -116,9 +112,9 @@ export default function HrAttendance() {
             <button 
               className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
               onClick={handleAddDemo}
-              disabled={createMutation.isLoading}
+              disabled={createMutation.isPending}
             >
-              {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('hr.attendance.add')}
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('hr.attendance.add')}
             </button>
           </div>
         </div>
@@ -166,7 +162,7 @@ export default function HrAttendance() {
                           <button 
                             className="text-emerald-600 hover:text-emerald-700 font-medium text-xs bg-emerald-50 px-2 py-1 rounded disabled:opacity-50"
                             onClick={() => handleApprove(record)}
-                            disabled={approveMutation.isLoading}
+                            disabled={approveMutation.isPending}
                           >
                             {t('hr.attendance.approve')}
                           </button>

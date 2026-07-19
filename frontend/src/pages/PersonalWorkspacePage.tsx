@@ -13,6 +13,9 @@ import toast from "react-hot-toast";
 import CommonHeroTitle from "../components/common/CommonHeroTitle";
 import { knowledgeApi, projectApi } from "../services/api";
 import { MyTasks, PersonalAnnouncements, PersonalStatus } from "../components/personal/PersonalFeatures";
+import PersonalPhoneRecords from "../components/personal/PersonalPhoneRecords";
+import PersonalMemos from "../components/personal/PersonalMemos";
+import PersonalDirectory from "../components/personal/PersonalDirectory";
 
 export default function PersonalWorkspacePage() {
   const { section = "following" } = useParams();
@@ -156,6 +159,12 @@ export default function PersonalWorkspacePage() {
             )}
           </div>
         </div>
+      ) : section === "phone-records" ? (
+        <PersonalPhoneRecords />
+      ) : section === "memos" ? (
+        <PersonalMemos />
+      ) : section === "directory" ? (
+        <PersonalDirectory />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {isLoading ? (

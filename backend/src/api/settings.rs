@@ -3,6 +3,7 @@ use crate::errors::AppError;
 use eiva_be_security::jwt::{verify_token, Claims};
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::Row;
 use std::collections::HashMap;
 
@@ -67,6 +68,26 @@ fn authentication(req: &Request, state: &AppState) -> Result<Claims, AppError> {
         .ok_or_else(|| AppError::Unauthorized("Invalid Authorization header".into()))?;
     verify_token(token, &state.config.jwt_secret)
         .map_err(|_| AppError::Unauthorized("Invalid or expired token".into()))
+}
+
+#[handler]
+async fn get_directory(depot: &mut Depot, req: &mut Request) -> Result<Json<Value>, AppError> {
+    let state = depot.obtain::<AppState>().unwrap();
+    authentication(req, state)?;
+    let rows = sqlx::query("SELECT u.id,u.username,u.email,p.department_key,p.job_title,p.company FROM users u LEFT JOIN user_profiles p ON p.user_id=u.id WHERE u.is_active=1")
+        .fetch_all(&state.db.pool).await?;
+    let mut users = Vec::new();
+    for row in rows {
+        users.push(serde_json::json!({
+            "id": row.get::<String, _>("id"),
+            "username": row.get::<String, _>("username"),
+            "email": row.get::<String, _>("email"),
+            "departmentKey": row.try_get::<String, _>("department_key").unwrap_or_default(),
+            "jobTitle": row.try_get::<String, _>("job_title").unwrap_or_default(),
+            "company": row.try_get::<String, _>("company").unwrap_or_default(),
+        }));
+    }
+    Ok(Json(serde_json::json!({ "users": users })))
 }
 
 fn valid_url(value: &str) -> bool {
@@ -309,9 +330,14 @@ async fn update_settings(
 }
 
 pub fn router() -> Router {
-    Router::with_path("settings/system")
-        .get(get_settings)
-        .put(update_settings)
+    Router::with_path("settings")
+        .push(Router::with_path("system")
+            .get(get_settings)
+            .put(update_settings)
+        )
+        .push(Router::with_path("directory")
+            .get(get_directory)
+        )
 }
 
 #[cfg(test)]

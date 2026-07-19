@@ -4,33 +4,31 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserCheck, Users, Search, Filter, Mail, Phone, MapPin, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function HrPersonnel() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading } = useQuery(
-    ['department', 'hr'],
-    () => departmentApi.overview('hr')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'hr'],
+    queryFn: () => departmentApi.overview('hr'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('hr', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'hr']);
-        toast.success(t('hr.personnel.addEmployee') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('hr', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'hr'] });
+      toast.success(t('hr.personnel.addEmployee') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const personnelItems = data?.data.items.filter(i => i.itemType === 'personnel') || [];
   const filteredItems = personnelItems.filter(item => 
-    item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.metadata?.id?.toLowerCase().includes(searchTerm.toLowerCase())
+    String(item.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    String((item.metadata as any)?.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddDemo = () => {
@@ -95,9 +93,9 @@ export default function HrPersonnel() {
           <button 
             className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
             onClick={handleAddDemo}
-            disabled={createMutation.isLoading}
+            disabled={createMutation.isPending}
           >
-            {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('hr.personnel.addEmployee')}
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('hr.personnel.addEmployee')}
           </button>
         </div>
         

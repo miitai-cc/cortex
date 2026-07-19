@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CommonHeroTitle from '../components/common/CommonHeroTitle';
 import {
@@ -111,6 +111,7 @@ function formatAmount(value?: number) {
 
 export default function DepartmentPortalPage() {
   const { department = '' } = useParams();
+  const navigate = useNavigate();
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const isDepartment = department in departmentConfigBySlug;

@@ -50,13 +50,6 @@ export const systemAdminEntities: Record<string, AdminEntityDefinition> = {
     { path: 'data.path', label: 'Hash Route 路徑', required: true, placeholder: '/cortex/documents', grid: true },
     { path: 'data.icon', label: 'Icon 名稱' },
   ]),
-  'enterprise-systems': definition('enterprise-systems', '可用企業資訊系統維護', '登錄 ERP、CRM、HRIS、DMS 等企業系統及負責窗口。', '企業系統', [
-    ...base,
-    { path: 'data.companyName', label: '公司名稱', required: true, grid: true },
-    { path: 'data.systemType', label: '系統類型', type: 'select', grid: true, options: ['ERP', 'CRM', 'HRIS', 'DMS', 'API', 'Other'].map((value) => ({ value, label: value })) },
-    { path: 'data.baseUrl', label: '系統網址', type: 'url', grid: true },
-    { path: 'data.owner', label: '負責窗口' },
-  ]),
   'ai-models': definition('ai-models', 'AI Model 管理', '維護可選模型、用途、提供者與服務端點。', 'AI Model', [
     ...base,
     { path: 'data.provider', label: 'Provider', required: true, grid: true },
@@ -124,6 +117,12 @@ export const systemAdminEntities: Record<string, AdminEntityDefinition> = {
     ...base,
     { path: 'data.locale', label: 'Locale', required: true, grid: true },
     { path: 'data.fallback', label: '備援語言', type: 'checkbox' },
+  ]),
+  'enterprise-systems': definition('enterprise-systems', '企業資訊系統', '維護可使用的企業資訊系統、分類與區域。', '企業資訊系統', [
+    ...base,
+    { path: 'data.url', label: '系統網址', type: 'url', required: true, grid: true },
+    { path: 'data.category', label: '分類', required: true, grid: true },
+    { path: 'data.area', label: '區域', required: true, grid: true },
   ]),
   about: definition('about', '關於', '維護公司、產品、版本、網站及版權資訊。', '關於資訊', [
     ...base,

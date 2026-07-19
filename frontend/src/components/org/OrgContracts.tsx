@@ -3,27 +3,25 @@ import { FileText, Clock, ShieldCheck, AlertCircle, Search, FileSignature, Loade
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function OrgContracts() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('org_management', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'org_management']);
-        toast.success(t('org.contracts.add') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('org_management', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'org_management'] });
+      toast.success(t('org.contracts.add') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const contracts = data?.data.items.filter(i => i.itemType === 'contract') || [];
 
@@ -33,7 +31,7 @@ export default function OrgContracts() {
       title: 'Demo Contract',
       description: 'SaaS',
       status: 'active',
-      priority: 'normal',
+      priority: 'medium',
       ownerName: 'Admin',
       metadata: {
         id: `CTR-2023-00${Math.floor(Math.random() * 9) + 1}`,
@@ -97,9 +95,9 @@ export default function OrgContracts() {
           <button 
             className="btn btn-primary text-sm px-4 py-2 disabled:opacity-50"
             onClick={handleAddDemo}
-            disabled={createMutation.isLoading}
+            disabled={createMutation.isPending}
           >
-            {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.contracts.add')}
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.contracts.add')}
           </button>
         </div>
         <div className="overflow-x-auto">

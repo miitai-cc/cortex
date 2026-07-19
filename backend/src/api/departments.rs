@@ -56,6 +56,9 @@ fn department_item_types(department: &str) -> Option<&'static [&'static str]> {
         "procurement" => Some(&["purchase_request", "supplier", "contract", "quotation"]),
         "mis" => Some(&["service_request", "incident", "it_asset", "maintenance"]),
         "org_management" => Some(&["vendor", "customer", "product", "resource", "meeting", "finance", "contract", "asset", "inventory", "warehouse"]),
+        "discussions" => Some(&["category", "topic", "item", "comment"]),
+        "personal" => Some(&["phone_record", "memo"]),
+        "collaboration" => Some(&["circular_message", "announcement", "calendar_event"]),
         "sales-projects" => Some(&[
             "customer_project",
             "milestone",

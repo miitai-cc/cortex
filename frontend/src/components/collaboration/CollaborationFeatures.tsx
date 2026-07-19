@@ -1,26 +1,44 @@
 import { useState } from 'react';
 import { Calendar, CalendarDays, FileClock, Megaphone, Car, MonitorSmartphone, Users } from 'lucide-react';
 
+import { useQuery } from '@tanstack/react-query';
+import { departmentApi } from '../../services/api';
+
 export function Announcements() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'collaboration'],
+    queryFn: () => departmentApi.overview('collaboration'),
+  });
+
+  const items = data?.data.items.filter((i: any) => i.itemType === 'announcement') || [];
+
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between border-b pb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2"><Megaphone className="h-5 w-5 text-indigo-500"/> 團隊公告</h2>
       </div>
       <div className="space-y-3">
-        {[
-          { title: "2026年下半年度績效考核啟動", date: "2026-07-20", dept: "HR" },
-          { title: "系統伺服器升級停機公告", date: "2026-07-25", dept: "IT" },
-          { title: "新進員工教育訓練時程", date: "2026-08-01", dept: "HR" }
-        ].map((item, idx) => (
-          <div key={idx} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-            <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
-              <p className="text-sm text-gray-500">發布單位: {item.dept}</p>
-            </div>
-            <span className="text-sm text-gray-400">{item.date}</span>
-          </div>
-        ))}
+        {isLoading ? (
+          <p className="text-gray-500 text-center py-4">Loading announcements...</p>
+        ) : items.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">No announcements</p>
+        ) : (
+          items.map((item: any) => {
+            const meta = (item.metadata as any) || {};
+            return (
+              <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
+                  <p className="text-sm text-gray-500">發布單位: {meta.department || 'General'}</p>
+                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                </div>
+                <span className="text-sm text-gray-400 whitespace-nowrap ml-4">
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
@@ -54,18 +72,53 @@ export function Workflows() {
 }
 
 export function CalendarView() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'collaboration'],
+    queryFn: () => departmentApi.overview('collaboration'),
+  });
+
+  const items = data?.data.items.filter((i: any) => i.itemType === 'calendar_event') || [];
+
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between border-b pb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2"><Calendar className="h-5 w-5 text-indigo-500"/> 行事曆整合</h2>
       </div>
-      <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-50 dark:bg-gray-800/50">
-        <div className="text-center">
-          <Calendar className="h-10 w-10 mx-auto text-gray-400 mb-2" />
-          <p className="text-gray-500 font-medium">個人行程與部門會議行事曆</p>
-          <p className="text-sm text-gray-400 mt-1">即將整合行事曆套件顯示</p>
+      
+      {isLoading ? (
+        <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <p className="text-gray-500">Loading calendar...</p>
         </div>
-      </div>
+      ) : items.length === 0 ? (
+        <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <div className="text-center">
+            <Calendar className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+            <p className="text-gray-500 font-medium">個人行程與部門會議行事曆</p>
+            <p className="text-sm text-gray-400 mt-1">目前沒有排程事件</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item: any) => {
+            const meta = (item.metadata as any) || {};
+            const type = meta.type || 'company';
+            return (
+              <div key={item.id} className="flex flex-col p-4 border rounded-lg border-l-4" style={{ borderLeftColor: type === 'company' ? '#8b5cf6' : type === 'department' ? '#3b82f6' : '#10b981' }}>
+                <div className="flex justify-between items-start">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${type === 'company' ? 'bg-purple-100 text-purple-700' : type === 'department' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                    {type === 'company' ? '全公司' : type === 'department' ? '部門' : '個人'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{item.description}</p>
+                <div className="mt-2 text-xs text-gray-500 font-medium">
+                  {meta.date ? new Date(meta.date).toLocaleDateString() : '未定日期'}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

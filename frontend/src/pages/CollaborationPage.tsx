@@ -7,6 +7,8 @@ import CommonHeroTitle from '../components/common/CommonHeroTitle';
 import IssueTracker from '../components/collaboration/IssueTracker';
 import TeamChannels from '../components/collaboration/TeamChannels';
 import ProjectCollaborationPanel from '../components/collaboration/ProjectCollaborationPanel';
+import DiscussionBoard from '../components/collaboration/DiscussionBoard';
+import CircularMessages from '../components/collaboration/CircularMessages';
 import { Announcements, Workflows, CalendarView, Bookings } from '../components/collaboration/CollaborationFeatures';
 import { collaborationApi } from '../services/api';
 import type { CollaborationOverview } from '../types/collaboration';
@@ -64,6 +66,10 @@ export default function CollaborationPage() {
           <CalendarView />
         ) : section === 'bookings' ? (
           <Bookings />
+        ) : section === 'circulars' ? (
+          <CircularMessages />
+        ) : section === 'discussions' ? (
+          <DiscussionBoard />
         ) : projectMode ? (
           <ProjectCollaborationPanel />
         ) : issueMode ? (

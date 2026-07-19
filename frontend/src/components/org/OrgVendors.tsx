@@ -3,27 +3,25 @@ import { Truck, Star, TrendingUp, AlertTriangle, Search, Filter, Loader2 } from 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function OrgVendors() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('org_management', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'org_management']);
-        toast.success(t('org.vendors.add') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('org_management', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'org_management'] });
+      toast.success(t('org.vendors.add') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const vendors = data?.data.items.filter(i => i.itemType === 'vendor') || [];
 
@@ -95,9 +93,9 @@ export default function OrgVendors() {
           <button 
             className="btn btn-primary disabled:opacity-50"
             onClick={handleAddDemo}
-            disabled={createMutation.isLoading}
+            disabled={createMutation.isPending}
           >
-            {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.vendors.add')}
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.vendors.add')}
           </button>
         </div>
         

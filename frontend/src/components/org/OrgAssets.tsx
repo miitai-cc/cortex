@@ -3,27 +3,25 @@ import { MonitorCog, MapPin, Laptop, Server, Smartphone, BatteryMedium, Loader2 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function OrgAssets() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('org_management', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'org_management']);
-        toast.success(t('org.assets.audit') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('org_management', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'org_management'] });
+      toast.success(t('org.assets.audit') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const assets = data?.data.items.filter(i => i.itemType === 'asset') || [];
 
@@ -79,9 +77,9 @@ export default function OrgAssets() {
           <button 
             className="btn btn-primary text-sm px-4 py-2 disabled:opacity-50"
             onClick={handleAddDemo}
-            disabled={createMutation.isLoading}
+            disabled={createMutation.isPending}
           >
-            {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.assets.audit')}
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.assets.audit')}
           </button>
         </div>
         <div className="overflow-x-auto">

@@ -387,6 +387,10 @@ export const systemSettingsApi = {
   update: (data: SystemSettingsPayload) => api.put('/settings/system', data),
 };
 
+export const usersDirectoryApi = {
+  getUsers: () => api.get('/settings/directory'),
+};
+
 export const systemAdminApi = {
   context: () => api.get<SystemContext>('/settings/context'),
   list: (entity: string, params: { page: number; pageSize: number; search?: string }) =>

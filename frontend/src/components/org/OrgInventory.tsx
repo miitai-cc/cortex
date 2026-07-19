@@ -3,27 +3,25 @@ import { Boxes, AlertTriangle, ArrowRightLeft, TrendingDown, Loader2 } from 'luc
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function OrgInventory() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('org_management', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'org_management']);
-        toast.success(t('org.inventory.transfer') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('org_management', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'org_management'] });
+      toast.success(t('org.inventory.transfer') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const inventory = data?.data.items.filter(i => i.itemType === 'inventory') || [];
 
@@ -70,9 +68,9 @@ export default function OrgInventory() {
           <button 
             className="btn btn-secondary text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50"
             onClick={handleAddDemo}
-            disabled={createMutation.isLoading}
+            disabled={createMutation.isPending}
           >
-            {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRightLeft className="w-4 h-4" /> {t('org.inventory.transfer')}</>}
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRightLeft className="w-4 h-4" /> {t('org.inventory.transfer')}</>}
           </button>
         </div>
         <div className="overflow-x-auto">

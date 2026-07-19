@@ -7,10 +7,10 @@ import { departmentApi, type DepartmentItem } from '../../services/api';
 export default function OrgFinance() {
   const { t } = useTranslation();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
   const transactions = data?.data.items.filter(i => i.itemType === 'finance') || [];
 

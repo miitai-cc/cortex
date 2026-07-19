@@ -4,28 +4,26 @@ import { CalendarDays, Calendar as CalendarIcon, Link2, Check, Clock, Video, Use
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function OrgMeetings() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isLinked, setIsLinked] = useState(false);
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('org_management', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'org_management']);
-        toast.success(t('org.meetings.add') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('org_management', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'org_management'] });
+      toast.success(t('org.meetings.add') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const meetings = data?.data.items.filter(i => i.itemType === 'meeting') || [];
 
@@ -42,7 +40,7 @@ export default function OrgMeetings() {
       title: 'Demo Meeting',
       description: 'Project Sync',
       status: 'active',
-      priority: 'normal',
+      priority: 'medium',
       ownerName: 'Admin',
       metadata: {
         time: '10:00 AM - 11:30 AM',
@@ -118,10 +116,10 @@ export default function OrgMeetings() {
           <h3 className="font-bold text-lg">{t('org.meetings.agenda')}</h3>
           <button 
             className="btn btn-secondary px-4 py-2 text-sm disabled:opacity-50" 
-            disabled={!isLinked || createMutation.isLoading}
+            disabled={!isLinked || createMutation.isPending}
             onClick={handleAddDemo}
           >
-            {createMutation.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.meetings.add')}
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('org.meetings.add')}
           </button>
         </div>
         <div className="p-6">

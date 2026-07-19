@@ -15,7 +15,6 @@ const ENTITY_TYPES: &[&str] = &[
     "roles",
     "permissions",
     "menus",
-    "enterprise-systems",
     "ai-models",
     "contexts",
     "channels",
@@ -155,7 +154,6 @@ fn validate_entity_payload(entity: &str, body: &AdminRecordRequest) -> Result<()
         ));
     }
     let required: &[&str] = match entity {
-        "enterprise-systems" => &["companyName", "systemType"],
         "ai-models" => &["provider", "model"],
         "contexts" => &["template"],
         "channels" => &["channelType"],

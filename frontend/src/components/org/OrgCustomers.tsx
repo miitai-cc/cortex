@@ -3,27 +3,25 @@ import { Building2, Users, Target, Activity, Search, Plus, Loader2 } from 'lucid
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../common/CommonHeroTitle';
-import { departmentApi, type DepartmentItem } from '../../services/api';
+import { departmentApi, type DepartmentItem, type DepartmentItemPayload } from '../../services/api';
 
 export default function OrgCustomers() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    ['department', 'org_management'],
-    () => departmentApi.overview('org_management')
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ['department', 'org_management'],
+    queryFn: () => departmentApi.overview('org_management'),
+  });
 
-  const createMutation = useMutation(
-    (newItem: any) => departmentApi.createItem('org_management', newItem),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['department', 'org_management']);
-        toast.success(t('org.customers.addGroup') + ' - Success');
-      },
-      onError: () => toast.error('Failed to create'),
-    }
-  );
+  const createMutation = useMutation({
+    mutationFn: (newItem: DepartmentItemPayload) => departmentApi.createItem('org_management', newItem),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['department', 'org_management'] });
+      toast.success(t('org.customers.addGroup') + ' - Success');
+    },
+    onError: () => toast.error('Failed to create'),
+  });
 
   const customers = data?.data.items.filter(i => i.itemType === 'customer') || [];
 
@@ -67,10 +65,10 @@ export default function OrgCustomers() {
           <p className="text-3xl font-bold mt-1">145</p>
         </div>
         <div 
-          onClick={createMutation.isLoading ? undefined : handleAddDemo}
-          className={`card p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center text-gray-500 hover:text-primary-500 hover:border-primary-500 cursor-pointer transition-colors ${createMutation.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={createMutation.isPending ? undefined : handleAddDemo}
+          className={`card p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center text-gray-500 hover:text-primary-500 hover:border-primary-500 cursor-pointer transition-colors ${createMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {createMutation.isLoading ? (
+          {createMutation.isPending ? (
             <Loader2 className="w-8 h-8 mb-2 animate-spin" />
           ) : (
             <Plus className="w-8 h-8 mb-2" />
