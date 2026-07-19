@@ -19,6 +19,11 @@ import {
   Trash2,
   Users,
   X,
+  Calendar,
+  Mail,
+  FileText,
+  UserCheck,
+  Briefcase,
 } from 'lucide-react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -36,7 +41,7 @@ import type {
   ProjectUser,
 } from '../types/projects';
 
-type Section = 'information' | 'gantt' | 'milestones' | 'kanban' | 'budget' | 'people' | 'requirements' | 'audits';
+type Section = 'information' | 'gantt' | 'milestones' | 'kanban' | 'budget' | 'people' | 'requirements' | 'audits' | 'calendar' | 'meetings' | 'emails' | 'customers' | 'vendors';
 
 const sectionConfigs: Record<Section, {
   title: string;
@@ -46,12 +51,17 @@ const sectionConfigs: Record<Section, {
 }> = {
   information: { title: '專案相關資訊', description: '維護專案主檔、日期、負責人、預算、相關連結與協作入口', icon: FolderKanban },
   gantt: { title: 'Gantt Chart', description: '以時間軸檢視任務與里程碑的計畫期間、進度及相依資訊', icon: BarChart3 },
+  calendar: { title: '工作 Calendar', description: '以月曆視圖呈現專案的任務與里程碑', icon: Calendar },
   milestones: { title: 'Milestone 管理', description: '管理專案的重要交付節點、負責人、期限與完成狀態', icon: Flag, recordType: 'milestone' },
   kanban: { title: 'Kanban 工作管理', description: '用看板拖放管理待辦、進行、審核與完成工作', icon: FolderKanban, recordType: 'task' },
   budget: { title: '專案預算', description: '管理規劃、核准、承諾與實際支出，並追蹤預算使用率', icon: CircleDollarSign, recordType: 'budget' },
   people: { title: '專案人員', description: '維護專案角色、投入比例與聯絡資訊，成員會同步加入協作頻道', icon: Users, recordType: 'member' },
   requirements: { title: '需求管理', description: '保留需求來源、驗收條件、優先順序、負責人與驗證結果', icon: ClipboardList, recordType: 'requirement' },
   audits: { title: '成果稽核記錄', description: '記錄成果查核、證據、缺失、結論與後續追蹤', icon: ClipboardCheck, recordType: 'audit' },
+  meetings: { title: '會議記錄', description: '管理專案相關的會議記錄、參與者與決議事項', icon: FileText, recordType: 'meeting' },
+  emails: { title: '郵件整理', description: '記錄與整理專案相關的重要郵件往來', icon: Mail, recordType: 'email' },
+  customers: { title: '客戶管理', description: '維護專案相關的客戶聯絡人資訊與備註', icon: UserCheck, recordType: 'customer' },
+  vendors: { title: '廠商管理', description: '管理專案合作的供應商與外包廠商資訊', icon: Briefcase, recordType: 'vendor' },
 };
 
 const projectStatuses: { value: ProjectStatus; label: string }[] = [
@@ -92,6 +102,18 @@ const recordStatuses: Record<ProjectRecordType, { value: string; label: string }
   audit: [
     { value: 'planned', label: '待稽核' }, { value: 'in_review', label: '稽核中' },
     { value: 'passed', label: '通過' }, { value: 'failed', label: '未通過' }, { value: 'follow_up', label: '追蹤改善' },
+  ],
+  meeting: [
+    { value: 'scheduled', label: '已排程' }, { value: 'completed', label: '已完成' }, { value: 'cancelled', label: '已取消' },
+  ],
+  email: [
+    { value: 'inbox', label: '收件' }, { value: 'sent', label: '寄件' }, { value: 'archived', label: '已歸檔' },
+  ],
+  customer: [
+    { value: 'active', label: '活躍' }, { value: 'inactive', label: '非活躍' },
+  ],
+  vendor: [
+    { value: 'active', label: '合作中' }, { value: 'evaluating', label: '評估中' }, { value: 'inactive', label: '已終止' },
   ],
 };
 
@@ -242,6 +264,27 @@ function RecordDialog({
       <label className="text-sm">稽核證據<input className="input-field mt-1" value={String(metadata.evidence ?? '')} onChange={(e) => setMetadata('evidence', e.target.value)} /></label>
       <label className="text-sm">結論／缺失<input className="input-field mt-1" value={String(metadata.finding ?? '')} onChange={(e) => setMetadata('finding', e.target.value)} /></label>
     </>;
+    if (type === 'meeting') return <>
+      <label className="text-sm">會議時間<input type="time" className="input-field mt-1" value={String(metadata.time ?? '')} onChange={(e) => setMetadata('time', e.target.value)} /></label>
+      <label className="text-sm">會議地點／連結<input className="input-field mt-1" value={String(metadata.location ?? '')} onChange={(e) => setMetadata('location', e.target.value)} /></label>
+      <label className="text-sm md:col-span-2">決議事項<input className="input-field mt-1" value={String(metadata.decisions ?? '')} onChange={(e) => setMetadata('decisions', e.target.value)} /></label>
+    </>;
+    if (type === 'email') return <>
+      <label className="text-sm">寄件人<input className="input-field mt-1" value={String(metadata.sender ?? '')} onChange={(e) => setMetadata('sender', e.target.value)} /></label>
+      <label className="text-sm">收件人<input className="input-field mt-1" value={String(metadata.recipient ?? '')} onChange={(e) => setMetadata('recipient', e.target.value)} /></label>
+      <label className="text-sm md:col-span-2">郵件連結／Message-ID<input className="input-field mt-1" value={String(metadata.messageId ?? '')} onChange={(e) => setMetadata('messageId', e.target.value)} /></label>
+    </>;
+    if (type === 'customer') return <>
+      <label className="text-sm">公司名稱<input className="input-field mt-1" value={String(metadata.company ?? '')} onChange={(e) => setMetadata('company', e.target.value)} /></label>
+      <label className="text-sm">聯絡電話<input className="input-field mt-1" value={String(metadata.phone ?? '')} onChange={(e) => setMetadata('phone', e.target.value)} /></label>
+      <label className="text-sm md:col-span-2">Email<input className="input-field mt-1" value={String(metadata.email ?? '')} onChange={(e) => setMetadata('email', e.target.value)} /></label>
+    </>;
+    if (type === 'vendor') return <>
+      <label className="text-sm">廠商名稱<input className="input-field mt-1" value={String(metadata.company ?? '')} onChange={(e) => setMetadata('company', e.target.value)} /></label>
+      <label className="text-sm">統一編號<input className="input-field mt-1" value={String(metadata.taxId ?? '')} onChange={(e) => setMetadata('taxId', e.target.value)} /></label>
+      <label className="text-sm">聯絡人<input className="input-field mt-1" value={String(metadata.contactPerson ?? '')} onChange={(e) => setMetadata('contactPerson', e.target.value)} /></label>
+      <label className="text-sm">聯絡電話<input className="input-field mt-1" value={String(metadata.phone ?? '')} onChange={(e) => setMetadata('phone', e.target.value)} /></label>
+    </>;
     if (type === 'milestone') return <label className="text-sm md:col-span-2">交付成果<input className="input-field mt-1" value={String(metadata.deliverable ?? '')} onChange={(e) => setMetadata('deliverable', e.target.value)} /></label>;
     return <label className="text-sm md:col-span-2">相依工作／補充資訊<input className="input-field mt-1" value={String(metadata.dependency ?? '')} onChange={(e) => setMetadata('dependency', e.target.value)} /></label>;
   })();
@@ -256,7 +299,7 @@ function RecordDialog({
           <label className="text-sm">{type === 'member' ? '選擇成員' : '負責人'}<select className="input-field mt-1" value={form.assigneeId} onChange={(e) => setUser(e.target.value)}><option value="">未指派</option>{users.map((user) => <option key={user.id} value={user.id}>{user.username} ({user.role})</option>)}</select></label>
           {(type === 'budget') && <label className="text-sm">金額<input min={0} type="number" className="input-field mt-1" value={form.amount ?? ''} onChange={(e) => setForm({ ...form, amount: e.target.value ? Number(e.target.value) : undefined })} /></label>}
           {type !== 'member' && <><label className="text-sm">開始日期<input type="date" className="input-field mt-1" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></label><label className="text-sm">完成／到期日<input type="date" className="input-field mt-1" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></label></>}
-          {!['member', 'budget'].includes(type) && <label className="text-sm md:col-span-2">完成進度：{form.progress ?? 0}%<input type="range" min={0} max={100} className="mt-2 w-full" value={form.progress ?? 0} onChange={(e) => setForm({ ...form, progress: Number(e.target.value) })} /></label>}
+          {!['member', 'budget', 'meeting', 'email', 'customer', 'vendor'].includes(type) && <label className="text-sm md:col-span-2">完成進度：{form.progress ?? 0}%<input type="range" min={0} max={100} className="mt-2 w-full" value={form.progress ?? 0} onChange={(e) => setForm({ ...form, progress: Number(e.target.value) })} /></label>}
           {specialFields}
           <label className="text-sm md:col-span-2">說明<textarea rows={3} className="input-field mt-1" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
         </div>
@@ -286,6 +329,60 @@ function GanttView({ records, onEdit }: { records: ProjectRecord[]; onEdit: (rec
             <button className="truncate text-left text-sm font-medium hover:text-primary-600" onClick={() => onEdit(record)}>{record.recordType === 'milestone' ? '◆ ' : ''}{record.title}</button>
             <div className="relative h-8 rounded bg-gray-100 dark:bg-gray-700"><button title={`${record.progress}% · ${statusLabel(record.recordType, record.status)}`} onClick={() => onEdit(record)} className={`absolute top-1 h-6 overflow-hidden rounded text-left text-[10px] text-white ${record.recordType === 'milestone' ? 'bg-violet-500' : 'bg-primary-600'}`} style={{ left: `${left}%`, width: `${width}%` }}><span className="relative z-10 px-2">{record.progress}%</span><span className="absolute inset-y-0 left-0 bg-black/20" style={{ width: `${record.progress}%` }} /></button></div>
           </div>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CalendarView({ records, onEdit }: { records: ProjectRecord[]; onEdit: (record: ProjectRecord) => void }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+  const items = records.filter(r => ['task', 'milestone', 'meeting'].includes(r.recordType) && r.startDate);
+  
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    const date = new Date(year, month, i + 1);
+    const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD local
+    const dayItems = items.filter(item => {
+      const start = item.startDate;
+      const end = item.endDate || item.startDate;
+      return dateStr >= start! && dateStr <= end!;
+    });
+    return { date: i + 1, items: dayItems, dateStr };
+  });
+
+  return (
+    <div className="card">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-bold">{year} 年 {month + 1} 月</h3>
+        <div className="flex gap-2">
+          <button className="btn-secondary px-3 py-1" onClick={prevMonth}>上個月</button>
+          <button className="btn-secondary px-3 py-1" onClick={nextMonth}>下個月</button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-px rounded-lg bg-gray-200 dark:bg-gray-700">
+        {['日', '一', '二', '三', '四', '五', '六'].map(d => <div key={d} className="bg-gray-50 py-2 text-center text-sm font-semibold text-gray-500 dark:bg-gray-800">{d}</div>)}
+        {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} className="min-h-24 bg-white dark:bg-gray-800/50" />)}
+        {days.map(({ date, items, dateStr }) => {
+          const isToday = dateStr === new Date().toLocaleDateString('en-CA');
+          return (
+            <div key={date} className={`min-h-24 bg-white p-2 dark:bg-gray-800 ${isToday ? 'bg-primary-50 dark:bg-primary-900/20' : ''}`}>
+              <div className={`mb-1 text-sm ${isToday ? 'font-bold text-primary-600' : 'text-gray-500'}`}>{date}</div>
+              <div className="space-y-1">
+                {items.map(item => (
+                  <button key={item.id} onClick={() => onEdit(item)} className={`block w-full truncate rounded px-1.5 py-0.5 text-left text-xs ${item.recordType === 'milestone' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300' : item.recordType === 'meeting' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'}`}>
+                    {item.recordType === 'milestone' ? '◆ ' : item.recordType === 'meeting' ? '👥 ' : ''}{item.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
         })}
       </div>
     </div>
@@ -399,6 +496,7 @@ export default function ProjectManagementPage() {
       <div className="space-y-5"><section className="card"><h3 className="flex items-center gap-2 font-semibold"><Link2 className="h-4 w-4" />相關連結</h3><div className="mt-3 space-y-2">{(project.relatedLinks ?? []).map((link) => <a key={`${link.label}-${link.url}`} href={link.url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm hover:border-primary-400 dark:border-gray-700"><span>{link.label}</span><ExternalLink className="h-4 w-4" /></a>)}{!project.relatedLinks?.length && <p className="text-sm text-gray-500">尚未設定相關連結</p>}</div></section><section className="card"><h3 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4" />團隊協作</h3><p className="mt-2 text-sm text-gray-500">所有異動會自動寫入專案協作頻道。</p>{project.collaborationChannelId && <Link className="btn-primary mt-4 inline-flex items-center gap-2" to={`/cortex/collaboration/channels?channel=${encodeURIComponent(project.collaborationChannelId)}`}><MessageSquare className="h-4 w-4" />開啟專案頻道</Link>}</section></div>
     </div>;
     if (activeSection === 'gantt') return <GanttView records={records} onEdit={(record) => openRecord(record.recordType, record)} />;
+    if (activeSection === 'calendar') return <CalendarView records={records} onEdit={(record) => openRecord(record.recordType, record)} />;
     if (activeSection === 'kanban') return <KanbanView records={records} onEdit={(record) => openRecord('task', record)} onDelete={removeRecord} onMove={(record, status) => moveRecord.mutate({ record, status })} />;
     return <RecordsView type={config.recordType!} records={records} onEdit={(record) => openRecord(config.recordType!, record)} onDelete={removeRecord} />;
   })();
@@ -410,6 +508,7 @@ export default function ProjectManagementPage() {
         <label className="flex min-w-0 flex-1 items-center gap-3 text-sm"><span className="shrink-0 text-gray-500">操作專案</span><select className="input-field" value={project?.id ?? ''} onChange={(e) => setSearchParams(e.target.value ? { project: e.target.value } : {})}><option value="">請選擇專案</option>{model?.projects.map((item) => <option key={item.id} value={item.id}>[{item.code}] {item.name}</option>)}</select></label>
         {project?.canEdit && <><button className="btn-secondary flex items-center justify-center gap-2" onClick={() => { setEditingProject(project); setProjectOpen(true); }}><Pencil className="h-4 w-4" />編輯專案</button><button className="flex items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50" onClick={() => { if (window.confirm(`確定刪除「${project.name}」及其專案資料？協作頻道歷程將保留。`)) deleteProject.mutate(project.id); }}><Trash2 className="h-4 w-4" />刪除專案</button></>}
         {project && activeSection === 'gantt' && <><button className="btn-primary" onClick={() => openRecord('task')}><Plus className="mr-1 inline h-4 w-4" />新增任務</button><button className="btn-secondary" onClick={() => openRecord('milestone')}><Plus className="mr-1 inline h-4 w-4" />新增里程碑</button></>}
+        {project && activeSection === 'calendar' && <><button className="btn-primary" onClick={() => openRecord('meeting')}><Plus className="mr-1 inline h-4 w-4" />排程會議</button><button className="btn-secondary" onClick={() => openRecord('task')}><Plus className="mr-1 inline h-4 w-4" />新增任務</button><button className="btn-secondary" onClick={() => openRecord('milestone')}><Plus className="mr-1 inline h-4 w-4" />新增里程碑</button></>}
         {project && config.recordType && <button className="btn-primary flex items-center justify-center gap-2" onClick={() => openRecord(config.recordType!)}><Plus className="h-4 w-4" />新增</button>}
       </section>
       {overview.isLoading && <div className="card flex min-h-56 items-center justify-center text-gray-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />載入專案資料…</div>}

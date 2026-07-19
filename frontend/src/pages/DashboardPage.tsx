@@ -30,7 +30,7 @@ import {
   YAxis,
 } from 'recharts';
 import CommonHeroTitle from '../components/common/CommonHeroTitle';
-import { dashboardApi, graphApi } from '../services/api';
+import { dashboardApi, graphApi, systemSettingsApi } from '../services/api';
 
 const typeColors: Record<string, string> = { pdf: '#ef4444', docx: '#3b82f6', xlsx: '#10b981', pptx: '#f97316', txt: '#8b5cf6', md: '#f59e0b', other: '#6b7280' };
 const statusColors: Record<string, string> = { indexed: '#10b981', processing: '#f59e0b', pending: '#6b7280', failed: '#ef4444' };
@@ -49,6 +49,7 @@ export default function DashboardPage() {
   const activityQuery = useQuery({ queryKey: ['dashboard-activity'], queryFn: dashboardApi.activity });
   const healthQuery = useQuery({ queryKey: ['dashboard-health'], queryFn: dashboardApi.health, refetchInterval: 30000 });
   const graphQuery = useQuery({ queryKey: ['graphData'], queryFn: graphApi.getData });
+  const settingsQuery = useQuery({ queryKey: ['system-settings'], queryFn: systemSettingsApi.get });
   const stats = statsQuery.data?.data ?? { totalDocuments: 0, totalChunks: 0, totalQueries: 0, issues: 0, messages: 0, conversations: 0, researches: 0, documentTypes: [], documentStatuses: [] };
   const health = healthQuery.data?.data ?? { status: 'unknown', services: [] };
   const trend = trendQuery.data?.data?.trend ?? [];
@@ -79,7 +80,8 @@ export default function DashboardPage() {
     </div>
 
     <div className="grid gap-6 lg:grid-cols-2"><section className="card"><div className="mb-4 flex items-center justify-between"><h2 className="font-semibold">最近活動</h2><button className="flex items-center gap-1 text-xs text-primary-600" onClick={() => navigate('/cortex/dashboard/activity')}>全部 <ArrowRight className="h-3 w-3" /></button></div><div className="space-y-1">{activities.map((item: any) => { const Icon = activityIcons[item.kind] ?? Activity; return <button key={item.id} onClick={() => item.path && navigate(item.path)} className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"><span className="rounded-lg bg-primary-50 p-2 text-primary-600 dark:bg-primary-900/20"><Icon className="h-4 w-4" /></span><p className="min-w-0 flex-1 truncate text-sm"><strong>{item.action}</strong> · {item.target}</p><span className="flex shrink-0 items-center gap-1 text-[11px] text-gray-400"><Clock className="h-3 w-3" />{time(item.timestamp)}</span></button>; })}{!activities.length && <p className="py-10 text-center text-sm text-gray-400">尚無活動</p>}</div></section>
-      <section className="card"><h2 className="mb-4 font-semibold">工作量快速入口</h2><div className="grid grid-cols-2 gap-3"><Quick label="團隊訊息" value={stats.messages} icon={MessageSquare} onClick={() => navigate('/cortex/collaboration/channels')} /><Quick label="Issue" value={stats.issues} icon={ClipboardList} onClick={() => navigate('/cortex/collaboration/issues')} /><Quick label="智慧對話" value={stats.conversations} icon={MessageSquare} onClick={() => navigate('/cortex/chat/history')} /><Quick label="研究任務" value={stats.researches} icon={FlaskConical} onClick={() => navigate('/cortex/research/history')} /></div></section></div>
+      <section className="card flex flex-col"><h2 className="mb-4 font-semibold">工作量快速入口</h2><div className="grid grid-cols-2 gap-3 mb-6"><Quick label="團隊訊息" value={stats.messages} icon={MessageSquare} onClick={() => navigate('/cortex/collaboration/channels')} /><Quick label="Issue" value={stats.issues} icon={ClipboardList} onClick={() => navigate('/cortex/collaboration/issues')} /><Quick label="智慧對話" value={stats.conversations} icon={MessageSquare} onClick={() => navigate('/cortex/chat/history')} /><Quick label="研究任務" value={stats.researches} icon={FlaskConical} onClick={() => navigate('/cortex/graph/history')} /></div></section>
+    </div>
   </div>;
 }
 

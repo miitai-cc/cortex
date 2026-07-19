@@ -303,7 +303,16 @@ export default function DepartmentPortalPage() {
                 key={itemType.value}
                 className={`rounded-xl border p-4 transition ${selected ? 'border-primary-500 ring-2 ring-primary-100 dark:ring-primary-900/40' : 'border-gray-200 hover:border-primary-300 dark:border-gray-700'}`}
               >
-                <button className="w-full text-left" onClick={() => setTypeFilter(selected ? 'all' : itemType.value)}>
+                <button 
+                  className="w-full text-left" 
+                  onClick={() => {
+                    if (itemType.linkTo) {
+                      navigate(itemType.linkTo);
+                    } else {
+                      setTypeFilter(selected ? 'all' : itemType.value);
+                    }
+                  }}
+                >
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <h3 className="font-medium text-gray-900 dark:text-white">
                       {isEnglish ? itemType.labelEn : itemType.label}

@@ -37,7 +37,8 @@ The project follows a modular architecture with clear separation between fronten
 
 - Node.js (for frontend)
 - Rust toolchain (for backend)
-- Docker (optional, for containerized deployment)
+- Docker & Docker Compose (for containerized deployment)
+- Kubernetes & kubectl (for cluster deployment)
 
 ### Installation
 
@@ -51,6 +52,45 @@ cd frontend && npm install
 
 # Build backend
 cd ../backend && cargo build
+```
+
+### Docker Build
+
+Build all container images from `run/container/`:
+
+```bash
+# Build all images
+cd run/container && make all
+
+# Or use the script from project root
+./run/run-make.sh all
+
+# Build single service with version tag
+./run/run-make.sh app v1.0.0
+```
+
+Image registry: `miitai-cc/cortex-*`
+
+### Docker Compose (Local Development)
+
+```bash
+cd run/container
+docker-compose up -d
+```
+
+### Kubernetes Deployment
+
+```bash
+# Deploy all resources to cortex namespace
+kubectl apply -f run/kubernetes/
+
+# Or step by step
+kubectl apply -f run/kubernetes/cortex-namespace.yaml
+kubectl apply -f run/kubernetes/cortex-secrets.yaml
+kubectl apply -f run/kubernetes/backend-deployment.yaml
+kubectl apply -f run/kubernetes/frontend-deployment.yaml
+kubectl apply -f run/kubernetes/qdrant-deployment.yaml
+kubectl apply -f run/kubernetes/cortex-ingress.yaml
 ```
 
 ## Authentication (Keycloak SSO)
@@ -79,6 +119,10 @@ cortex/
 ├── lib/
 │   ├── react/         # Shared TypeScript types & utilities
 │   └── rust/          # Shared Rust types & utilities
+├── run/
+│   ├── container/     # Docker build (Makefile, Dockerfiles, docker-compose)
+│   └── kubernetes/    # Kubernetes deployment manifests
+├── third-party/       # Third-party source (keycloak, qdrant)
 ├── ~docs/             # Documentation
 └── AGENTS.zh-tw.md    # Agent instructions (Traditional Chinese)
 ```

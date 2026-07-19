@@ -12,6 +12,7 @@ import {
   Save,
   Sliders,
   Trash2,
+  Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CommonHeroTitle from '../components/common/CommonHeroTitle';
@@ -31,6 +32,14 @@ const empty: SystemSettingsPayload = {
   contactEmail: '',
   contactPhone: '',
   commonLinks: [],
+  imapServer: '',
+  imapPort: '',
+  imapUsername: '',
+  smtpServer: '',
+  smtpPort: '',
+  smtpUsername: '',
+  googleMailApiEnabled: false,
+  enterpriseSystems: [],
 };
 
 export default function SettingsSystemPage() {
@@ -51,6 +60,14 @@ export default function SettingsSystemPage() {
       contactEmail: model.contactEmail ?? '',
       contactPhone: model.contactPhone ?? '',
       commonLinks: model.commonLinks ?? [],
+      imapServer: model.imapServer ?? '',
+      imapPort: model.imapPort ?? '',
+      imapUsername: model.imapUsername ?? '',
+      smtpServer: model.smtpServer ?? '',
+      smtpPort: model.smtpPort ?? '',
+      smtpUsername: model.smtpUsername ?? '',
+      googleMailApiEnabled: model.googleMailApiEnabled ?? false,
+      enterpriseSystems: model.enterpriseSystems ?? [],
     });
   }, [model]);
 
@@ -106,8 +123,43 @@ export default function SettingsSystemPage() {
     });
   };
 
+  const invalidEnterpriseSystems = form.enterpriseSystems.some(
+    (sys) => !sys.label.trim() || !sys.url.trim() || !sys.category.trim() || !sys.area.trim()
+  );
+  const updateEnterpriseSystem = (index: number, payload: Partial<typeof form.enterpriseSystems[0]>) => {
+    setForm((current) => ({
+      ...current,
+      enterpriseSystems: current.enterpriseSystems.map((sys, pos) => (pos === index ? { ...sys, ...payload } : sys)),
+    }));
+  };
+  const addEnterpriseSystem = () => {
+    if (form.enterpriseSystems.length >= 50) {
+      toast.error('系統連結最多 50 筆');
+      return;
+    }
+    setForm((current) => ({
+      ...current,
+      enterpriseSystems: [...current.enterpriseSystems, { label: '', url: '', category: '', area: '' }],
+    }));
+  };
+  const removeEnterpriseSystem = (index: number) => {
+    setForm((current) => ({
+      ...current,
+      enterpriseSystems: current.enterpriseSystems.filter((_, position) => position !== index),
+    }));
+  };
+  const moveEnterpriseSystem = (index: number, offset: -1 | 1) => {
+    const destination = index + offset;
+    if (destination < 0 || destination >= form.enterpriseSystems.length) return;
+    setForm((current) => {
+      const enterpriseSystems = [...current.enterpriseSystems];
+      [enterpriseSystems[index], enterpriseSystems[destination]] = [enterpriseSystems[destination], enterpriseSystems[index]];
+      return { ...current, enterpriseSystems };
+    });
+  };
+
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-10">
+    <div className="mx-auto max-w-11xl px-4 pb-10">
       <CommonHeroTitle
         icon={Sliders}
         title="系統參數"
@@ -147,6 +199,44 @@ export default function SettingsSystemPage() {
           <KeyStatus label="PAGEINDEX_API_KEY" configured={!!model?.pageindexApiKeyConfigured} />
         </div>
         <p className="text-xs text-gray-500">基於安全性，API Key 不會透過此頁讀取、回傳或明文寫入資料庫；請在後端環境變數或秘密管理服務中設定。</p>
+      </section>
+
+      <section className="card mb-6 space-y-5">
+        <div>
+          <h2 className="font-semibold">郵件整合設定</h2>
+          <p className="mt-1 text-xs text-gray-500">設定專案管理「郵件整理」功能的連線參數，以支援 IMAP/SMTP 及 Google Mail API。</p>
+        </div>
+        
+        <h3 className="font-medium text-sm border-b border-gray-200 pb-2 dark:border-gray-700">IMAP / SMTP 伺服器</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="IMAP 伺服器" help="例如：imap.example.com">
+            <input disabled={!admin} className="input-field" value={form.imapServer} onChange={(event) => setForm({ ...form, imapServer: event.target.value })} />
+          </Field>
+          <Field label="IMAP 連接埠" help="例如：993">
+            <input disabled={!admin} className="input-field" value={form.imapPort} onChange={(event) => setForm({ ...form, imapPort: event.target.value })} />
+          </Field>
+          <Field label="IMAP 帳號" help="用於接收信件的帳號">
+            <input disabled={!admin} className="input-field" value={form.imapUsername} onChange={(event) => setForm({ ...form, imapUsername: event.target.value })} />
+          </Field>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 mt-2">
+          <Field label="SMTP 伺服器" help="例如：smtp.example.com">
+            <input disabled={!admin} className="input-field" value={form.smtpServer} onChange={(event) => setForm({ ...form, smtpServer: event.target.value })} />
+          </Field>
+          <Field label="SMTP 連接埠" help="例如：465 或 587">
+            <input disabled={!admin} className="input-field" value={form.smtpPort} onChange={(event) => setForm({ ...form, smtpPort: event.target.value })} />
+          </Field>
+          <Field label="SMTP 帳號" help="用於發送信件的帳號">
+            <input disabled={!admin} className="input-field" value={form.smtpUsername} onChange={(event) => setForm({ ...form, smtpUsername: event.target.value })} />
+          </Field>
+        </div>
+
+        <h3 className="font-medium text-sm border-b border-gray-200 pb-2 mt-4 dark:border-gray-700">Google Mail API</h3>
+        <label className="flex items-center gap-3">
+          <input disabled={!admin} type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700" checked={form.googleMailApiEnabled} onChange={(event) => setForm({ ...form, googleMailApiEnabled: event.target.checked })} />
+          <span className="text-sm">啟用 Google Mail API 整合</span>
+        </label>
+        <p className="text-xs text-gray-500">啟用後，將使用後端環境變數 (如 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) 進行 OAuth2 認證授權。</p>
       </section>
 
       <section className="card mb-6 space-y-5">
@@ -192,9 +282,37 @@ export default function SettingsSystemPage() {
         </div>
       </section>
 
+      <section className="card mb-6 space-y-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="flex items-center gap-2 font-medium"><Building2 className="h-4 w-4" />企業資訊系統</h3>
+            <p className="mt-1 text-xs text-gray-500">此清單將顯示於儀表板中，供使用者快速存取外部子系統。系統將會依照「分類」與「區域」進行群組。</p>
+          </div>
+          <button type="button" disabled={!admin || form.enterpriseSystems.length >= 50} className="btn-secondary flex items-center gap-1.5 text-sm" onClick={addEnterpriseSystem}>
+            <Plus className="h-4 w-4" />新增系統
+          </button>
+        </div>
+        <div className="space-y-3">
+          {form.enterpriseSystems.map((sys, index) => (
+            <div key={`enterprise-sys-${index}`} className="grid gap-2 rounded-xl border border-gray-200 p-3 dark:border-gray-700 md:grid-cols-[1fr_1fr_1.5fr_2fr_auto] md:items-center">
+              <input disabled={!admin} maxLength={50} className="input-field" placeholder="分類 (例如：內部管理)" value={sys.category} onChange={(event) => updateEnterpriseSystem(index, { category: event.target.value })} />
+              <input disabled={!admin} maxLength={50} className="input-field" placeholder="區域 (例如：台北總部)" value={sys.area} onChange={(event) => updateEnterpriseSystem(index, { area: event.target.value })} />
+              <input disabled={!admin} maxLength={80} className="input-field" placeholder="系統名稱" value={sys.label} onChange={(event) => updateEnterpriseSystem(index, { label: event.target.value })} />
+              <input disabled={!admin} type="url" className="input-field" placeholder="https://..." value={sys.url} onChange={(event) => updateEnterpriseSystem(index, { url: event.target.value })} />
+              <div className="flex justify-end gap-1">
+                <button type="button" disabled={!admin || index === 0} title="向上移動" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveEnterpriseSystem(index, -1)}><ArrowUp className="h-4 w-4" /></button>
+                <button type="button" disabled={!admin || index === form.enterpriseSystems.length - 1} title="向下移動" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveEnterpriseSystem(index, 1)}><ArrowDown className="h-4 w-4" /></button>
+                <button type="button" disabled={!admin} title="刪除連結" className="rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-30 dark:hover:bg-red-900/20" onClick={() => removeEnterpriseSystem(index)}><Trash2 className="h-4 w-4" /></button>
+              </div>
+            </div>
+          ))}
+          {!form.enterpriseSystems.length && <div className="rounded-xl border border-dashed border-gray-300 py-8 text-center text-sm text-gray-400 dark:border-gray-700">尚未設定企業資訊系統</div>}
+        </div>
+      </section>
+
       {!admin && <p className="mt-4 text-sm text-amber-600">目前帳號只有檢視權限；僅系統管理員可修改。</p>}
       <button
-        disabled={!admin || save.isPending || settings.isLoading || requiredValues.some((value) => !value.trim()) || invalidLinks}
+        disabled={!admin || save.isPending || settings.isLoading || requiredValues.some((value) => !value.trim()) || invalidLinks || invalidEnterpriseSystems}
         onClick={() => save.mutate()}
         className="btn-primary flex items-center gap-2 px-6 py-2.5"
       >

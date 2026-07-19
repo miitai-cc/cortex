@@ -22,6 +22,22 @@ struct SystemSettingsRequest {
     contact_phone: Option<String>,
     #[serde(default)]
     common_links: Option<Vec<CommonLinkRequest>>,
+    #[serde(default)]
+    imap_server: Option<String>,
+    #[serde(default)]
+    imap_port: Option<String>,
+    #[serde(default)]
+    imap_username: Option<String>,
+    #[serde(default)]
+    smtp_server: Option<String>,
+    #[serde(default)]
+    smtp_port: Option<String>,
+    #[serde(default)]
+    smtp_username: Option<String>,
+    #[serde(default)]
+    google_mail_api_enabled: Option<bool>,
+    #[serde(default)]
+    enterprise_systems: Option<Vec<EnterpriseSystemLinkRequest>>,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -29,6 +45,15 @@ struct SystemSettingsRequest {
 struct CommonLinkRequest {
     label: String,
     url: String,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EnterpriseSystemLinkRequest {
+    label: String,
+    url: String,
+    category: String,
+    area: String,
 }
 
 fn authentication(req: &Request, state: &AppState) -> Result<Claims, AppError> {
@@ -147,6 +172,13 @@ fn response(state: &AppState, saved: &HashMap<String, String>) -> serde_json::Va
         .into_iter()
         .filter(|link| !link.label.trim().is_empty() && valid_url(link.url.trim()))
         .collect::<Vec<_>>();
+    let enterprise_systems = saved
+        .get("enterprise_systems")
+        .and_then(|value| serde_json::from_str::<Vec<EnterpriseSystemLinkRequest>>(value).ok())
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|link| !link.label.trim().is_empty() && valid_url(link.url.trim()))
+        .collect::<Vec<_>>();
     serde_json::json!({
         "embeddingModel":embedding_model,"rerankingModel":reranking_model,
         "pageindexModel":pageindex_model,"openaiBaseUrl":openai_base_url,
@@ -157,7 +189,15 @@ fn response(state: &AppState, saved: &HashMap<String, String>) -> serde_json::Va
         "contactName":saved.get("contact_name").cloned().unwrap_or_else(|| "系統管理員".into()),
         "contactEmail":saved.get("contact_email").cloned().unwrap_or_default(),
         "contactPhone":saved.get("contact_phone").cloned().unwrap_or_default(),
-        "commonLinks":common_links
+        "commonLinks":common_links,
+        "imapServer":saved.get("imap_server").cloned().unwrap_or_default(),
+        "imapPort":saved.get("imap_port").cloned().unwrap_or_default(),
+        "imapUsername":saved.get("imap_username").cloned().unwrap_or_default(),
+        "smtpServer":saved.get("smtp_server").cloned().unwrap_or_default(),
+        "smtpPort":saved.get("smtp_port").cloned().unwrap_or_default(),
+        "smtpUsername":saved.get("smtp_username").cloned().unwrap_or_default(),
+        "googleMailApiEnabled":saved.get("google_mail_api_enabled").and_then(|v| v.parse::<bool>().ok()).unwrap_or(false),
+        "enterpriseSystems":enterprise_systems
     })
 }
 
@@ -206,10 +246,19 @@ async fn update_settings(
         ("contact_name", body.contact_name.as_deref()),
         ("contact_email", body.contact_email.as_deref()),
         ("contact_phone", body.contact_phone.as_deref()),
+        ("imap_server", body.imap_server.as_deref()),
+        ("imap_port", body.imap_port.as_deref()),
+        ("imap_username", body.imap_username.as_deref()),
+        ("smtp_server", body.smtp_server.as_deref()),
+        ("smtp_port", body.smtp_port.as_deref()),
+        ("smtp_username", body.smtp_username.as_deref()),
     ] {
         if let Some(value) = value {
             entries.push((key, value.trim().to_string()));
         }
+    }
+    if let Some(enabled) = body.google_mail_api_enabled {
+        entries.push(("google_mail_api_enabled", enabled.to_string()));
     }
     if let Some(links) = &body.common_links {
         let normalized = links
@@ -221,6 +270,22 @@ async fn update_settings(
             .collect::<Vec<_>>();
         entries.push((
             "common_links",
+            serde_json::to_string(&normalized)
+                .map_err(|error| AppError::BadRequest(error.to_string()))?,
+        ));
+    }
+    if let Some(systems) = &body.enterprise_systems {
+        let normalized = systems
+            .iter()
+            .map(|sys| EnterpriseSystemLinkRequest {
+                label: sys.label.trim().to_string(),
+                url: sys.url.trim().to_string(),
+                category: sys.category.trim().to_string(),
+                area: sys.area.trim().to_string(),
+            })
+            .collect::<Vec<_>>();
+        entries.push((
+            "enterprise_systems",
             serde_json::to_string(&normalized)
                 .map_err(|error| AppError::BadRequest(error.to_string()))?,
         ));

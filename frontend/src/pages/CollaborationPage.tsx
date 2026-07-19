@@ -7,6 +7,7 @@ import CommonHeroTitle from '../components/common/CommonHeroTitle';
 import IssueTracker from '../components/collaboration/IssueTracker';
 import TeamChannels from '../components/collaboration/TeamChannels';
 import ProjectCollaborationPanel from '../components/collaboration/ProjectCollaborationPanel';
+import { Announcements, Workflows, CalendarView, Bookings } from '../components/collaboration/CollaborationFeatures';
 import { collaborationApi } from '../services/api';
 import type { CollaborationOverview } from '../types/collaboration';
 
@@ -54,14 +55,23 @@ export default function CollaborationPage() {
           無法載入協作資料，請確認後端服務與登入狀態。
         </div>
       )}
-      {model &&
-        (projectMode ? (
+      {model && (
+        section === 'announcements' ? (
+          <Announcements />
+        ) : section === 'workflows' ? (
+          <Workflows />
+        ) : section === 'calendar' ? (
+          <CalendarView />
+        ) : section === 'bookings' ? (
+          <Bookings />
+        ) : projectMode ? (
           <ProjectCollaborationPanel />
         ) : issueMode ? (
           <IssueTracker overview={model} onlyMine={section === 'my-issues'} />
         ) : (
           <TeamChannels overview={model} token={token} />
-        ))}
+        )
+      )}
     </div>
   );
 }

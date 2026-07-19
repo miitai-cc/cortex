@@ -1,6 +1,6 @@
 export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed' | 'archived';
 export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
-export type ProjectRecordType = 'milestone' | 'task' | 'budget' | 'member' | 'requirement' | 'audit';
+export type ProjectRecordType = 'milestone' | 'task' | 'budget' | 'member' | 'requirement' | 'audit' | 'meeting' | 'email' | 'customer' | 'vendor';
 
 export interface ProjectLink {
   label: string;

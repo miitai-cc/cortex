@@ -6,14 +6,20 @@ import { LoginPage } from 'eiva-fe-security';
 import DashboardPage from './pages/DashboardPage';
 import DashboardHealthPage from './pages/DashboardHealthPage';
 import DashboardActivityPage from './pages/DashboardActivityPage';
+import EnterpriseSystemsPage from './pages/EnterpriseSystemsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import DocumentListPage from './pages/DocumentListPage';
 import RecentDocumentsPage from './pages/RecentDocumentsPage';
+import DepartmentFileManager from './components/documents/DepartmentFileManager';
+import CommonFeaturesPage from './pages/CommonFeaturesPage';
+import OrgManagementPage from './pages/OrgManagementPage';
+import HrPortalPage from './pages/HrPortalPage';
 import SearchPage from './pages/SearchPage';
 import SearchHybridPage from './pages/SearchHybridPage';
 import DocumentDetailPage from './pages/DocumentDetailPage';
 import SettingsSystemPage from './pages/SettingsSystemPage';
 import SystemAdministrationPage from './pages/SystemAdministrationPage';
+import AiManagementSettingsPage from './pages/AiManagementSettingsPage';
 import ChatPage from './pages/ChatPage';
 import ChatHistoryPage from './pages/ChatHistoryPage';
 import KnowledgeGraphPage from './pages/KnowledgeGraphPage';
@@ -106,14 +112,24 @@ function App() {
           <Route path="/cortex/dashboard" element={<DashboardPage />} />
           <Route path="/cortex/dashboard/health" element={<DashboardHealthPage />} />
           <Route path="/cortex/dashboard/activity" element={<DashboardActivityPage />} />
+          <Route path="/cortex/dashboard/enterprise-systems" element={<EnterpriseSystemsPage />} />
           <Route path="/cortex/departments/:department" element={<DepartmentPortalPage />} />
+          <Route path="/cortex/documents" element={<DocumentsPage />} />
           <Route path="/cortex/projects/:section?" element={<ProjectManagementPage />} />
           <Route path="/cortex/workflows/designer" element={<Suspense fallback={<div className="card m-6 py-14 text-center text-gray-500">載入流程設計器…</div>}><WorkflowDesignerPage /></Suspense>} />
           <Route path="/cortex/workflows/:section?" element={<WorkflowManagementPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
+          <Route path="/cortex/chat/directory" element={<CommonFeaturesPage />} />
+          <Route path="/cortex/chat/leave" element={<CommonFeaturesPage />} />
+          <Route path="/cortex/chat/overtime" element={<CommonFeaturesPage />} />
+          <Route path="/cortex/chat/trip" element={<CommonFeaturesPage />} />
+          <Route path="/cortex/chat/outing" element={<CommonFeaturesPage />} />
           <Route path="/cortex/chat/history" element={<ChatHistoryPage />} />
           <Route path="/cortex/collaboration/:section?" element={<CollaborationPage />} />
           <Route path="/cortex/documents" element={<DocumentsPage />} />
+          <Route path="/cortex/documents/shared" element={<DepartmentFileManager />} />
+          <Route path="/cortex/documents/forms" element={<DepartmentFileManager />} />
+          <Route path="/cortex/documents/iso" element={<DepartmentFileManager />} />
           <Route path="/cortex/documents/list" element={<DocumentListPage />} />
           <Route path="/cortex/documents/recent" element={<RecentDocumentsPage />} />
           <Route path="/cortex/documents/indexing" element={<IndexingPage />} />
@@ -127,10 +143,13 @@ function App() {
           <Route path="/cortex/graph" element={<KnowledgeGraphPage />} />
           <Route path="/cortex/graph/community" element={<GraphCommunityPage />} />
           <Route path="/cortex/graph/isolated" element={<GraphIsolatedPage />} />
+          <Route path="/cortex/orgManagement/:section?" element={<OrgManagementPage />} />
+          <Route path="/cortex/hr/:section?" element={<HrPortalPage />} />
           <Route path="/cortex/research" element={<DeepResearchPage />} />
-          <Route path="/cortex/research/history" element={<ResearchHistoryPage />} />
+          <Route path="/cortex/graph/history" element={<ResearchHistoryPage />} />
           <Route path="/cortex/settings" element={<Navigate to="/cortex/settings/system" replace />} />
           <Route path="/cortex/settings/system" element={<SettingsSystemPage />} />
+          <Route path="/cortex/settings/ai-management" element={<AiManagementSettingsPage />} />
           <Route path="/cortex/settings/:section" element={<SystemAdministrationPage />} />
           <Route path="/cortex/ai-models" element={<Navigate to="/cortex/ai-models/embedding" replace />} />
           <Route path="/cortex/ai-models/:tab" element={<AiModelsPage />} />

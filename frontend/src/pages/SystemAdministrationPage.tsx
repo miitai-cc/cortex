@@ -60,8 +60,9 @@ function errorMessage(error: unknown, fallback: string): string {
   return candidate.response?.data?.error || candidate.message || fallback;
 }
 
-export default function SystemAdministrationPage() {
-  const { section = '' } = useParams();
+export default function SystemAdministrationPage({ sectionProp, hideHeader, hideWrapper }: { sectionProp?: string; hideHeader?: boolean; hideWrapper?: boolean }) {
+  const params = useParams<{ section: string }>();
+  const section = sectionProp || params.section || '';
   const baseDefinition = systemAdminEntities[section];
   const user = useAuthStore((state) => state.user);
   const account = user as typeof user & { role?: string };
@@ -159,8 +160,8 @@ export default function SystemAdministrationPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 pb-10">
-      <CommonHeroTitle icon={Database} title={definition.title} description={definition.description} />
+    <div className={hideWrapper ? '' : 'mx-auto max-w-[1600px] px-4 pb-10'}>
+      {!hideHeader && <CommonHeroTitle icon={Database} title={definition.title} description={definition.description} />}
       {!admin && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
           <ShieldAlert className="h-5 w-5" />目前帳號沒有系統設定管理權限。

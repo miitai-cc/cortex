@@ -348,6 +348,13 @@ export interface CommonSystemLink {
   url: string;
 }
 
+export interface EnterpriseSystemLink {
+  label: string;
+  url: string;
+  category: string;
+  area: string;
+}
+
 export interface SystemSettingsPayload {
   embeddingModel: string;
   rerankingModel: string;
@@ -358,6 +365,14 @@ export interface SystemSettingsPayload {
   contactEmail: string;
   contactPhone: string;
   commonLinks: CommonSystemLink[];
+  imapServer?: string;
+  imapPort?: string;
+  imapUsername?: string;
+  smtpServer?: string;
+  smtpPort?: string;
+  smtpUsername?: string;
+  googleMailApiEnabled?: boolean;
+  enterpriseSystems: EnterpriseSystemLink[];
 }
 
 export interface SystemSettingsResponse extends SystemSettingsPayload {

@@ -6,65 +6,18 @@ import { useAuthStore } from 'eiva-fe-security';
 import { useResearchStore } from '../stores/researchStore';
 import { useThemeStore } from '../stores/themeStore';
 import {
-  LayoutDashboard,
-  FileText,
-  Search,
-  Settings,
-  LogOut,
   Brain,
-  MessageSquare,
-  Share2,
-  FlaskConical,
   PanelRightOpen,
   PanelRightClose,
   PanelLeftOpen,
   PanelLeftClose,
-  Globe,
-  BarChart3,
-  Activity,
-  Heart,
-  Plus,
-  Clock,
-  Upload,
-  List,
-  Layers,
-  Network,
-  Users,
-  AlertTriangle,
-  Sliders,
-  Sun,
   Moon,
-  Cpu,
-  ArrowUpDown,
-  FolderSearch,
-  Sparkles,
-  Library,
-  Award,
-  Bookmark,
-  CircleHelp,
-  ClipboardCheck,
-  UserRoundSearch,
-  FolderCog,
-  MessagesSquare,
-  Hash,
-  ClipboardList,
-  UserCheck,
-  Building2,
-  CalendarDays,
-  CircleDollarSign,
-  Flag,
-  FolderKanban,
-  Link2,
-  FileClock,
-  GitBranch,
-  Workflow,
-  ShieldCheck,
-  Bell,
-  Box,
-  Server,
-  CloudCog,
+  Sun,
+  Megaphone,
+  User,
+  Globe,
+  LogOut,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
 import BottomToolArea from './BottomToolArea';
 import TopQuickActions from './TopQuickActions';
@@ -73,190 +26,7 @@ import { DEFAULT_AUTHENTICATED_PATH } from '../utils/authNavigation';
 import { departmentConfigs } from '../config/departments';
 import { systemAdminApi } from '../services/api';
 import type { SystemUserContext } from '../types/systemAdmin';
-
-interface SubMenuItem {
-  labelKey: string;
-  icon: LucideIcon;
-  to: string;
-}
-
-interface NavItem {
-  to: string;
-  icon: LucideIcon;
-  labelKey: string;
-  children: SubMenuItem[];
-}
-
-const navItems: NavItem[] = [
-  {
-    to: '/cortex',
-    icon: LayoutDashboard,
-    labelKey: 'nav.workspace',
-    children: [
-      { labelKey: 'nav.workspace.aiDocumentQuery', icon: Sparkles, to: DEFAULT_AUTHENTICATED_PATH },
-      { labelKey: 'nav.dashboard.overview', icon: BarChart3, to: '/cortex/dashboard' },
-      { labelKey: 'nav.dashboard.health', icon: Heart, to: '/cortex/dashboard/health' },
-      { labelKey: 'nav.dashboard.activity', icon: Activity, to: '/cortex/dashboard/activity' },
-    ],
-  },
-  {
-    to: '/cortex/departments',
-    icon: Building2,
-    labelKey: 'nav.departments',
-    children: departmentConfigs.map((department) => ({
-      labelKey: department.navKey,
-      icon: department.icon,
-      to: `/cortex/departments/${department.slug}`,
-    })),
-  },
-  {
-    to: '/cortex/workspace',
-    icon: UserRoundSearch,
-    labelKey: 'nav.personalWorkspace',
-    children: [
-      { labelKey: 'nav.personalWorkspace.following', icon: Bookmark, to: '/cortex/workspace/following' },
-      { labelKey: 'nav.personalWorkspace.review', icon: ClipboardCheck, to: '/cortex/workspace/review' },
-      { labelKey: 'nav.personalWorkspace.points', icon: Award, to: '/cortex/workspace/points' },
-      { labelKey: 'nav.personalWorkspace.projects', icon: FolderKanban, to: '/cortex/workspace/projects' },
-    ],
-  },
-  {
-    to: '/cortex/projects',
-    icon: FolderKanban,
-    labelKey: 'nav.projects',
-    children: [
-      { labelKey: 'nav.projects.information', icon: Link2, to: '/cortex/projects/information' },
-      { labelKey: 'nav.projects.gantt', icon: BarChart3, to: '/cortex/projects/gantt' },
-      { labelKey: 'nav.projects.milestones', icon: Flag, to: '/cortex/projects/milestones' },
-      { labelKey: 'nav.projects.kanban', icon: FolderKanban, to: '/cortex/projects/kanban' },
-      { labelKey: 'nav.projects.budget', icon: CircleDollarSign, to: '/cortex/projects/budget' },
-      { labelKey: 'nav.projects.people', icon: Users, to: '/cortex/projects/people' },
-      { labelKey: 'nav.projects.requirements', icon: ClipboardList, to: '/cortex/projects/requirements' },
-      { labelKey: 'nav.projects.audits', icon: ClipboardCheck, to: '/cortex/projects/audits' },
-    ],
-  },
-  {
-    to: '/cortex/workflows',
-    icon: Workflow,
-    labelKey: 'nav.workflows',
-    children: [
-      { labelKey: 'nav.workflows.overview', icon: Network, to: '/cortex/workflows/overview' },
-      { labelKey: 'nav.workflows.designer', icon: Workflow, to: '/cortex/workflows/designer' },
-      { labelKey: 'nav.workflows.definitions', icon: GitBranch, to: '/cortex/workflows/definitions' },
-      { labelKey: 'nav.workflows.tasks', icon: UserCheck, to: '/cortex/workflows/tasks' },
-      { labelKey: 'nav.workflows.instances', icon: FileClock, to: '/cortex/workflows/instances' },
-      { labelKey: 'nav.workflows.monitoring', icon: Activity, to: '/cortex/workflows/monitoring' },
-    ],
-  },
-  {
-    to: '/cortex/chat',
-    icon: MessageSquare,
-    labelKey: 'nav.chat',
-    children: [
-      { labelKey: 'nav.chat.new', icon: Plus, to: '/cortex/chat' },
-      { labelKey: 'nav.chat.history', icon: Clock, to: '/cortex/chat/history' },
-    ],
-  },
-  {
-    to: '/cortex/collaboration',
-    icon: MessagesSquare,
-    labelKey: 'nav.collaboration',
-    children: [
-      { labelKey: 'nav.collaboration.channels', icon: Hash, to: '/cortex/collaboration/channels' },
-      { labelKey: 'nav.collaboration.issues', icon: ClipboardList, to: '/cortex/collaboration/issues' },
-      { labelKey: 'nav.collaboration.myIssues', icon: UserCheck, to: '/cortex/collaboration/my-issues' },
-      { labelKey: 'nav.collaboration.projects', icon: CalendarDays, to: '/cortex/collaboration/projects' },
-    ],
-  },
-  {
-    to: '/cortex/documents',
-    icon: FileText,
-    labelKey: 'nav.documents',
-    children: [
-      { labelKey: 'nav.documents.upload', icon: Upload, to: '/cortex/documents' },
-      { labelKey: 'nav.documents.content', icon: Library, to: '/cortex/documents/content' },
-      { labelKey: 'nav.documents.list', icon: List, to: '/cortex/documents/list' },
-      { labelKey: 'nav.documents.recent', icon: Clock, to: '/cortex/documents/recent' },
-      { labelKey: 'nav.documents.indexing', icon: FolderSearch, to: '/cortex/documents/indexing' },
-    ],
-  },
-  {
-    to: '/cortex/search',
-    icon: Search,
-    labelKey: 'nav.search',
-    children: [
-      { labelKey: 'nav.search.fulltext', icon: Search, to: '/cortex/search' },
-      { labelKey: 'nav.search.hybrid', icon: Layers, to: '/cortex/search/hybrid' },
-    ],
-  },
-  {
-    to: '/cortex/knowledge',
-    icon: Library,
-    labelKey: 'nav.knowledgeCenter',
-    children: [
-      { labelKey: 'nav.knowledgeCenter.documents', icon: FileText, to: '/cortex/knowledge/documents' },
-      { labelKey: 'nav.knowledgeCenter.categories', icon: FolderCog, to: '/cortex/knowledge-categories' },
-      { labelKey: 'nav.knowledgeCenter.review', icon: ClipboardCheck, to: '/cortex/knowledge/review' },
-      { labelKey: 'nav.knowledgeCenter.faq', icon: CircleHelp, to: '/cortex/knowledge/faq' },
-      { labelKey: 'nav.knowledgeCenter.experts', icon: UserRoundSearch, to: '/cortex/knowledge/experts' },
-      { labelKey: 'nav.knowledgeCenter.community', icon: Users, to: '/cortex/knowledge/community' },
-    ],
-  },
-  {
-    to: '/cortex/graph',
-    icon: Share2,
-    labelKey: 'nav.graph',
-    children: [
-      { labelKey: 'nav.graph.overview', icon: Network, to: '/cortex/graph' },
-      { labelKey: 'nav.graph.community', icon: Users, to: '/cortex/graph/community' },
-      { labelKey: 'nav.graph.isolated', icon: AlertTriangle, to: '/cortex/graph/isolated' },
-    ],
-  },
-  {
-    to: '/cortex/research',
-    icon: FlaskConical,
-    labelKey: 'nav.research',
-    children: [
-      { labelKey: 'nav.research.new', icon: Plus, to: '/cortex/research' },
-      { labelKey: 'nav.research.history', icon: Clock, to: '/cortex/research/history' },
-    ],
-  },
-  {
-    to: '/cortex/ai-models',
-    icon: Cpu,
-    labelKey: 'nav.aiModels',
-    children: [
-      { labelKey: 'nav.aiModels.embedding', icon: Layers, to: '/cortex/ai-models/embedding' },
-      { labelKey: 'nav.aiModels.reranking', icon: ArrowUpDown, to: '/cortex/ai-models/reranking' },
-    ],
-  },
-  {
-    to: '/cortex/settings',
-    icon: Settings,
-    labelKey: 'nav.settings',
-    children: [
-      { labelKey: 'nav.settings.system', icon: Sliders, to: '/cortex/settings/system' },
-      { labelKey: 'nav.settings.users', icon: Users, to: '/cortex/settings/users' },
-      { labelKey: 'nav.settings.departments', icon: Building2, to: '/cortex/settings/departments' },
-      { labelKey: 'nav.settings.roles', icon: UserCheck, to: '/cortex/settings/roles' },
-      { labelKey: 'nav.settings.permissions', icon: ShieldCheck, to: '/cortex/settings/permissions' },
-      { labelKey: 'nav.settings.menus', icon: List, to: '/cortex/settings/menus' },
-      { labelKey: 'nav.settings.enterpriseSystems', icon: Server, to: '/cortex/settings/enterprise-systems' },
-      { labelKey: 'nav.settings.aiModels', icon: Cpu, to: '/cortex/settings/ai-models' },
-      { labelKey: 'nav.settings.contexts', icon: Brain, to: '/cortex/settings/contexts' },
-      { labelKey: 'nav.settings.channels', icon: Hash, to: '/cortex/settings/channels' },
-      { labelKey: 'nav.settings.schedules', icon: CalendarDays, to: '/cortex/settings/schedules' },
-      { labelKey: 'nav.settings.aiProviders', icon: CloudCog, to: '/cortex/settings/ai-providers' },
-      { labelKey: 'nav.settings.autoApprove', icon: UserCheck, to: '/cortex/settings/auto-approve' },
-      { labelKey: 'nav.settings.autoComplete', icon: Sparkles, to: '/cortex/settings/auto-complete' },
-      { labelKey: 'nav.settings.notifications', icon: Bell, to: '/cortex/settings/notifications' },
-      { labelKey: 'nav.settings.commitMessages', icon: GitBranch, to: '/cortex/settings/commit-messages' },
-      { labelKey: 'nav.settings.sandboxes', icon: Box, to: '/cortex/settings/sandboxes' },
-      { labelKey: 'nav.settings.languages', icon: Globe, to: '/cortex/settings/languages' },
-      { labelKey: 'nav.settings.about', icon: CircleHelp, to: '/cortex/settings/about' },
-    ],
-  },
-];
+import { navItems, type SubMenuItem, type NavItem } from '../lib/navConfig';
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
@@ -283,12 +53,7 @@ export default function Layout() {
     return navItems
       .filter((item) => item.to === '/cortex/settings' && admin
         ? true
-        : policies.find((policy) => policy.path === item.to)?.enabled !== false)
-      .sort((left, right) => {
-        const leftOrder = policies.find((policy) => policy.path === left.to)?.sortOrder ?? navItems.indexOf(left);
-        const rightOrder = policies.find((policy) => policy.path === right.to)?.sortOrder ?? navItems.indexOf(right);
-        return leftOrder - rightOrder;
-      });
+        : policies.find((policy) => policy.path === item.to)?.enabled !== false);
   }, [admin, systemContext.data?.data.menus]);
   const systemJobs: SystemJobDefinition[] = useMemo(() => visibleNavItems.flatMap((item) => item.children.map((child) => ({
     path: child.to,
@@ -355,13 +120,12 @@ export default function Layout() {
           {visibleNavItems.map((item) => (
             <Link
               key={item.to}
-              to={item.children[0].to}
+              to={item.children?.length > 0 ? item.children[0].to : item.to}
               onClick={() => handleNavClick(item)}
-              className={`p-2.5 rounded-lg transition-colors ${
-                activeNavItem?.to === item.to
+              className={`p-2.5 rounded-lg transition-colors ${activeNavItem?.to === item.to
                   ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
+                }`}
               title={t(item.labelKey)}
             >
               <item.icon className="w-5 h-5" />
@@ -372,9 +136,8 @@ export default function Layout() {
 
       {/* Left Panel (submenu) */}
       <div
-        className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-200 overflow-hidden ${
-          leftPanelOpen && activeNavItem ? 'w-60' : 'w-0'
-        }`}
+        className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-200 overflow-hidden ${leftPanelOpen && activeNavItem ? 'w-60' : 'w-0'
+          }`}
       >
         {activeNavItem && (
           <>
@@ -395,11 +158,10 @@ export default function Layout() {
                     <Link
                       key={subItem.to}
                       to={subItem.to}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
-                        isSubActive
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${isSubActive
                           ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-medium'
                           : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-                      }`}
+                        }`}
                     >
                       <subItem.icon className="w-4 h-4 shrink-0" />
                       <span>{t(subItem.labelKey)}</span>
@@ -478,12 +240,11 @@ export default function Layout() {
       {/* Right Panel (Research toggle) */}
       <button
         onClick={togglePanel}
-        className={`fixed right-4 bottom-4 z-20 p-2.5 rounded-full shadow-lg transition-colors ${
-          researchPanelOpen
+        className={`fixed right-4 bottom-4 z-20 p-2.5 rounded-full shadow-lg transition-colors ${researchPanelOpen
             ? 'bg-primary-600 text-white'
             : 'bg-white text-gray-600 border border-gray-200'
-        }`}
-        title={t('nav.research')}
+          }`}
+        title={t('nav.orgManagement')}
       >
         {researchPanelOpen ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
       </button>

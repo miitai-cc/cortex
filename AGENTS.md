@@ -11,6 +11,38 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
+## Container Build
+
+All container images use Alpine base and are prefixed with `miitai-cc/cortex-*`.
+
+| Image | Dockerfile | Description |
+|-------|-----------|-------------|
+| `miitai-cc/cortex-app` | `run/container/app/Dockerfile` | Rust backend API |
+| `miitai-cc/cortex-sso` | `run/container/sso/keycloak/Dockerfile` | Keycloak SSO |
+| `miitai-cc/cortex-qdrant` | `run/container/qdrant/Dockerfile` | Qdrant vector DB |
+| `miitai-cc/cortex-ai-embedded` | `run/container/ai/embedded/Dockerfile` | llama.cpp embedding server |
+| `miitai-cc/cortex-ai-reranking` | `run/container/ai/reranking/Dockerfile` | llama.cpp reranking server |
+| `miitai-cc/cortex-ai-common` | `run/container/ai/common/Dockerfile` | llama.cpp general server |
+| `miitai-cc/cortex-postgresql` | `run/container/postgresql/Dockerfile` | PostgreSQL 16 |
+
+Build commands:
+```bash
+./run/run-make.sh all          # Build all images
+./run/run-make.sh app v1.0.0   # Build single service with version
+```
+
+See `run/container/README.md` for full details.
+
+## Kubernetes Deployment
+
+Deployments are in `run/kubernetes/` targeting the `cortex` namespace.
+
+```bash
+kubectl apply -f run/kubernetes/
+```
+
+See `run/kubernetes/README.md` for full details.
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 

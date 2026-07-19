@@ -882,7 +882,7 @@ async fn ensure_defaults_inner(state: &AppState) -> Result<(), AppError> {
         ("search", "智慧檢索", "/cortex/search"),
         ("knowledge", "知識中心", "/cortex/knowledge"),
         ("graph", "知識圖譜", "/cortex/graph"),
-        ("research", "深度研究", "/cortex/research"),
+        ("org-management", "營運管理", "/cortex/orgManagement"),
         ("ai-models", "AI 模型", "/cortex/ai-models"),
         ("settings", "系統設定", "/cortex/settings"),
     ];

@@ -21,14 +21,14 @@ export default function ResearchHistoryPage() {
 
   return (
     <div>
-      <CommonHeroTitle icon={Clock} title={t('nav.research.history')} description="檢視所有已完成的研究任務" />
+      <CommonHeroTitle icon={Clock} title={t('nav.graph.history')} description="檢視所有已完成的研究任務" />
 
       {sorted.length === 0 ? (
         <div className="card text-center py-12">
           <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
           <p className="text-sm text-gray-500 dark:text-gray-400">尚無研究紀錄</p>
           <button
-            onClick={() => navigate('/cortex/research')}
+            onClick={() => navigate('/cortex/graph/research')}
             className="mt-4 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
             開始研究
@@ -43,10 +43,9 @@ export default function ResearchHistoryPage() {
               <div key={task.id} className="card">
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`p-2 rounded-lg ${cfg.bg}`}>
-                    <Icon className={`w-4 h-4 ${cfg.color} ${
-                      task.status === 'queued' || task.status === 'searching' || task.status === 'synthesizing'
-                        ? 'animate-spin' : ''
-                    }`} />
+                    <Icon className={`w-4 h-4 ${cfg.color} ${task.status === 'queued' || task.status === 'searching' || task.status === 'synthesizing'
+                      ? 'animate-spin' : ''
+                      }`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{task.topic}</p>

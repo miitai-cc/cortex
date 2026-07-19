@@ -150,7 +150,7 @@ async fn recent_activity(
         activities.push(activity(row.get("id"),"query","執行文件檢索",row.get("query_text"),None,row.try_get("created_at").ok(),"/cortex"));
     }
     for row in sqlx::query("SELECT id,topic,CAST(created_at AS TEXT) AS created_at FROM researches ORDER BY created_at DESC LIMIT 30").fetch_all(&state.db.pool).await? {
-        activities.push(activity(row.get("id"),"research","建立深層研究",row.get("topic"),None,row.try_get("created_at").ok(),"/cortex/research/history"));
+        activities.push(activity(row.get("id"),"research","建立深層研究",row.get("topic"),None,row.try_get("created_at").ok(),"/cortex/graph/research/history"));
     }
     for row in sqlx::query("SELECT id,title,CAST(updated_at AS TEXT) AS updated_at FROM conversations ORDER BY updated_at DESC LIMIT 30").fetch_all(&state.db.pool).await? {
         activities.push(activity(row.get("id"),"conversation","更新智慧對話",row.get("title"),None,row.try_get("updated_at").ok(),"/cortex/chat/history"));

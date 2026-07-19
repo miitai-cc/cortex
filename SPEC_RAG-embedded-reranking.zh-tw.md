@@ -185,6 +185,20 @@ LLM 收到的 prompt：
 ## 五、模型 API 呼叫實作
 
 目前 Embedding 與 Reranking 皆透過 HTTP API 呼叫（可相容 OpenAI 格式）：
+- **本地部署**：使用 llama.cpp 容器（`miitai-cc/cortex-ai-embedded`、`miitai-cc/cortex-ai-reranking`）提供推理服務
+- **雲端 API**：呼叫 OpenAI 或相容的第三方 API
+
+### 容器化部署
+
+```bash
+# 建置 AI 推理容器
+cd run/container
+make ai-embedded    # miitai-cc/cortex-ai-embedded
+make ai-reranking   # miitai-cc/cortex-ai-reranking
+make ai-common      # miitai-cc/cortex-ai-common
+```
+
+所有 AI 容器皆使用 Alpine 基底，暴露 `8080` port，可透過 docker-compose 或 Kubernetes 部署。
 
 ### Embedding 請求
 

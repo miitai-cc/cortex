@@ -228,11 +228,10 @@ export default function ChatPage() {
           {conversations.map((conv) => (
             <div
               key={conv.id}
-              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                conv.id === activeConversationId
+              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${conv.id === activeConversationId
                   ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
+                }`}
               onClick={() => setActiveConversation(conv.id)}
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
@@ -298,11 +297,10 @@ export default function ChatPage() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[75%] px-4 py-3 rounded-2xl ${
-                    msg.role === 'user'
+                  className={`max-w-[75%] px-4 py-3 rounded-2xl ${msg.role === 'user'
                       ? 'bg-primary-600 text-white rounded-br-md'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md'
-                  }`}
+                    }`}
                 >
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                   {msg.references && msg.references.length > 0 && (
@@ -405,11 +403,10 @@ export default function ChatPage() {
             <div className="flex gap-3">
               <button
                 onClick={toggleContextPanel}
-                className={`shrink-0 p-3 rounded-xl border transition-colors ${
-                  contextPanelOpen
+                className={`shrink-0 p-3 rounded-xl border transition-colors ${contextPanelOpen
                     ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400'
                     : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-                }`}
+                  }`}
                 title="上下文庫管理"
               >
                 <BookOpen className="w-5 h-5" />

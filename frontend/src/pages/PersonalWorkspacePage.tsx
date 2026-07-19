@@ -12,6 +12,7 @@ import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import CommonHeroTitle from "../components/common/CommonHeroTitle";
 import { knowledgeApi, projectApi } from "../services/api";
+import { MyTasks, PersonalAnnouncements, PersonalStatus } from "../components/personal/PersonalFeatures";
 
 export default function PersonalWorkspacePage() {
   const { section = "following" } = useParams();
@@ -115,6 +116,12 @@ export default function PersonalWorkspacePage() {
             </>
           )}
         </div>
+      ) : section === "tasks" ? (
+        <MyTasks />
+      ) : section === "announcements" ? (
+        <PersonalAnnouncements />
+      ) : section === "status" ? (
+        <PersonalStatus />
       ) : section === "points" ? (
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           <div className="card self-start">

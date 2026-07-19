@@ -31,6 +31,7 @@ export interface DepartmentItemTypeConfig {
   label: string;
   labelEn: string;
   description: string;
+  linkTo?: string;
 }
 
 export interface DepartmentConfig {
@@ -157,6 +158,9 @@ export const departmentConfigs: DepartmentConfig[] = [
       { value: 'onboarding', label: '到職作業', labelEn: 'Onboarding', description: '新進人員報到與試用期追蹤' },
       { value: 'training', label: '培訓發展', labelEn: 'Training', description: '年度訓練、職能與學習成果' },
       { value: 'people_action', label: '人員事項', labelEn: 'People Action', description: '調動、晉升、績效與組織異動' },
+      { value: 'personnel', label: '人員資料管理', labelEn: 'Personnel Data', description: '員工名冊、聯絡方式與組織架構', linkTo: '/cortex/hr/personnel' },
+      { value: 'attendance', label: '出缺勤管理', labelEn: 'Attendance', description: '打卡、假單簽核與出勤異常', linkTo: '/cortex/hr/attendance' },
+      { value: 'payroll', label: '薪資管理', labelEn: 'Payroll', description: '薪資結算、獎金與扣繳紀錄', linkTo: '/cortex/hr/payroll' },
     ],
   },
   {
