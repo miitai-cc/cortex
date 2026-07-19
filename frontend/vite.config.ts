@@ -30,9 +30,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@lib': path.resolve(__dirname, '../lib/react'),
     },
+    dedupe: ['react', 'react-dom', 'zustand'],
   },
   optimizeDeps: {
-    include: ['eiva-fe-sso', 'eiva-fe-security'],
+    // These workspace packages expose TypeScript source and must stay live in
+    // development. Pre-bundling them leaves stale login/store code in .vite.
+    exclude: ['eiva-fe-sso', 'eiva-fe-security'],
   },
   build: {
     outDir: '../backend/assets',
@@ -48,6 +51,7 @@ export default defineConfig({
       '/cortex/api/v0.85': {
         target: `http://localhost:${BACKEND_PORT}`,
         changeOrigin: true,
+        ws: true,
       },
       '/cortex/ws': {
         target: `ws://localhost:${BACKEND_PORT}`,

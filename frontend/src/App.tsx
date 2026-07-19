@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from 'eiva-fe-security';
 import Layout from './components/Layout';
 import { LoginPage } from 'eiva-fe-security';
@@ -28,22 +29,83 @@ import ContentManagementPage from './pages/ContentManagementPage';
 import KnowledgeCenterPage from './pages/KnowledgeCenterPage';
 import PersonalWorkspacePage from './pages/PersonalWorkspacePage';
 import KnowledgeCategoriesPage from './pages/KnowledgeCategoriesPage';
+import CollaborationPage from './pages/CollaborationPage';
+import DepartmentPortalPage from './pages/DepartmentPortalPage';
+import NotFoundPage from './pages/NotFoundPage';
+import {
+  clearRememberedReturnPath,
+  DEFAULT_AUTHENTICATED_PATH,
+  getRememberedReturnPath,
+  hasValidAuthentication,
+  LOGIN_PATH,
+  rememberReturnPath,
+  sanitizeReturnPath,
+} from './utils/authNavigation';
+
+type LoginLocationState = {
+  from?: string;
+};
+
+function ProtectedLayout() {
+  const { isAuthenticated, token } = useAuthStore();
+  const location = useLocation();
+  const returnPath = `${location.pathname}${location.search}`;
+  const hasValidSession = hasValidAuthentication(isAuthenticated, token);
+
+  useEffect(() => {
+    if (!hasValidSession) rememberReturnPath(returnPath);
+  }, [hasValidSession, returnPath]);
+
+  if (!hasValidSession) {
+    return <Navigate to={LOGIN_PATH} replace state={{ from: returnPath }} />;
+  }
+
+  return <Layout />;
+}
+
+function LoginRoute() {
+  const { isAuthenticated, token } = useAuthStore();
+  const location = useLocation();
+  const hasValidSession = hasValidAuthentication(isAuthenticated, token);
+  const state = location.state as LoginLocationState | null;
+  const returnPath =
+    sanitizeReturnPath(state?.from) ??
+    getRememberedReturnPath() ??
+    DEFAULT_AUTHENTICATED_PATH;
+
+  useEffect(() => {
+    if (hasValidSession) clearRememberedReturnPath();
+  }, [hasValidSession]);
+
+  return hasValidSession ? <Navigate to={returnPath} replace /> : <LoginPage />;
+}
 
 function App() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token, logout } = useAuthStore();
+  const hasValidSession = hasValidAuthentication(isAuthenticated, token);
+
+  useEffect(() => {
+    if (isAuthenticated && !hasValidSession) logout();
+  }, [hasValidSession, isAuthenticated, logout]);
 
   return (
     <>
       <Routes>
-        <Route path="/" element={<Navigate to="/cortex" replace />} />
-        <Route path="/cortex/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/cortex" replace />} />
-        <Route element={isAuthenticated ? <Layout /> : <Navigate to="/cortex/login" replace />}>
-          <Route path="/cortex" element={<AiDocumentQueryPage />} />
+        <Route
+          path="/"
+          element={<Navigate to={hasValidSession ? DEFAULT_AUTHENTICATED_PATH : LOGIN_PATH} replace />}
+        />
+        <Route path={LOGIN_PATH} element={<LoginRoute />} />
+        <Route element={<ProtectedLayout />}>
+          <Route path="/cortex" element={<Navigate to={DEFAULT_AUTHENTICATED_PATH} replace />} />
+          <Route path={DEFAULT_AUTHENTICATED_PATH} element={<AiDocumentQueryPage />} />
           <Route path="/cortex/dashboard" element={<DashboardPage />} />
           <Route path="/cortex/dashboard/health" element={<DashboardHealthPage />} />
           <Route path="/cortex/dashboard/activity" element={<DashboardActivityPage />} />
+          <Route path="/cortex/departments/:department" element={<DepartmentPortalPage />} />
           <Route path="/cortex/chat" element={<ChatPage />} />
           <Route path="/cortex/chat/history" element={<ChatHistoryPage />} />
+          <Route path="/cortex/collaboration/:section?" element={<CollaborationPage />} />
           <Route path="/cortex/documents" element={<DocumentsPage />} />
           <Route path="/cortex/documents/list" element={<DocumentListPage />} />
           <Route path="/cortex/documents/recent" element={<RecentDocumentsPage />} />
@@ -62,11 +124,12 @@ function App() {
           <Route path="/cortex/research/history" element={<ResearchHistoryPage />} />
           <Route path="/cortex/settings" element={<SettingsPage />} />
           <Route path="/cortex/settings/system" element={<SettingsSystemPage />} />
-          <Route path="/cortex/ai-models" element={<AiModelsPage />} />
+          <Route path="/cortex/ai-models" element={<Navigate to="/cortex/ai-models/embedding" replace />} />
+          <Route path="/cortex/ai-models/:tab" element={<AiModelsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/cortex/login" replace />} />
       </Routes>
-      {isAuthenticated && <ResearchPanel />}
+      {hasValidSession && <ResearchPanel />}
     </>
   );
 }

@@ -95,7 +95,7 @@ pub async fn list_researches(
     let state = depot.obtain::<AppState>().unwrap();
 
     let rows = sqlx::query_as::<_, (String, String, String)>(
-        "SELECT id, topic, created_at FROM researches ORDER BY created_at DESC LIMIT 20",
+        "SELECT id, topic, CAST(created_at AS TEXT) AS created_at FROM researches ORDER BY created_at DESC LIMIT 20",
     )
     .fetch_all(&state.db.pool)
     .await

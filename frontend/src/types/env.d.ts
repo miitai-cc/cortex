@@ -5,6 +5,7 @@ declare global {
     __ENV__?: {
       BACKEND_HOST?: string;
       BACKEND_PORT?: string;
+      API_ORIGIN?: string;
       API_PREFIX?: string;
       LOGIN_TYPE?: string;
       KEYCLOAK_URL?: string;

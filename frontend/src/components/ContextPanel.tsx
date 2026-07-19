@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import {
   BookOpen,
   X,
@@ -9,16 +8,13 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  Settings,
   Sliders,
   Info,
-  Filter,
 } from 'lucide-react';
 import { documentApi } from '../services/api';
 import { useContextStore } from '../stores/contextStore';
 
 export default function ContextPanel() {
-  const { t } = useTranslation();
   const {
     selectedDocs,
     settings,

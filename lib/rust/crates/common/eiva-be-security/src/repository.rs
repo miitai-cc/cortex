@@ -7,7 +7,7 @@ pub struct UserRepo;
 impl UserRepo {
     pub async fn find_by_id(pool: &AnyPool, id: &str) -> Result<UserModel, SecurityError> {
         sqlx::query_as::<_, UserModel>(
-            "SELECT id, username, email, role, created_at FROM users WHERE id = ?"
+            "SELECT id, username, email, role, CAST(created_at AS TEXT) AS created_at FROM users WHERE id = ?"
         )
         .bind(id)
         .fetch_optional(pool)
@@ -17,7 +17,7 @@ impl UserRepo {
 
     pub async fn find_by_username(pool: &AnyPool, username: &str) -> Result<Option<UserModel>, SecurityError> {
         sqlx::query_as::<_, UserModel>(
-            "SELECT id, username, email, role, created_at FROM users WHERE username = ?"
+            "SELECT id, username, email, role, CAST(created_at AS TEXT) AS created_at FROM users WHERE username = ?"
         )
         .bind(username)
         .fetch_optional(pool)
@@ -30,7 +30,7 @@ impl UserRepo {
         username: &str,
     ) -> Result<Option<(UserModel, String)>, SecurityError> {
         let row = sqlx::query_as::<_, (String, String, String, String, String, String)>(
-            "SELECT id, username, email, password_hash, role, created_at FROM users WHERE username = ?"
+            "SELECT id, username, email, password_hash, role, CAST(created_at AS TEXT) AS created_at FROM users WHERE username = ?"
         )
         .bind(username)
         .fetch_optional(pool)
@@ -43,7 +43,7 @@ impl UserRepo {
 
     pub async fn list_all(pool: &AnyPool) -> Result<Vec<UserModel>, SecurityError> {
         sqlx::query_as::<_, UserModel>(
-            "SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC"
+            "SELECT id, username, email, role, CAST(created_at AS TEXT) AS created_at FROM users ORDER BY created_at DESC"
         )
         .fetch_all(pool)
         .await

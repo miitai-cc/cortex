@@ -10,12 +10,13 @@ export default function SettingsPage() {
 
   const handleLanguageChange = (lng: string) => {
     setLanguage(lng);
+    localStorage.setItem('cortex-language', lng);
     i18n.changeLanguage(lng);
     toast.success(t('settings.saved'));
   };
 
   return (
-    <div className="max-w-2xl-empty">
+    <div className="mx-auto max-w-2xl px-4 pb-10">
       <CommonHeroTitle icon={Settings} title={t('settings.title')} />
 
       <div className="card space-y-6">

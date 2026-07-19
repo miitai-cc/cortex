@@ -11,6 +11,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashSet;
+use std::time::Instant;
 
 #[derive(Deserialize, Debug)]
 pub struct RagQueryRequest {
@@ -64,6 +65,7 @@ pub async fn query(
         .parse_json()
         .await
         .map_err(|_| StatusError::bad_request().detail("Invalid request body"))?;
+    let query_started = Instant::now();
 
     tracing::debug!("Received RAG query: {:?}", query_req.query);
 
@@ -194,6 +196,17 @@ pub async fn query(
         .join("\n\n");
 
     let answer = llm.generate(&query_req.query, &context).await.ok();
+
+    let _ = sqlx::query(
+        "INSERT INTO rag_query_events (id,query_text,duration_ms,result_count,created_at) \
+         VALUES (?,?,?,?,CURRENT_TIMESTAMP)",
+    )
+    .bind(cortex_lib::utils::generate_id())
+    .bind(&query_req.query)
+    .bind(i64::try_from(query_started.elapsed().as_millis()).unwrap_or(i64::MAX))
+    .bind(i64::try_from(chunks.len()).unwrap_or(i64::MAX))
+    .execute(&state.db.pool)
+    .await;
 
     Ok(Json(serde_json::json!({
         "query": query_req.query,

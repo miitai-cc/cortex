@@ -8,7 +8,7 @@ i18n.use(initReactI18next).init({
     'zh-TW': { translation: zhTW },
     'en': { translation: en },
   },
-  lng: 'zh-TW',
+  lng: localStorage.getItem('cortex-language') || 'zh-TW',
   fallbackLng: 'zh-TW',
   interpolation: {
     escapeValue: false,

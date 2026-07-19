@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useResearchStore, ResearchTask } from '../stores/researchStore';
+import { useResearchStore } from '../stores/researchStore';
 import { researchApi } from '../services/api';
 import {
   Loader2,

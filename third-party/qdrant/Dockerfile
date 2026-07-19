@@ -140,7 +140,7 @@ RUN cargo sbom > qdrant.spdx.json
 # To workaround this limitation, we use a multi-stage build with a different base images which have equal name to ARG value.
 
 # Base image for Qdrant.
-FROM debian:13-slim AS qdrant-cpu
+FROM alpine:3.18 AS qdrant-cpu
 
 
 # Base images for Qdrant with nvidia GPU support.
@@ -180,10 +180,7 @@ RUN if [ -n "$GPU" ]; then \
 # E.g., the debugger of choice: gdb/gdbserver/lldb.
 ARG PACKAGES
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tzdata libunwind8 $PACKAGES \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /var/cache/debconf/* /var/lib/dpkg/status-old
+RUN apk add --no-cache ca-certificates tzdata libunwind $PACKAGES
 
 # Copy Qdrant source files into the container. Useful for debugging.
 #
@@ -214,8 +211,8 @@ ARG APP=/qdrant
 ARG USER_ID=0
 
 RUN if [ "$USER_ID" != 0 ]; then \
-        groupadd --gid "$USER_ID" qdrant; \
-        useradd --uid "$USER_ID" --gid "$USER_ID" -m qdrant; \
+        addgroup -g "$USER_ID" qdrant; \
+        adduser -u "$USER_ID" -G qdrant -D qdrant; \
         mkdir -p "$APP"/storage "$APP"/snapshots; \
         chown -R "$USER_ID:$USER_ID" "$APP"; \
     fi

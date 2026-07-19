@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useChatStore, ChatMessage } from '../stores/chatStore';
 import { useContextStore } from '../stores/contextStore';
-import { chatApi } from '../services/api';
 import {
   Send,
   Loader2,
@@ -62,7 +61,7 @@ export default function ChatPage() {
   }, [activeConversation?.messages, streamingContent]);
 
   const handleNewChat = useCallback(() => {
-    const id = createConversation();
+    createConversation();
     setInput('');
     inputRef.current?.focus();
   }, [createConversation]);
@@ -133,11 +132,15 @@ export default function ChatPage() {
       const decoder = new TextDecoder();
       let buffer = '';
 
-      let currentEvent = 'message';
+      const currentEvent = 'message';
 
-      while (true) {
+      let streamOpen = true;
+      while (streamOpen) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          streamOpen = false;
+          continue;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const parts = buffer.split('\n\n');

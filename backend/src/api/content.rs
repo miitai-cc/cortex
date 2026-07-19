@@ -281,7 +281,7 @@ async fn create_version(
 #[handler]
 async fn list(depot: &mut Depot) -> Result<Json<serde_json::Value>, AppError> {
     let state = depot.obtain::<AppState>().unwrap();
-    let rows = sqlx::query("SELECT i.id, i.title, i.content_kind, i.relative_directory, i.source_url, i.current_version, i.created_at, i.updated_at, v.document_id, d.status FROM content_items i LEFT JOIN content_versions v ON v.content_id = i.id AND v.version_number = i.current_version LEFT JOIN documents d ON d.id = v.document_id ORDER BY i.updated_at DESC")
+    let rows = sqlx::query("SELECT i.id, i.title, i.content_kind, i.relative_directory, i.source_url, i.current_version, CAST(i.created_at AS TEXT) AS created_at, CAST(i.updated_at AS TEXT) AS updated_at, v.document_id, d.status FROM content_items i LEFT JOIN content_versions v ON v.content_id = i.id AND v.version_number = i.current_version LEFT JOIN documents d ON d.id = v.document_id ORDER BY i.updated_at DESC")
         .fetch_all(&state.db.pool).await?;
     let items = rows.into_iter().map(|row| serde_json::json!({
         "id": row.get::<String,_>("id"), "title": row.get::<String,_>("title"), "contentKind": row.get::<String,_>("content_kind"),
@@ -363,7 +363,7 @@ async fn versions(
     let id = req
         .param::<String>("id")
         .ok_or_else(|| AppError::BadRequest("Missing content id".into()))?;
-    let rows = sqlx::query("SELECT v.id, v.version_number, v.document_id, v.source_kind, v.source_url, v.markdown_content, v.change_note, v.rag_enabled, v.pageindex_enabled, v.created_at, d.status FROM content_versions v LEFT JOIN documents d ON d.id = v.document_id WHERE v.content_id = ? ORDER BY v.version_number DESC").bind(&id).fetch_all(&state.db.pool).await?;
+    let rows = sqlx::query("SELECT v.id, v.version_number, v.document_id, v.source_kind, v.source_url, v.markdown_content, v.change_note, v.rag_enabled, v.pageindex_enabled, CAST(v.created_at AS TEXT) AS created_at, d.status FROM content_versions v LEFT JOIN documents d ON d.id = v.document_id WHERE v.content_id = ? ORDER BY v.version_number DESC").bind(&id).fetch_all(&state.db.pool).await?;
     let items = rows.into_iter().map(|row| serde_json::json!({"id": row.get::<String,_>("id"), "version": row.get::<i64,_>("version_number"), "documentId": row.get::<String,_>("document_id"), "sourceKind": row.get::<String,_>("source_kind"), "sourceUrl": row.try_get::<String,_>("source_url").ok(), "content": row.try_get::<String,_>("markdown_content").ok(), "changeNote": row.try_get::<String,_>("change_note").ok(), "ragEnabled": row.get::<bool,_>("rag_enabled"), "pageindexEnabled": row.get::<bool,_>("pageindex_enabled"), "status": row.try_get::<String,_>("status").ok(), "createdAt": row.try_get::<String,_>("created_at").ok()})).collect::<Vec<_>>();
     Ok(Json(serde_json::json!(items)))
 }

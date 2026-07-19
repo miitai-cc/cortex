@@ -60,9 +60,16 @@ impl Database {
             _ => "TEXT",
         };
         let timestamp_default = match self.db_type {
-            DbType::Sqlite => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            DbType::Sqlite => "TEXT DEFAULT CURRENT_TIMESTAMP",
             DbType::Postgresql => "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP",
             _ => "DATETIME DEFAULT CURRENT_TIMESTAMP",
+        };
+        // sqlx::Any cannot decode SQLite's native DATETIME value. The collaboration
+        // module stores ISO-compatible text timestamps so all supported Any drivers
+        // expose the same value type.
+        let portable_timestamp_default = match self.db_type {
+            DbType::Sqlite => "TEXT DEFAULT CURRENT_TIMESTAMP",
+            _ => timestamp_default,
         };
         let blob_type = match self.db_type {
             DbType::Sqlite | DbType::Postgresql => "BYTEA",
@@ -232,6 +239,98 @@ impl Database {
                 created_at {ts}, updated_at {ts}, FOREIGN KEY (record_id) REFERENCES knowledge_records(id)
             )", text = text_type, ts = timestamp_default
         );
+        let create_collaboration_workspaces = format!(
+            "CREATE TABLE IF NOT EXISTS collaboration_workspaces (
+                id {text} PRIMARY KEY, name {text} NOT NULL, description {text}, created_by {text} NOT NULL,
+                created_at {ts}, updated_at {ts}
+            )", text=text_type, ts=portable_timestamp_default
+        );
+        let create_collaboration_channels = format!(
+            "CREATE TABLE IF NOT EXISTS collaboration_channels (
+                id {text} PRIMARY KEY, workspace_id {text} NOT NULL, name {text} NOT NULL,
+                description {text}, is_private INTEGER NOT NULL DEFAULT 0, created_by {text} NOT NULL,
+                created_at {ts}, updated_at {ts}, UNIQUE(workspace_id,name)
+            )", text=text_type, ts=portable_timestamp_default
+        );
+        let create_channel_members = format!(
+            "CREATE TABLE IF NOT EXISTS collaboration_channel_members (
+                channel_id {text} NOT NULL, user_id {text} NOT NULL, role {text} NOT NULL DEFAULT 'member',
+                last_read_at {ts}, PRIMARY KEY(channel_id,user_id)
+            )", text=text_type, ts=portable_timestamp_default
+        );
+        let create_collaboration_messages = format!(
+            "CREATE TABLE IF NOT EXISTS collaboration_messages (
+                id {text} PRIMARY KEY, channel_id {text} NOT NULL, user_id {text} NOT NULL,
+                username {text} NOT NULL, content {text} NOT NULL, parent_id {text}, issue_id {text},
+                created_at {ts}, updated_at {ts}, deleted_at {text}
+            )", text=text_type, ts=portable_timestamp_default
+        );
+        let create_message_reactions = format!(
+            "CREATE TABLE IF NOT EXISTS collaboration_message_reactions (
+                message_id {text} NOT NULL, user_id {text} NOT NULL, emoji {text} NOT NULL,
+                created_at {ts}, PRIMARY KEY(message_id,user_id,emoji)
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_message_reads = format!(
+            "CREATE TABLE IF NOT EXISTS collaboration_message_reads (
+                message_id {text} NOT NULL, user_id {text} NOT NULL, read_at {ts},
+                PRIMARY KEY(message_id,user_id)
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_issues = format!(
+            "CREATE TABLE IF NOT EXISTS issues (
+                id {text} PRIMARY KEY, issue_key {text} NOT NULL UNIQUE, title {text} NOT NULL,
+                description {text}, issue_type {text} NOT NULL DEFAULT 'task', status {text} NOT NULL DEFAULT 'open',
+                priority {text} NOT NULL DEFAULT 'medium', reporter_id {text} NOT NULL, assignee_id {text},
+                channel_id {text}, due_date {text}, labels {text}, created_at {ts}, updated_at {ts}
+            )", text=text_type, ts=portable_timestamp_default
+        );
+        let create_issue_comments = format!(
+            "CREATE TABLE IF NOT EXISTS issue_comments (
+                id {text} PRIMARY KEY, issue_id {text} NOT NULL, user_id {text} NOT NULL,
+                username {text} NOT NULL, content {text} NOT NULL, created_at {ts}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_issue_history = format!(
+            "CREATE TABLE IF NOT EXISTS issue_history (
+                id {text} PRIMARY KEY, issue_id {text} NOT NULL, user_id {text} NOT NULL,
+                username {text} NOT NULL, action {text} NOT NULL, old_value {text}, new_value {text},
+                created_at {ts}
+            )", text=text_type, ts=portable_timestamp_default
+        );
+        let create_rag_query_events = format!(
+            "CREATE TABLE IF NOT EXISTS rag_query_events (
+                id {text} PRIMARY KEY, query_text {text} NOT NULL, duration_ms BIGINT NOT NULL,
+                result_count INTEGER NOT NULL DEFAULT 0, created_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_system_settings = format!(
+            "CREATE TABLE IF NOT EXISTS system_settings (
+                setting_key {text} PRIMARY KEY, setting_value {text} NOT NULL,
+                updated_by {text}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
+        let create_department_items = format!(
+            "CREATE TABLE IF NOT EXISTS department_items (
+                id {text} PRIMARY KEY, department {text} NOT NULL, item_type {text} NOT NULL,
+                title {text} NOT NULL, description {text}, status {text} NOT NULL DEFAULT 'planned',
+                priority {text} NOT NULL DEFAULT 'medium', owner_name {text} NOT NULL,
+                amount BIGINT, due_date {text}, metadata {text} NOT NULL DEFAULT '{{}}',
+                created_by {text} NOT NULL, created_at {ts}, updated_at {ts}
+            )",
+            text = text_type,
+            ts = portable_timestamp_default
+        );
 
         sqlx::query(&create_documents).execute(&self.pool).await?;
         sqlx::query(&create_chunks).execute(&self.pool).await?;
@@ -267,6 +366,45 @@ impl Database {
         sqlx::query(&create_knowledge_comments)
             .execute(&self.pool)
             .await?;
+        sqlx::query(&create_collaboration_workspaces)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_collaboration_channels)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_channel_members)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_collaboration_messages)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_message_reactions)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_message_reads)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_issues).execute(&self.pool).await?;
+        sqlx::query(&create_issue_comments)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_issue_history)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_rag_query_events)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_system_settings)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(&create_department_items)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_department_items_department_updated ON department_items(department, updated_at)",
+        )
+        .execute(&self.pool)
+        .await?;
 
         Ok(())
     }

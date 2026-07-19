@@ -60,11 +60,17 @@ async fn main() {
 
     tracing::info!("Starting Cortex Backend...");
 
-    let app_state = core::state::AppState::new().await;
+    let mut app_state = core::state::AppState::new().await;
     tracing::debug!("App state initialized");
 
-    let _ = app_state.db.run_migrations().await;
+    if let Err(error) = app_state.db.run_migrations().await {
+        tracing::error!("Database migration failed; server startup aborted: {error}");
+        return;
+    }
     tracing::debug!("Database migrations completed");
+    if let Err(error) = app_state.apply_persisted_settings().await {
+        tracing::error!("Failed to load persisted system settings: {error}");
+    }
 
     let server_host = app_state.config.server_host.clone();
     let server_port = app_state.config.server_port;

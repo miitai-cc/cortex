@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from 'eiva-fe-security';
 import { useResearchStore } from '../stores/researchStore';
@@ -44,9 +44,16 @@ import {
   ClipboardCheck,
   UserRoundSearch,
   FolderCog,
+  MessagesSquare,
+  Hash,
+  ClipboardList,
+  UserCheck,
+  Building2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import DirectoryBrowser from './DirectoryBrowser';
+import { DEFAULT_AUTHENTICATED_PATH } from '../utils/authNavigation';
+import { departmentConfigs } from '../config/departments';
 
 interface SubMenuItem {
   labelKey: string;
@@ -67,11 +74,21 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
     labelKey: 'nav.workspace',
     children: [
-      { labelKey: 'nav.workspace.aiDocumentQuery', icon: Sparkles, to: '/cortex' },
+      { labelKey: 'nav.workspace.aiDocumentQuery', icon: Sparkles, to: DEFAULT_AUTHENTICATED_PATH },
       { labelKey: 'nav.dashboard.overview', icon: BarChart3, to: '/cortex/dashboard' },
       { labelKey: 'nav.dashboard.health', icon: Heart, to: '/cortex/dashboard/health' },
       { labelKey: 'nav.dashboard.activity', icon: Activity, to: '/cortex/dashboard/activity' },
     ],
+  },
+  {
+    to: '/cortex/departments',
+    icon: Building2,
+    labelKey: 'nav.departments',
+    children: departmentConfigs.map((department) => ({
+      labelKey: department.navKey,
+      icon: department.icon,
+      to: `/cortex/departments/${department.slug}`,
+    })),
   },
   {
     to: '/cortex/chat',
@@ -80,6 +97,16 @@ const navItems: NavItem[] = [
     children: [
       { labelKey: 'nav.chat.new', icon: Plus, to: '/cortex/chat' },
       { labelKey: 'nav.chat.history', icon: Clock, to: '/cortex/chat/history' },
+    ],
+  },
+  {
+    to: '/cortex/collaboration',
+    icon: MessagesSquare,
+    labelKey: 'nav.collaboration',
+    children: [
+      { labelKey: 'nav.collaboration.channels', icon: Hash, to: '/cortex/collaboration/channels' },
+      { labelKey: 'nav.collaboration.issues', icon: ClipboardList, to: '/cortex/collaboration/issues' },
+      { labelKey: 'nav.collaboration.myIssues', icon: UserCheck, to: '/cortex/collaboration/my-issues' },
     ],
   },
   {
@@ -150,8 +177,8 @@ const navItems: NavItem[] = [
     icon: Cpu,
     labelKey: 'nav.aiModels',
     children: [
-      { labelKey: 'nav.aiModels.embedding', icon: Layers, to: '/cortex/ai-models' },
-      { labelKey: 'nav.aiModels.reranking', icon: ArrowUpDown, to: '/cortex/ai-models' },
+      { labelKey: 'nav.aiModels.embedding', icon: Layers, to: '/cortex/ai-models/embedding' },
+      { labelKey: 'nav.aiModels.reranking', icon: ArrowUpDown, to: '/cortex/ai-models/reranking' },
     ],
   },
   {
@@ -173,7 +200,6 @@ export default function Layout() {
   const { togglePanel, panelOpen: researchPanelOpen } = useResearchStore();
   const { theme, toggleTheme } = useThemeStore();
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
-  const [activeNav, setActiveNav] = useState<string | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -184,27 +210,25 @@ export default function Layout() {
     i18n.changeLanguage(i18n.language === 'zh-TW' ? 'en' : 'zh-TW');
   };
 
-  const isActive = (path: string) => {
-    if (path === '/cortex') return location.pathname === '/cortex';
-    return location.pathname.startsWith(path);
+  const matchesCurrentRoute = (item: NavItem) => {
+    if (item.to === '/cortex') {
+      return location.pathname === DEFAULT_AUTHENTICATED_PATH
+        || location.pathname.startsWith('/cortex/dashboard');
+    }
+    return location.pathname === item.to
+      || location.pathname.startsWith(`${item.to}/`)
+      || item.children.some((child) => location.pathname === child.to);
   };
+
+  const activeNavItem = navItems.find(matchesCurrentRoute);
 
   const handleNavClick = (item: NavItem) => {
-    if (activeNav === item.to) {
+    if (activeNavItem?.to === item.to && leftPanelOpen) {
       setLeftPanelOpen(false);
-      setActiveNav(null);
     } else {
-      setActiveNav(item.to);
       setLeftPanelOpen(true);
-      navigate(item.children[0].to);
     }
   };
-
-  const handleSubItemClick = (subItem: SubMenuItem) => {
-    navigate(subItem.to);
-  };
-
-  const activeNavItem = navItems.find((item) => item.to === activeNav);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -215,18 +239,19 @@ export default function Layout() {
         </div>
         <nav className="flex-1 flex flex-col items-center gap-1">
           {navItems.map((item) => (
-            <button
+            <Link
               key={item.to}
+              to={item.children[0].to}
               onClick={() => handleNavClick(item)}
               className={`p-2.5 rounded-lg transition-colors ${
-                isActive(item.to) && activeNav === item.to
+                activeNavItem?.to === item.to
                   ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               title={t(item.labelKey)}
             >
               <item.icon className="w-5 h-5" />
-            </button>
+            </Link>
           ))}
         </nav>
       </aside>
@@ -244,7 +269,7 @@ export default function Layout() {
                 <activeNavItem.icon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{t(activeNavItem.labelKey)}</span>
               </div>
-              <button onClick={() => { setLeftPanelOpen(false); setActiveNav(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <button onClick={() => setLeftPanelOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <PanelLeftClose className="w-4 h-4" />
               </button>
             </div>
@@ -253,9 +278,9 @@ export default function Layout() {
                 {activeNavItem.children.map((subItem) => {
                   const isSubActive = location.pathname === subItem.to;
                   return (
-                    <button
+                    <Link
                       key={subItem.to}
-                      onClick={() => handleSubItemClick(subItem)}
+                      to={subItem.to}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
                         isSubActive
                           ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-medium'
@@ -264,11 +289,11 @@ export default function Layout() {
                     >
                       <subItem.icon className="w-4 h-4 shrink-0" />
                       <span>{t(subItem.labelKey)}</span>
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
-              {activeNav === '/cortex/documents' && <DirectoryBrowser />}
+              {activeNavItem.to === '/cortex/documents' && <DirectoryBrowser />}
             </div>
           </>
         )}
@@ -277,7 +302,7 @@ export default function Layout() {
       {/* Left toggle button */}
       {!leftPanelOpen && (
         <button
-          onClick={() => { setLeftPanelOpen(true); if (!activeNav) setActiveNav('/cortex'); }}
+          onClick={() => setLeftPanelOpen(true)}
           className="absolute left-14 top-3 z-10 p-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-r-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shadow-sm"
         >
           <PanelLeftOpen className="w-4 h-4" />

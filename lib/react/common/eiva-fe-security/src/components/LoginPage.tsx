@@ -20,18 +20,6 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (loginType === 'mock') {
-        if (username === 'root' && password === 'mithra35') {
-          setAuth(
-            { id: 'mock-root', username: 'root', email: 'root@mock.local', roles: ['admin'] },
-            'mock-jwt-token-1234567890'
-          );
-          return;
-        } else {
-          throw new Error('Invalid mock credentials (use root/mithra35)');
-        }
-      }
-
       if (loginType === 'sso') {
         // @ts-ignore
         const kcUrl = window.__ENV__?.KEYCLOAK_URL || 'http://localhost:8080';
@@ -57,7 +45,7 @@ export const LoginPage: React.FC = () => {
           </div>
           <h2 className="text-3xl font-bold text-white">Welcome to Cortex</h2>
           <p className="text-gray-400 mt-2">
-            {loginType === 'mock' ? 'Mock Mode Enabled (root/mithra35)' : 'Please sign in to continue'}
+            {loginType === 'mock' ? 'Development mode — credentials are accepted by the Cortex backend' : 'Please sign in to continue'}
           </p>
         </div>
 

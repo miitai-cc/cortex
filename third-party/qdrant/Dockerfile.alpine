@@ -1,0 +1,75 @@
+# Alpine-based Dockerfile for Qdrant
+# This is a simplified version for CPU-only deployments
+
+# Build stage
+FROM rust:alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    musl-dev \
+    protobuf-dev \
+    cmake \
+    clang \
+    lld \
+    jq \
+    curl \
+    git
+
+# Set working directory
+WORKDIR /qdrant
+
+# Copy Cargo files first for better layer caching
+COPY Cargo.toml Cargo.lock ./
+
+# Copy source code
+COPY . .
+
+# Build Qdrant in release mode
+RUN cargo build --release --bin qdrant
+
+# Download and extract web UI
+RUN mkdir /static && STATIC_DIR=/static ./tools/sync-web-ui.sh
+
+# Runtime stage
+FROM alpine:3.18
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    libunwind \
+    curl
+
+# Create qdrant user
+RUN addgroup -g 1000 -S qdrant && \
+    adduser -u 1000 -S qdrant -G qdrant
+
+# Set working directory
+WORKDIR /qdrant
+
+# Copy built artifacts from builder
+COPY --from=builder /qdrant/target/release/qdrant .
+COPY --from=builder /qdrant/config ./config
+COPY --from=builder /qdrant/tools/entrypoint.sh .
+COPY --from=builder /static ./static
+
+# Create necessary directories
+RUN mkdir -p storage snapshots && \
+    chown -R qdrant:qdrant /qdrant
+
+# Switch to non-root user
+USER qdrant
+
+# Environment variables
+ENV TZ=Etc/UTC \
+    RUN_MODE=production
+
+# Expose ports
+EXPOSE 6333 6334
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:6333/healthz || exit 1
+
+# Start Qdrant
+CMD ["./entrypoint.sh"]

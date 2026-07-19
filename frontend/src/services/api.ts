@@ -2,6 +2,12 @@ import axios from 'axios';
 import { useAuthStore } from 'eiva-fe-security';
 import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 import { uploadDocumentStream, type DocumentIndexEvent } from '../grpc/documentWsClient';
+import type { IssuePayload } from '../types/collaboration';
+import {
+  LOGIN_PATH,
+  rememberCurrentHashRoute,
+  shouldRedirectToLogin,
+} from '../utils/authNavigation';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,9 +31,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+    const authState = useAuthStore.getState();
+    if (shouldRedirectToLogin(error, authState.token)) {
+      rememberCurrentHashRoute();
+      authState.logout();
+      if (window.location.hash !== `#${LOGIN_PATH}`) {
+        window.location.hash = `#${LOGIN_PATH}`;
+      }
     }
     return Promise.reject(error);
   }
@@ -119,6 +129,69 @@ export const researchApi = {
 export const dashboardApi = {
   stats: () => api.get('/dashboard/stats'),
   queryTrend: () => api.get('/dashboard/query-trend'),
+  activity: () => api.get('/dashboard/activity'),
+  health: () => api.get('/dashboard/health'),
+};
+
+export type DepartmentItemStatus =
+  | 'planned'
+  | 'active'
+  | 'pending_review'
+  | 'blocked'
+  | 'completed'
+  | 'archived';
+
+export type DepartmentItemPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface DepartmentItemPayload {
+  itemType: string;
+  title: string;
+  description?: string;
+  status: DepartmentItemStatus;
+  priority: DepartmentItemPriority;
+  ownerName?: string;
+  amount?: number;
+  dueDate?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DepartmentItem extends DepartmentItemPayload {
+  id: string;
+  department: string;
+  createdBy: string;
+  createdAt?: string;
+  updatedAt?: string;
+  canEdit: boolean;
+}
+
+export interface DepartmentOverview {
+  department: string;
+  allowedItemTypes: string[];
+  stats: {
+    total: number;
+    active: number;
+    completed: number;
+    blocked: number;
+    highPriority: number;
+    overdue: number;
+    amountTotal: number;
+  };
+  items: DepartmentItem[];
+  currentUser: { id: string; username: string; role: string };
+}
+
+export const departmentApi = {
+  overview: (department: string) =>
+    api.get<DepartmentOverview>(`/departments/${encodeURIComponent(department)}`),
+  createItem: (department: string, data: DepartmentItemPayload) =>
+    api.post<DepartmentItem>(`/departments/${encodeURIComponent(department)}/items`, data),
+  updateItem: (department: string, id: string, data: DepartmentItemPayload) =>
+    api.put<DepartmentItem>(
+      `/departments/${encodeURIComponent(department)}/items/${encodeURIComponent(id)}`,
+      data,
+    ),
+  deleteItem: (department: string, id: string) =>
+    api.delete(`/departments/${encodeURIComponent(department)}/items/${encodeURIComponent(id)}`),
 };
 
 export const contextApi = {
@@ -145,4 +218,81 @@ export const indexingApi = {
   /** 啟始：Runs full Graphify semantic extraction (graphify extract <path>) */
   graphifyExtractWsUrl: (relative_path: string): string =>
     `${WS_BASE_URL}/indexing/ws/graphify/extract?relative_path=${encodeURIComponent(relative_path)}`,
+};
+
+export const collaborationApi = {
+  overview: () => api.get('/collaboration/overview'),
+  createWorkspace: (data: { name: string; description?: string }) =>
+    api.post('/collaboration/workspaces', data),
+  updateWorkspace: (id: string, data: { name: string; description?: string }) =>
+    api.put(`/collaboration/workspaces/${id}`, data),
+  deleteWorkspace: (id: string) => api.delete(`/collaboration/workspaces/${id}`),
+  createChannel: (data: {
+    workspaceId: string;
+    name: string;
+    description?: string;
+    isPrivate?: boolean;
+    memberIds?: string[];
+  }) => api.post('/collaboration/channels', data),
+  updateChannel: (
+    id: string,
+    data: {
+      workspaceId: string;
+      name: string;
+      description?: string;
+      isPrivate?: boolean;
+      memberIds?: string[];
+    },
+  ) => api.put(`/collaboration/channels/${id}`, data),
+  deleteChannel: (id: string) => api.delete(`/collaboration/channels/${id}`),
+  members: (channelId: string) => api.get(`/collaboration/channels/${channelId}/members`),
+  addMembers: (channelId: string, userIds: string[]) =>
+    api.post(`/collaboration/channels/${channelId}/members`, { userIds }),
+  removeMember: (channelId: string, userId: string) =>
+    api.delete(`/collaboration/channels/${channelId}/members/${userId}`),
+  markRead: (channelId: string) => api.post(`/collaboration/channels/${channelId}/read`),
+  messages: (channelId: string, parentId?: string) =>
+    api.get(`/collaboration/channels/${channelId}/messages`, {
+      params: parentId ? { parent_id: parentId } : undefined,
+    }),
+  sendMessage: (
+    channelId: string,
+    data: { content: string; parentId?: string; issueId?: string },
+  ) => api.post(`/collaboration/channels/${channelId}/messages`, data),
+  updateMessage: (id: string, content: string) =>
+    api.put(`/collaboration/messages/${id}`, { content }),
+  deleteMessage: (id: string) => api.delete(`/collaboration/messages/${id}`),
+  toggleReaction: (id: string, emoji: string) =>
+    api.post(`/collaboration/messages/${id}/reactions`, { emoji }),
+  searchMessages: (q: string, channelId?: string) =>
+    api.get('/collaboration/messages/search', { params: { q, channel_id: channelId } }),
+  issues: (params?: { q?: string; status?: string; assignee_id?: string; channel_id?: string }) =>
+    api.get('/collaboration/issues', { params }),
+  issue: (id: string) => api.get(`/collaboration/issues/${id}`),
+  createIssue: (data: IssuePayload) => api.post('/collaboration/issues', data),
+  updateIssue: (id: string, data: IssuePayload) => api.put(`/collaboration/issues/${id}`, data),
+  deleteIssue: (id: string) => api.delete(`/collaboration/issues/${id}`),
+  issueComments: (id: string) => api.get(`/collaboration/issues/${id}/comments`),
+  addIssueComment: (id: string, content: string) =>
+    api.post(`/collaboration/issues/${id}/comments`, { content }),
+  updateIssueComment: (issueId: string, commentId: string, content: string) =>
+    api.put(`/collaboration/issues/${issueId}/comments/${commentId}`, { content }),
+  deleteIssueComment: (issueId: string, commentId: string) =>
+    api.delete(`/collaboration/issues/${issueId}/comments/${commentId}`),
+  issueHistory: (id: string) => api.get(`/collaboration/issues/${id}/history`),
+  websocketUrl: (channelId: string, token: string) =>
+    `${WS_BASE_URL}/collaboration/ws?channel_id=${encodeURIComponent(channelId)}&token=${encodeURIComponent(token)}`,
+};
+
+export type SystemSettingsPayload = {
+  embeddingModel: string;
+  rerankingModel: string;
+  pageindexModel: string;
+  openaiBaseUrl: string;
+  pageindexBaseUrl: string;
+};
+
+export const systemSettingsApi = {
+  get: () => api.get('/settings/system'),
+  update: (data: SystemSettingsPayload) => api.put('/settings/system', data),
 };

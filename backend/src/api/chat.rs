@@ -229,7 +229,7 @@ pub async fn list_conversations(
     let state = depot.obtain::<AppState>().unwrap();
 
     let rows = sqlx::query_as::<_, (String, String, String, String)>(
-        "SELECT id, title, created_at, updated_at FROM conversations ORDER BY updated_at DESC LIMIT 50"
+        "SELECT id, title, CAST(created_at AS TEXT) AS created_at, CAST(updated_at AS TEXT) AS updated_at FROM conversations ORDER BY updated_at DESC LIMIT 50"
     )
     .fetch_all(&state.db.pool)
     .await

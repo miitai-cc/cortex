@@ -90,7 +90,7 @@ export default function KnowledgeGraphPage() {
 
     // Simple force-directed layout iterations
     const iterations = 50;
-    let currentPos = new Map(pos);
+    const currentPos = new Map(pos);
 
     for (let iter = 0; iter < iterations; iter++) {
       const forces = new Map<string, { fx: number; fy: number }>();

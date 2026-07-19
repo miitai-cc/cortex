@@ -1,7 +1,10 @@
 pub mod admin;
 pub mod auth;
 pub mod chat;
+pub mod collaboration;
 pub mod content;
+pub mod dashboard;
+pub mod departments;
 pub mod documents;
 pub mod graph;
 pub mod health;
@@ -10,3 +13,4 @@ pub mod knowledge;
 pub mod rag;
 pub mod research;
 pub mod router;
+pub mod settings;

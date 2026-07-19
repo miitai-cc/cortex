@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useResearchStore, ResearchTask } from '../stores/researchStore';
+import { useState } from 'react';
+import { useResearchStore } from '../stores/researchStore';
 import { researchApi } from '../services/api';
 import {
   FlaskConical,

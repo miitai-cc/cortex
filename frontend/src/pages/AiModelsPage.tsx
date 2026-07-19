@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Cpu,
   Loader2,
@@ -415,7 +416,15 @@ const TABS: { id: TabId; label: string; icon: typeof Cpu }[] = [
 ];
 
 export default function AiModelsPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('embedding');
+  const navigate = useNavigate();
+  const { tab } = useParams<{ tab: string }>();
+  const activeTab: TabId = tab === 'reranking' ? 'reranking' : 'embedding';
+
+  useEffect(() => {
+    if (tab !== 'embedding' && tab !== 'reranking') {
+      navigate('/cortex/ai-models/embedding', { replace: true });
+    }
+  }, [navigate, tab]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -431,7 +440,7 @@ export default function AiModelsPage() {
           <button
             key={id}
             id={`ai-models-tab-${id}`}
-            onClick={() => setActiveTab(id)}
+            onClick={() => navigate(`/cortex/ai-models/${id}`)}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               activeTab === id
                 ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'

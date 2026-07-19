@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, Layers } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { graphApi } from '../services/api';
 import CommonHeroTitle from '../components/common/CommonHeroTitle';
 
