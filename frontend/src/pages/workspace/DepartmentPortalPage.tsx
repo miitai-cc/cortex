@@ -34,20 +34,20 @@ import {
   type DepartmentItemStatus,
 } from '../../services/api';
 
-const statuses: Array<{ value: DepartmentItemStatus; label: string }> = [
-  { value: 'planned', label: '規劃中' },
-  { value: 'active', label: '進行中' },
-  { value: 'pending_review', label: '待審核' },
-  { value: 'blocked', label: '受阻' },
-  { value: 'completed', label: '已完成' },
-  { value: 'archived', label: '已封存' },
+const statuses: Array<{ value: DepartmentItemStatus; labelKey: string }> = [
+  { value: 'planned', labelKey: 'dept.status.planned' },
+  { value: 'active', labelKey: 'dept.status.active' },
+  { value: 'pending_review', labelKey: 'dept.status.pending_review' },
+  { value: 'blocked', labelKey: 'dept.status.blocked' },
+  { value: 'completed', labelKey: 'dept.status.completed' },
+  { value: 'archived', labelKey: 'dept.status.archived' },
 ];
 
-const priorities: Array<{ value: DepartmentItemPriority; label: string }> = [
-  { value: 'low', label: '低' },
-  { value: 'medium', label: '中' },
-  { value: 'high', label: '高' },
-  { value: 'critical', label: '關鍵' },
+const priorities: Array<{ value: DepartmentItemPriority; labelKey: string }> = [
+  { value: 'low', labelKey: 'dept.priority.low' },
+  { value: 'medium', labelKey: 'dept.priority.medium' },
+  { value: 'high', labelKey: 'dept.priority.high' },
+  { value: 'critical', labelKey: 'dept.priority.critical' },
 ];
 
 const statusStyles: Record<DepartmentItemStatus, string> = {
@@ -87,11 +87,11 @@ function errorMessage(error: unknown, fallback: string) {
 }
 
 function statusLabel(value: DepartmentItemStatus) {
-  return statuses.find((status) => status.value === value)?.label ?? value;
+  return statuses.find((status) => status.value === value)?.labelKey ?? value;
 }
 
 function priorityLabel(value: DepartmentItemPriority) {
-  return priorities.find((priority) => priority.value === value)?.label ?? value;
+  return priorities.find((priority) => priority.value === value)?.labelKey ?? value;
 }
 
 function formatDate(value?: string) {
@@ -112,7 +112,8 @@ function formatAmount(value?: number) {
 export default function DepartmentPortalPage() {
   const { department = '' } = useParams();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language?.startsWith("en");
   const queryClient = useQueryClient();
   const isDepartment = department in departmentConfigBySlug;
   const config = isDepartment
@@ -239,8 +240,8 @@ export default function DepartmentPortalPage() {
   const metrics = [
     { label: '全部項目', value: stats.total, icon: ListChecks, color: 'text-slate-600' },
     { label: '進行／待審', value: stats.active, icon: RefreshCw, color: 'text-blue-600' },
-    { label: '已完成', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600' },
-    { label: '受阻', value: stats.blocked, icon: AlertCircle, color: 'text-red-600' },
+    { labelKey: 'dept.status.completed', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600' },
+    { labelKey: 'dept.status.blocked', value: stats.blocked, icon: AlertCircle, color: 'text-red-600' },
     { label: '高優先', value: stats.highPriority, icon: AlertTriangle, color: 'text-orange-600' },
     { label: '已逾期', value: stats.overdue, icon: CalendarClock, color: 'text-rose-600' },
   ];
@@ -292,7 +293,7 @@ export default function DepartmentPortalPage() {
             <p className="text-xs text-gray-500">依部門職責規劃；點選模組可篩選，再按新增建立該類項目。</p>
           </div>
           {typeFilter !== 'all' && (
-            <button className="btn-secondary text-sm" onClick={() => setTypeFilter('all')}>顯示全部</button>
+            <button className="btn-secondary text-sm" onClick={() => setTypeFilter('all')}>{t('dept.filters.all')}</button>
           )}
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -346,7 +347,7 @@ export default function DepartmentPortalPage() {
             <Filter className="h-4 w-4 text-gray-400" />
             <select className="input-field" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as DepartmentItemStatus | 'all')}>
               <option value="all">全部狀態</option>
-              {statuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+              {statuses.map((status) => <option key={status.value} value={status.value}>{t(status.labelKey)}</option>)}
             </select>
             <select className="input-field" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
               <option value="all">全部類型</option>
@@ -368,7 +369,7 @@ export default function DepartmentPortalPage() {
             <AlertCircle className="mb-2 h-8 w-8 text-red-500" />
             <p className="font-medium text-red-600">無法載入部門資料</p>
             <p className="mt-1 max-w-lg text-sm text-gray-500">{errorMessage(overviewQuery.error, '請確認後端服務與資料庫遷移已完成。')}</p>
-            <button className="btn-secondary mt-4" onClick={() => overviewQuery.refetch()}>重試</button>
+            <button className="btn-secondary mt-4" onClick={() => overviewQuery.refetch()}>{t('dept.action.retry')}</button>
           </div>
         )}
         {!overviewQuery.isLoading && !overviewQuery.isError && (
@@ -381,24 +382,24 @@ export default function DepartmentPortalPage() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${config.accentSoft} ${config.accent}`}>{itemType?.label ?? item.itemType}</span>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[item.status]}`}>{statusLabel(item.status)}</span>
-                        <span className={`text-xs font-semibold ${priorityStyles[item.priority]}`}>{priorityLabel(item.priority)}優先</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[item.status]}`}>{t(`dept.status.${item.status}`)}</span>
+                        <span className={`text-xs font-semibold ${priorityStyles[item.priority]}`}>{t(`dept.priority.${item.priority}`)}{t('dept.item.prioritySuffix')}</span>
                       </div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">{item.title}</h3>
                       {item.description && <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 dark:text-gray-300">{item.description}</p>}
                       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span>負責人：{item.ownerName || '未指派'}</span>
-                        <span>期限：{formatDate(item.dueDate)}</span>
-                        {config.supportsAmount && <span>金額：{formatAmount(item.amount)}</span>}
-                        {item.updatedAt && <span>更新：{new Date(item.updatedAt).toLocaleString('zh-TW')}</span>}
+                        <span>{t('dept.item.owner')}{item.ownerName || t('dept.item.unassigned')}</span>
+                        <span>{t('dept.item.dueDate')}{formatDate(item.dueDate)}</span>
+                        {config.supportsAmount && <span>{t('dept.item.amount')}{formatAmount(item.amount)}</span>}
+                        {item.updatedAt && <span>{t('dept.item.updated')}{new Date(item.updatedAt).toLocaleString('zh-TW')}</span>}
                       </div>
                     </div>
                     {item.canEdit && (
                       <div className="flex shrink-0 gap-1 self-end md:self-start">
-                        <button className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-700" title="編輯" onClick={() => openEdit(item)}>
+                        <button className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-700" title={t("dept.action.editBtn")} onClick={() => openEdit(item)}>
                           <Edit3 className="h-4 w-4" />
                         </button>
-                        <button className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20" title="刪除" onClick={() => removeItem(item)} disabled={deleteMutation.isPending}>
+                        <button className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20" title={t("dept.action.deleteBtn")} onClick={() => removeItem(item)} disabled={deleteMutation.isPending}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -410,8 +411,8 @@ export default function DepartmentPortalPage() {
             {!filteredItems.length && (
               <div className="py-14 text-center text-sm text-gray-500">
                 <config.icon className={`mx-auto mb-3 h-9 w-9 ${config.accent}`} />
-                <p className="font-medium text-gray-700 dark:text-gray-200">目前沒有符合條件的項目</p>
-                <p className="mt-1">可調整篩選，或建立第一筆部門工作項目。</p>
+                <p className="font-medium text-gray-700 dark:text-gray-200">{t('dept.empty.title')}</p>
+                <p className="mt-1">{t('dept.empty.desc')}</p>
               </div>
             )}
           </div>
@@ -419,12 +420,12 @@ export default function DepartmentPortalPage() {
       </section>
 
       {formOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label={editing ? '編輯工作項目' : '新增工作項目'}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label={editing ? t('dept.action.edit') : t('dept.action.new')}>
           <form className="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-2xl bg-white shadow-2xl dark:bg-gray-800" onSubmit={submit}>
             <header className="sticky top-0 z-10 flex items-start justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editing ? '編輯工作項目' : '新增工作項目'}</h2>
-                <p className="mt-1 text-xs text-gray-500">{config.title} · {config.focus}</p>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editing ? t('dept.action.edit') : t('dept.action.new')}</h2>
+                <p className="mt-1 text-xs text-gray-500">{isEn && config.titleEn ? config.titleEn : config.title} · {config.focus} {/* TODO: Add focus translation if needed */}</p>
               </div>
               <button type="button" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => setFormOpen(false)}>
                 <X className="h-5 w-5" />
@@ -439,26 +440,26 @@ export default function DepartmentPortalPage() {
               </label>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 負責人
-                <input className="input-field mt-1 w-full" maxLength={120} placeholder="未填時使用目前使用者" value={form.ownerName ?? ''} onChange={(event) => setForm({ ...form, ownerName: event.target.value })} />
+                <input className="input-field mt-1 w-full" maxLength={120} placeholder={t("dept.form.ownerPlaceholder")} value={form.ownerName ?? ''} onChange={(event) => setForm({ ...form, ownerName: event.target.value })} />
               </label>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200 md:col-span-2">
                 標題 <span className="text-red-500">*</span>
-                <input autoFocus required className="input-field mt-1 w-full" maxLength={200} placeholder="輸入清楚、可執行的工作標題" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
+                <input autoFocus required className="input-field mt-1 w-full" maxLength={200} placeholder={t("dept.form.titlePlaceholder")} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
               </label>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200 md:col-span-2">
                 說明
-                <textarea className="input-field mt-1 min-h-28 w-full resize-y" maxLength={5000} placeholder="描述背景、目標、交付內容與完成條件" value={form.description ?? ''} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+                <textarea className="input-field mt-1 min-h-28 w-full resize-y" maxLength={5000} placeholder={t("dept.form.descPlaceholder")} value={form.description ?? ''} onChange={(event) => setForm({ ...form, description: event.target.value })} />
               </label>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 狀態
                 <select className="input-field mt-1 w-full" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as DepartmentItemStatus })}>
-                  {statuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                  {statuses.map((status) => <option key={status.value} value={status.value}>{t(status.labelKey)}</option>)}
                 </select>
               </label>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 優先級
                 <select className="input-field mt-1 w-full" value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value as DepartmentItemPriority })}>
-                  {priorities.map((priority) => <option key={priority.value} value={priority.value}>{priority.label}</option>)}
+                  {priorities.map((priority) => <option key={priority.value} value={priority.value}>{t(priority.labelKey)}</option>)}
                 </select>
               </label>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -473,10 +474,10 @@ export default function DepartmentPortalPage() {
               )}
             </div>
             <footer className="sticky bottom-0 flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
-              <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>取消</button>
+              <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>{t('dept.action.cancel')}</button>
               <button type="submit" className="btn-primary flex items-center gap-2" disabled={saveMutation.isPending}>
                 {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {editing ? '儲存變更' : '建立項目'}
+                {editing ? t('dept.action.save') : t('dept.action.create')}
               </button>
             </footer>
           </form>

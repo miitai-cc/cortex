@@ -2,7 +2,7 @@ import CommonHeroTitle from '../../components/common/CommonHeroTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { usersDirectoryApi } from '../../services/api';
-import { Search, UserCircle, Building2, Mail } from 'lucide-react';
+import { Search, UserCircle, Building2, Mail, Users } from 'lucide-react';
 import { useState } from 'react';
 
 export default function PersonalDirectory() {
