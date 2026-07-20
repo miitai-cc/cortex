@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { graphApi } from '../../services/api';
 import { useGraphStore } from '../../stores/graphStore';
 import {
@@ -28,6 +29,8 @@ const COMMUNITY_COLORS = [
 ];
 
 export default function KnowledgeGraphPage() {
+  const { t } = useTranslation();
+
   const {
     data,
     loading,
@@ -353,7 +356,7 @@ export default function KnowledgeGraphPage() {
 
   return (
     <div className='max-w-11xl mx-auto px-4 pb-10'>
-      <CommonHeroTitle icon={Layers} title="知識圖譜" description="視覺化文件與概念之間的關聯" />
+      <CommonHeroTitle icon={Layers} title={t("graph.title")} description={t("graph.description")} />
       <div className="flex h-full">
         {/* Graph canvas */}
         <div ref={containerRef} className="flex-1 relative overflow-hidden">
@@ -373,21 +376,21 @@ export default function KnowledgeGraphPage() {
             <button
               onClick={() => setZoom((z) => Math.min(z * 1.3, 5))}
               className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              title="放大"
+              title={t("graph.zoomIn")}
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
               onClick={() => setZoom((z) => Math.max(z / 1.3, 0.1))}
               className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              title="縮小"
+              title={t("graph.zoomOut")}
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <button
               onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}
               className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              title="重設視圖"
+              title={t("graph.resetView")}
             >
               <Maximize2 className="w-4 h-4" />
             </button>
@@ -401,7 +404,7 @@ export default function KnowledgeGraphPage() {
                 }`}
             >
               <Type className="w-3.5 h-3.5 inline mr-1" />
-              類型
+               {t("graph.type")}
             </button>
             <button
               onClick={() => setColorMode('community')}
@@ -409,28 +412,28 @@ export default function KnowledgeGraphPage() {
                 }`}
             >
               <Layers className="w-3.5 h-3.5 inline mr-1" />
-              社群
+               {t("graph.community")}
             </button>
           </div>
 
           {/* Statistics overlay */}
           {data && (
             <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-lg px-3 py-2 text-xs text-gray-500 dark:text-gray-400 shadow-sm border border-gray-200 dark:border-gray-700">
-              節點: {data.nodes.length} | 邊: {data.edges.length}
+              {t("graph.statNodes")}: {data.nodes.length} | {t("graph.statEdges")}: {data.edges.length}
             </div>
           )}
         </div>
 
         {/* Insights panel */}
         <div className="w-72 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-auto p-4 shrink-0">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">圖譜洞察</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t("graph.insights")}</h3>
 
           {selectedNode && (
             <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-              <p className="text-xs text-primary-600 dark:text-primary-400 font-medium mb-1">選中節點</p>
+              <p className="text-xs text-primary-600 dark:text-primary-400 font-medium mb-1">{t("graph.selectedNode")}</p>
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{selectedNode.label}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">類型: {selectedNode.type}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">連接數: {selectedNode.link_count}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("graph.nodeType")}: {selectedNode.type}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t("graph.nodeConnections")}: {selectedNode.link_count}</p>
             </div>
           )}
 
@@ -438,7 +441,7 @@ export default function KnowledgeGraphPage() {
             <div className="mb-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">孤立節點 ({insights.isolated.length})</span>
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">{t("graph.isolatedNodes")} ({insights.isolated.length})</span>
               </div>
               <div className="space-y-1">
                 {insights.isolated.slice(0, 10).map((label) => (
@@ -454,7 +457,7 @@ export default function KnowledgeGraphPage() {
             <div className="mb-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <Layers className="w-4 h-4 text-blue-500" />
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-400">橋接節點 ({insights.bridges.length})</span>
+                <span className="text-xs font-medium text-blue-700 dark:text-blue-400">{t("graph.bridgeNodes")} ({insights.bridges.length})</span>
               </div>
               <div className="space-y-1">
                 {insights.bridges.slice(0, 10).map((label) => (
@@ -468,7 +471,7 @@ export default function KnowledgeGraphPage() {
 
           <div className="mt-4">
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              拖曳畫布移動視圖 · 滾輪縮放 · 點擊節點查看詳情
+              {t("graph.canvasHint")}
             </p>
           </div>
         </div>

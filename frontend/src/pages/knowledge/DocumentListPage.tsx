@@ -14,7 +14,7 @@ export default function DocumentListPage() {
 
   return (
     <div className="max-w-11xl mx-auto px-4 ">
-      <CommonHeroTitle icon={List} title={t('nav.documents.list')} description="瀏覽所有已上傳的文件" />
+      <CommonHeroTitle icon={List} title={t('nav.documents.list')} description={t("documents.listDescription")} />
 
       <div className="relative mb-4">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -58,7 +58,7 @@ export default function DocumentListPage() {
           {data?.data?.length === 0 && (
             <div className="card text-center py-8">
               <FileText className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">尚無文件</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t("documents.noDocuments")}</p>
             </div>
           )}
         </div>

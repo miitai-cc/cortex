@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -60,6 +61,7 @@ import toast from 'react-hot-toast';
 interface ComponentItem {
   type: string;
   label: string;
+  labelKey: string;
   icon: typeof Type;
   category: 'basic' | 'form' | 'layout' | 'data';
 }
@@ -84,32 +86,32 @@ interface HistoryEntry {
 /* ------------------------------------------------------------------ */
 
 const componentPalette: ComponentItem[] = [
-  { type: 'text', label: '文字標籤', icon: Type, category: 'basic' },
-  { type: 'heading', label: '標題', icon: Tag, category: 'basic' },
-  { type: 'paragraph', label: '段落文字', icon: FileText, category: 'basic' },
-  { type: 'image', label: '圖片', icon: Image, category: 'basic' },
-  { type: 'separator', label: '分隔線', icon: SeparatorHorizontal, category: 'layout' },
-  { type: 'card', label: '卡片容器', icon: CreditCard, category: 'layout' },
-  { type: 'columns', label: '多欄佈局', icon: SquareStack, category: 'layout' },
-  { type: 'textInput', label: '文字輸入', icon: TextCursorInput, category: 'form' },
-  { type: 'textarea', label: '多行輸入', icon: TextCursorInput, category: 'form' },
-  { type: 'select', label: '下拉選單', icon: List, category: 'form' },
-  { type: 'checkbox', label: '勾選框', icon: ToggleLeft, category: 'form' },
-  { type: 'datepicker', label: '日期選擇', icon: Calendar, category: 'form' },
-  { type: 'fileupload', label: '檔案上傳', icon: Upload, category: 'form' },
-  { type: 'button', label: '按鈕', icon: MousePointerClick, category: 'form' },
-  { type: 'table', label: '資料表格', icon: Table2, category: 'data' },
-  { type: 'chart', label: '圖表', icon: BarChart3, category: 'data' },
-  { type: 'email', label: '電子郵件', icon: Mail, category: 'form' },
-  { type: 'phone', label: '電話', icon: Phone, category: 'form' },
-  { type: 'number', label: '數字輸入', icon: Hash, category: 'form' },
+  { type: 'text', labelKey: 'screenDesigner.component.text', label: '文字標籤', icon: Type, category: 'basic' },
+  { type: 'heading', labelKey: 'screenDesigner.component.heading', label: '標題', icon: Tag, category: 'basic' },
+  { type: 'paragraph', labelKey: 'screenDesigner.component.paragraph', label: '段落文字', icon: FileText, category: 'basic' },
+  { type: 'image', labelKey: 'screenDesigner.component.image', label: '圖片', icon: Image, category: 'basic' },
+  { type: 'separator', labelKey: 'screenDesigner.component.separator', label: '分隔線', icon: SeparatorHorizontal, category: 'layout' },
+  { type: 'card', labelKey: 'screenDesigner.component.card', label: '卡片容器', icon: CreditCard, category: 'layout' },
+  { type: 'columns', labelKey: 'screenDesigner.component.columns', label: '多欄佈局', icon: SquareStack, category: 'layout' },
+  { type: 'textInput', labelKey: 'screenDesigner.component.textInput', label: '文字輸入', icon: TextCursorInput, category: 'form' },
+  { type: 'textarea', labelKey: 'screenDesigner.component.textarea', label: '多行輸入', icon: TextCursorInput, category: 'form' },
+  { type: 'select', labelKey: 'screenDesigner.component.select', label: '下拉選單', icon: List, category: 'form' },
+  { type: 'checkbox', labelKey: 'screenDesigner.component.checkbox', label: '勾選框', icon: ToggleLeft, category: 'form' },
+  { type: 'datepicker', labelKey: 'screenDesigner.component.datepicker', label: '日期選擇', icon: Calendar, category: 'form' },
+  { type: 'fileupload', labelKey: 'screenDesigner.component.fileupload', label: '檔案上傳', icon: Upload, category: 'form' },
+  { type: 'button', labelKey: 'screenDesigner.component.button', label: '按鈕', icon: MousePointerClick, category: 'form' },
+  { type: 'table', labelKey: 'screenDesigner.component.table', label: '資料表格', icon: Table2, category: 'data' },
+  { type: 'chart', labelKey: 'screenDesigner.component.chart', label: '圖表', icon: BarChart3, category: 'data' },
+  { type: 'email', labelKey: 'screenDesigner.component.email', label: '電子郵件', icon: Mail, category: 'form' },
+  { type: 'phone', labelKey: 'screenDesigner.component.phone', label: '電話', icon: Phone, category: 'form' },
+  { type: 'number', labelKey: 'screenDesigner.component.number', label: '數字輸入', icon: Hash, category: 'form' },
 ];
 
 const categories = [
-  { key: 'basic', label: '基礎元件' },
-  { key: 'layout', label: '佈局元件' },
-  { key: 'form', label: '表單元件' },
-  { key: 'data', label: '資料元件' },
+  { key: 'basic', labelKey: 'screenDesigner.category.basic', label: '基礎元件' },
+  { key: 'layout', labelKey: 'screenDesigner.category.layout', label: '佈局元件' },
+  { key: 'form', labelKey: 'screenDesigner.category.form', label: '表單元件' },
+  { key: 'data', labelKey: 'screenDesigner.category.data', label: '資料元件' },
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -117,6 +119,7 @@ const categories = [
 /* ------------------------------------------------------------------ */
 
 function ScreenNodeComponent({ data, selected }: { data: ScreenNode['data']; selected?: boolean }) {
+  const { t } = useTranslation();
   const iconMap: Record<string, typeof Type> = {
     text: Type, heading: Tag, paragraph: FileText, image: Image,
     separator: SeparatorHorizontal, card: CreditCard, columns: SquareStack,
@@ -133,9 +136,9 @@ function ScreenNodeComponent({ data, selected }: { data: ScreenNode['data']; sel
       case 'heading':
         return <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{data.props.text || data.label}</p>;
       case 'paragraph':
-        return <p className="text-xs text-gray-500">{data.props.text || '段落文字內容...'}</p>;
+        return <p className="text-xs text-gray-500">{data.props.text || t('screenDesigner.paragraphPlaceholder')}</p>;
       case 'button':
-        return <button className="rounded bg-primary-600 px-3 py-1 text-xs text-white">{data.props.label || '按鈕'}</button>;
+        return <button className="rounded bg-primary-600 px-3 py-1 text-xs text-white">{data.props.label || t('screenDesigner.buttonPlaceholder')}</button>;
       case 'textInput':
         return <input className="w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700" placeholder={data.props.placeholder || '請輸入...'} readOnly />;
       case 'textarea':
@@ -192,13 +195,14 @@ function ScreenNodeComponent({ data, selected }: { data: ScreenNode['data']; sel
 /* ------------------------------------------------------------------ */
 
 function ScreenDesignerInner() {
+  const { t } = useTranslation();
   const { screenToFlowPosition, setNodes, setEdges } = useReactFlow();
   const [nodes, setNodesState] = useState<ScreenNode[]>([]);
   const [edges, setEdgesState] = useState<ScreenEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<ScreenNode | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([{ nodes: [], edges: [] }]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [screenName, setScreenName] = useState('未命名畫面');
+  const [screenName, setScreenName] = useState(t('screenDesigner.unnamed'));
   const [showProperties, setShowProperties] = useState(true);
   const dragRef = useRef<string | null>(null);
   const nodeIdCounter = useRef(0);
@@ -289,7 +293,7 @@ function ScreenDesignerInner() {
     const newNodes = [...nodes, newNode];
     setNodesState(newNodes);
     saveToHistory(newNodes, edges);
-    toast.success(`已新增「${item.label}」元件`);
+    toast.success(t('screenDesigner.added', { label: item.label }));
   }, [nodes, edges, screenToFlowPosition, saveToHistory]);
 
   const handleDragStart = useCallback((event: React.DragEvent, type: string) => {
@@ -318,27 +322,27 @@ function ScreenDesignerInner() {
     setEdgesState(newEdges);
     saveToHistory(newNodes, newEdges);
     setSelectedNode(null);
-    toast.success('已刪除元件');
+    toast.success(t('screenDesigner.deleted'));
   }, [selectedNode, nodes, edges, saveToHistory]);
 
   const save = () => {
-    toast.success(`「${screenName}」已儲存（共 ${nodes.length} 個元件）`);
+    toast.success(t('screenDesigner.saved', { name: screenName, count: nodes.length }));
   };
 
   const preview = () => {
-    toast('預覽功能開發中…', { icon: '🚧' });
+    toast(t('screenDesigner.previewDev'), { icon: '🚧' });
   };
 
   return (
     <div className="mx-auto flex h-[calc(100vh-120px)] max-w-[1800px] flex-col px-4 pb-4">
       <CommonHeroTitle
         icon={LayoutGrid}
-        title="畫面設計器"
-        description="以拖拉方式進行表單與畫面的視覺化設計，快速建立前端頁面原型"
-        breadcrumb={['工作流程管理', '畫面設計']}
+        title={t("screenDesigner.title")}
+        description={t("screenDesigner.description")}
+        breadcrumb={[t("workflow.breadcrumb"), t("screenDesigner.breadcrumb")]}
         extraButtons={[
-          { label: '儲存', icon: Save, onClick: save },
-          { label: '預覽', icon: Eye, onClick: preview },
+          { label: t("screenDesigner.save"), icon: Save, onClick: save },
+          { label: t("screenDesigner.preview"), icon: Eye, onClick: preview },
         ]}
       />
 
@@ -348,7 +352,7 @@ function ScreenDesignerInner() {
           <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
             <input
               className="w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700"
-              placeholder="搜尋元件..."
+              placeholder={t("screenDesigner.searchComponents")}
               readOnly
             />
           </div>
@@ -358,7 +362,7 @@ function ScreenDesignerInner() {
               if (!items.length) return null;
               return (
                 <div key={cat.key} className="mb-3">
-                  <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{cat.label}</p>
+                  <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{t(cat.labelKey)}</p>
                   <div className="space-y-1">
                     {items.map((item) => (
                       <div
@@ -368,7 +372,7 @@ function ScreenDesignerInner() {
                         className="flex cursor-grab items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 active:cursor-grabbing dark:text-gray-300 dark:hover:bg-primary-900/20"
                       >
                         <item.icon className="h-3.5 w-3.5 shrink-0" />
-                        <span>{item.label}</span>
+                        <span>{t(item.labelKey)}</span>
                       </div>
                     ))}
                   </div>
@@ -388,15 +392,15 @@ function ScreenDesignerInner() {
               onChange={(e) => setScreenName(e.target.value)}
             />
             <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
-            <button onClick={undo} disabled={historyIndex <= 0} className="rounded p-1 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" title="復原"><Undo2 className="h-4 w-4" /></button>
-            <button onClick={redo} disabled={historyIndex >= history.length - 1} className="rounded p-1 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" title="重做"><Redo2 className="h-4 w-4" /></button>
+            <button onClick={undo} disabled={historyIndex <= 0} className="rounded p-1 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" title={t("screenDesigner.undo")}><Undo2 className="h-4 w-4" /></button>
+            <button onClick={redo} disabled={historyIndex >= history.length - 1} className="rounded p-1 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" title={t("screenDesigner.redo")}><Redo2 className="h-4 w-4" /></button>
             <span className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" />
-            <button onClick={() => setShowProperties((v) => !v)} className={`rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${showProperties ? 'text-primary-600' : ''}`} title="屬性面板"><Settings2 className="h-4 w-4" /></button>
+            <button onClick={() => setShowProperties((v) => !v)} className={`rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${showProperties ? 'text-primary-600' : ''}`} title={t("screenDesigner.properties")}><Settings2 className="h-4 w-4" /></button>
           </div>
 
           {/* Status bar */}
           <div className="absolute bottom-3 left-3 z-10 rounded bg-white/80 px-2 py-0.5 text-[10px] text-gray-400 shadow-sm dark:bg-gray-800/80">
-            {nodes.length} 個元件 · {edges.length} 條連線
+            {nodes.length} {t("screenDesigner.components")} · {edges.length} {t("screenDesigner.connections")}
           </div>
 
           <ReactFlow
@@ -435,8 +439,8 @@ function ScreenDesignerInner() {
           {nodes.length === 0 && (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-gray-400">
               <LayoutGrid className="mb-3 h-12 w-12 text-gray-300" />
-              <p className="text-sm">從左側拖曳元件至此處開始設計</p>
-              <p className="mt-1 text-xs text-gray-300">支援連線、分組、屬性設定與即時預覽</p>
+              <p className="text-sm">{t("screenDesigner.dropHint")}</p>
+              <p className="mt-1 text-xs text-gray-300">{t("screenDesigner.dropHintSub")}</p>
             </div>
           )}
         </div>
@@ -445,23 +449,23 @@ function ScreenDesignerInner() {
         {showProperties && (
           <aside className="flex w-64 flex-col border-l border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-700">
-              <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-300">屬性設定</h3>
+              <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-300">{t("screenDesigner.propertySettings")}</h3>
               {selectedNode && (
-                <button onClick={deleteNode} className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="刪除元件"><Trash2 className="h-3.5 w-3.5" /></button>
+                <button onClick={deleteNode} className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title={t("screenDesigner.deleteComponent")}><Trash2 className="h-3.5 w-3.5" /></button>
               )}
             </div>
             <div className="flex-1 overflow-y-auto px-3 py-3">
               {selectedNode ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">元件類型</label>
+                    <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.componentType")}</label>
                     <div className="flex items-center gap-1.5 rounded bg-gray-50 px-2 py-1.5 text-xs dark:bg-gray-700">
                       <ChevronRight className="h-3 w-3 text-primary-600" />
                       <span className="font-medium text-gray-700 dark:text-gray-200">{selectedNode.data.label}</span>
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">顯示名稱</label>
+                    <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.displayName")}</label>
                     <input
                       className="w-full rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700"
                       value={selectedNode.data.label}
@@ -479,37 +483,37 @@ function ScreenDesignerInner() {
                   </div>
                   {selectedNode.data.componentType === 'button' && (
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">按鈕文字</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.buttonText")}</label>
                       <input className="w-full rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700" value={selectedNode.data.props.label || ''} onChange={(e) => updateNodeProps('label', e.target.value)} />
                     </div>
                   )}
                   {['textInput', 'textarea', 'email', 'phone', 'number'].includes(selectedNode.data.componentType) && (
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">佔位文字</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.placeholderText")}</label>
                       <input className="w-full rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700" value={selectedNode.data.props.placeholder || ''} onChange={(e) => updateNodeProps('placeholder', e.target.value)} />
                     </div>
                   )}
                   {['text', 'heading', 'paragraph'].includes(selectedNode.data.componentType) && (
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">內容文字</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.contentText")}</label>
                       <textarea className="w-full rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700" rows={3} value={selectedNode.data.props.text || ''} onChange={(e) => updateNodeProps('text', e.target.value)} />
                     </div>
                   )}
                   {selectedNode.data.componentType === 'checkbox' && (
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">勾選標籤</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.checkboxLabel")}</label>
                       <input className="w-full rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700" value={selectedNode.data.props.label || ''} onChange={(e) => updateNodeProps('label', e.target.value)} />
                     </div>
                   )}
                   <div>
-                    <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">元件 ID</label>
+                    <label className="mb-1 block text-[10px] font-medium uppercase text-gray-400">{t("screenDesigner.componentId")}</label>
                     <p className="rounded bg-gray-50 px-2 py-1.5 font-mono text-[11px] text-gray-500 dark:bg-gray-700">{selectedNode.id}</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-gray-400">
                   <Settings2 className="mb-2 h-8 w-8 text-gray-300" />
-                  <p className="text-xs">點選元件以編輯屬性</p>
+                  <p className="text-xs">{t("screenDesigner.selectComponent")}</p>
                 </div>
               )}
             </div>

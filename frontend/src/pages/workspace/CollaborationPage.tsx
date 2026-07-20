@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from 'eiva-fe-security';
 import { ClipboardList, MessagesSquare } from 'lucide-react';
@@ -14,6 +15,7 @@ import { collaborationApi } from '../../services/api';
 import type { CollaborationOverview } from '../../types/collaboration';
 
 export default function CollaborationPage() {
+  const { t } = useTranslation();
   const { section = 'channels' } = useParams();
   const token = useAuthStore((state) => state.token) ?? '';
   const queryClient = useQueryClient();
@@ -38,23 +40,23 @@ export default function CollaborationPage() {
     <div className="mx-auto max-w-[1680px] px-4 pb-8">
       <CommonHeroTitle
         icon={issueMode ? ClipboardList : MessagesSquare}
-        title={issueMode ? 'Issue 工作追蹤' : projectMode ? '專案協作' : '團隊協作'}
+        title={issueMode ? t('collaboration.issueTracking') : projectMode ? t('collaboration.projectTitle') : t('collaboration.teamTitle')}
         description={
           issueMode
-            ? '規劃、指派與追蹤工作，並保留留言及完整狀態歷程'
+            ? t('collaboration.issueDesc')
             : projectMode
-              ? '集中開啟專案頻道，專案管理異動會即時同步至團隊通訊'
-            : 'Cortex 內建的多人頻道、討論串、提及、表情、搜尋與即時訊息'
+              ? t('collaboration.projectDesc')
+            : t('collaboration.teamDesc')
         }
         onRefresh={() => {
           queryClient.invalidateQueries({ queryKey: ['collaboration-overview'] });
           queryClient.invalidateQueries({ queryKey: ['collaboration-issues'] });
         }}
       />
-      {overview.isLoading && <div className="card py-14 text-center text-gray-500">載入協作空間…</div>}
+      {overview.isLoading && <div className="card py-14 text-center text-gray-500">{t('collaboration.loading')}</div>}
       {overview.isError && (
         <div className="card border-red-200 py-14 text-center text-red-600">
-          無法載入協作資料，請確認後端服務與登入狀態。
+          {t('collaboration.loadError')}
         </div>
       )}
       {model && (

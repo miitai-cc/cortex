@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from 'eiva-fe-security';
 import { Database, Plus, RefreshCw, Search, ShieldAlert, X } from 'lucide-react';
@@ -61,6 +62,7 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 export default function SystemAdministrationPage({ sectionProp, hideHeader, hideWrapper }: { sectionProp?: string; hideHeader?: boolean; hideWrapper?: boolean }) {
+  const { t } = useTranslation();
   const params = useParams<{ section: string }>();
   const section = sectionProp || params.section || '';
   const baseDefinition = systemAdminEntities[section];
@@ -122,19 +124,19 @@ export default function SystemAdministrationPage({ sectionProp, hideHeader, hide
       ? systemAdminApi.update(definition.entity, editing.id, form)
       : systemAdminApi.create(definition.entity, form),
     onSuccess: async () => {
-      toast.success(`${definition.itemName}已${editing ? '更新' : '新增'}`);
+      toast.success(t(editing ? "admin.updated" : "admin.created", { itemName: definition.itemName }));
       setEditing(undefined);
       await refresh();
     },
-    onError: (error) => toast.error(errorMessage(error, `${definition.itemName}儲存失敗`)),
+    onError: (error) => toast.error(errorMessage(error, t("admin.saveFailed", { itemName: definition.itemName }))),
   });
   const remove = useMutation({
     mutationFn: (record: AdminRecord) => systemAdminApi.delete(definition.entity, record.id),
     onSuccess: async () => {
-      toast.success(`${definition.itemName}已刪除`);
+      toast.success(t("admin.deleted", { itemName: definition.itemName }));
       await refresh();
     },
-    onError: (error) => toast.error(errorMessage(error, `${definition.itemName}刪除失敗`)),
+    onError: (error) => toast.error(errorMessage(error, t("admin.deleteFailed", { itemName: definition.itemName }))),
   });
   const openCreate = () => {
     setForm(blankPayload(definition.fields));
@@ -153,7 +155,7 @@ export default function SystemAdministrationPage({ sectionProp, hideHeader, hide
       return value === undefined || value === null || String(value).trim() === '';
     });
     if (missing || (!editing && definition.entity === 'users' && String(form.data.password ?? '').length < 8)) {
-      toast.error('請填寫所有必填欄位；新使用者密碼至少 8 字');
+      toast.error(t("admin.validationError"));
       return;
     }
     save.mutate();
@@ -164,16 +166,16 @@ export default function SystemAdministrationPage({ sectionProp, hideHeader, hide
       {!hideHeader && <CommonHeroTitle icon={Database} title={definition.title} description={definition.description} />}
       {!admin && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-          <ShieldAlert className="h-5 w-5" />目前帳號沒有系統設定管理權限。
+          <ShieldAlert className="h-5 w-5" />{t("admin.noPermission")}
         </div>
       )}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <label className="relative min-w-64 flex-1 lg:max-w-xl">
           <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <input className="input-field pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`即時搜尋所有${definition.itemName}欄位…`} />
+          <input className="input-field pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("admin.searchPlaceholder", { entity: definition.itemName })} />
         </label>
-        <button type="button" className="btn-secondary flex items-center gap-2" disabled={query.isFetching} onClick={() => query.refetch()}><RefreshCw className={`h-4 w-4 ${query.isFetching ? 'animate-spin' : ''}`} />重新整理</button>
-        <button type="button" className="btn-primary flex items-center gap-2" disabled={!admin} onClick={openCreate}><Plus className="h-4 w-4" />新增{definition.itemName}</button>
+        <button type="button" className="btn-secondary flex items-center gap-2" disabled={query.isFetching} onClick={() => query.refetch()}><RefreshCw className={`h-4 w-4 ${query.isFetching ? 'animate-spin' : ''}`} />{t("admin.refresh")}</button>
+        <button type="button" className="btn-primary flex items-center gap-2" disabled={!admin} onClick={openCreate}><Plus className="h-4 w-4" />{t("admin.add", { itemName: definition.itemName })}</button>
       </div>
       <AdminDataGrid
         records={model?.records ?? []}
@@ -187,12 +189,12 @@ export default function SystemAdministrationPage({ sectionProp, hideHeader, hide
         onPageChange={setPage}
         onEdit={openEdit}
         onDelete={(record) => {
-          if (window.confirm(`確定刪除「${record.name}」？此操作無法復原。`)) remove.mutate(record);
+          if (window.confirm(t("admin.deleteConfirm", { name: record.name }))) remove.mutate(record);
         }}
       />
       {editing !== undefined && (
         <EditorDialog
-          title={`${editing ? '編輯' : '新增'}${definition.itemName}`}
+          title={t(editing ? "admin.editTitle" : "admin.addTitle", { itemName: definition.itemName })}
           fields={definition.fields}
           form={form}
           editing={!!editing}
@@ -216,6 +218,7 @@ function EditorDialog({ title, fields, form, editing, saving, onChange, onClose,
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4" role="dialog" aria-modal="true" aria-label={title}>
       <section className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
@@ -225,13 +228,14 @@ function EditorDialog({ title, fields, form, editing, saving, onChange, onClose,
             <DynamicField key={field.path} field={field} value={valueAt(form, field.path)} editing={editing} onChange={(value) => onChange(field.path, value)} />
           ))}
         </div>
-        <footer className="flex justify-end gap-2 border-t border-gray-200 px-6 py-4 dark:border-gray-700"><button type="button" className="btn-secondary" onClick={onClose}>取消</button><button type="button" className="btn-primary" disabled={saving} onClick={onSubmit}>{saving ? '儲存中…' : '儲存'}</button></footer>
+        <footer className="flex justify-end gap-2 border-t border-gray-200 px-6 py-4 dark:border-gray-700"><button type="button" className="btn-secondary" onClick={onClose}>{t("admin.cancel")}</button><button type="button" className="btn-primary" disabled={saving} onClick={onSubmit}>{saving ? t("admin.saving") : t("admin.save")}</button></footer>
       </section>
     </div>
   );
 }
 
 function DynamicField({ field, value, editing, onChange }: { field: AdminFieldDefinition; value: unknown; editing: boolean; onChange: (value: unknown) => void }) {
+  const { t } = useTranslation();
   const inputClass = 'input-field mt-1 w-full';
   const shownValue = value ?? '';
   if (field.type === 'checkbox') {
@@ -249,7 +253,7 @@ function DynamicField({ field, value, editing, onChange }: { field: AdminFieldDe
           className={inputClass}
           type={field.type === 'tags' ? 'text' : field.type ?? 'text'}
           value={field.type === 'tags' && Array.isArray(value) ? value.join(', ') : String(shownValue)}
-          placeholder={field.type === 'password' && editing ? '留空表示不變更' : field.placeholder}
+          placeholder={field.type === 'password' && editing ? t("admin.passwordUnchanged") : field.placeholder}
           onChange={(event) => onChange(field.type === 'number' ? Number(event.target.value) : field.type === 'tags' ? event.target.value.split(',').map((item) => item.trim()).filter(Boolean) : event.target.value)}
         />
       )}

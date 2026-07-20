@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from 'eiva-fe-security';
 import {
@@ -43,6 +44,7 @@ const empty: SystemSettingsPayload = {
 };
 
 export default function SettingsSystemPage() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const [form, setForm] = useState<SystemSettingsPayload>(empty);
   const settings = useQuery({ queryKey: ['system-settings'], queryFn: systemSettingsApi.get });
@@ -75,9 +77,9 @@ export default function SettingsSystemPage() {
     mutationFn: () => systemSettingsApi.update(form),
     onSuccess: async () => {
       await settings.refetch();
-      toast.success('系統參數已儲存；底部資訊立即更新，模型設定於重啟後生效');
+      toast.success(t("settings.system.saved"));
     },
-    onError: (error: any) => toast.error(error.response?.data?.error || '系統參數儲存失敗'),
+    onError: (error: any) => toast.error(error.response?.data?.error || t("settings.system.saveFailed")),
   });
   const account = user as typeof user & { role?: string };
   const admin = (user?.roles?.includes('admin') ?? false) || account?.role === 'admin';
@@ -99,7 +101,7 @@ export default function SettingsSystemPage() {
   };
   const addLink = () => {
     if (form.commonLinks.length >= 20) {
-      toast.error('常用連結最多 20 筆');
+      toast.error(t("settings.system.linksMax"));
       return;
     }
     setForm((current) => ({
@@ -134,7 +136,7 @@ export default function SettingsSystemPage() {
   };
   const addEnterpriseSystem = () => {
     if (form.enterpriseSystems.length >= 50) {
-      toast.error('系統連結最多 50 筆');
+      toast.error(t("settings.system.systemsMax"));
       return;
     }
     setForm((current) => ({
@@ -162,96 +164,96 @@ export default function SettingsSystemPage() {
     <div className="mx-auto max-w-11xl px-4 pb-10">
       <CommonHeroTitle
         icon={Sliders}
-        title="系統參數"
-        description="維護模型、API Endpoint，以及全站底部顯示的聯絡窗口與常用連結"
+        title={t("settings.system.title")}
+        description={t("settings.system.description")}
       />
       {model?.restartRequired && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
-            <strong>模型設定尚未套用</strong>
-            <p>設定已持久化至後端資料庫；模型及 Endpoint 需重新啟動 Cortex Backend 後套用。</p>
+            <strong>{t("settings.system.restartRequired")}</strong>
+            <p>{t("settings.system.restartRequiredDesc")}</p>
           </div>
         </div>
       )}
 
       <section className="card mb-6 space-y-5">
-        <h2 className="font-semibold">AI 模型</h2>
-        <Field label="Embedding 模型" help="文件索引與查詢向量化使用的模型名稱">
+        <h2 className="font-semibold">{t("settings.system.aiModel")}</h2>
+        <Field label={t("settings.system.embeddingModel")} help={t("settings.system.embeddingModelHelp")}>
           <input disabled={!admin} className="input-field" value={form.embeddingModel} onChange={(event) => setForm({ ...form, embeddingModel: event.target.value })} />
         </Field>
-        <Field label="Reranking 模型" help="RAG 結果重新排序使用的模型名稱">
+        <Field label={t("settings.system.rerankingModel")} help={t("settings.system.rerankingModelHelp")}>
           <input disabled={!admin} className="input-field" value={form.rerankingModel} onChange={(event) => setForm({ ...form, rerankingModel: event.target.value })} />
         </Field>
-        <Field label="PageIndex 模型" help="PageIndex 文件結構分析使用的 LLM 模型">
+        <Field label={t("settings.system.pageindexModel")} help={t("settings.system.pageindexModelHelp")}>
           <input disabled={!admin} className="input-field" value={form.pageindexModel} onChange={(event) => setForm({ ...form, pageindexModel: event.target.value })} />
         </Field>
         <hr className="border-gray-200 dark:border-gray-700" />
-        <h2 className="font-semibold">API Endpoint</h2>
-        <Field label="OpenAI 相容 API Base URL" help="必須使用 http 或 https">
+        <h2 className="font-semibold">{t("settings.system.apiEndpoint")}</h2>
+        <Field label={t("settings.system.openaiBaseUrl")} help={t("settings.system.openaiBaseUrlHelp")}>
           <input disabled={!admin} type="url" className="input-field" value={form.openaiBaseUrl} onChange={(event) => setForm({ ...form, openaiBaseUrl: event.target.value })} />
         </Field>
-        <Field label="PageIndex API Base URL" help="PageIndex 會以此端點呼叫相容 LLM API">
+        <Field label={t("settings.system.pageindexBaseUrl")} help={t("settings.system.pageindexBaseUrlHelp")}>
           <input disabled={!admin} type="url" className="input-field" value={form.pageindexBaseUrl} onChange={(event) => setForm({ ...form, pageindexBaseUrl: event.target.value })} />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
           <KeyStatus label="OPENAI_API_KEY" configured={!!model?.openaiApiKeyConfigured} />
           <KeyStatus label="PAGEINDEX_API_KEY" configured={!!model?.pageindexApiKeyConfigured} />
         </div>
-        <p className="text-xs text-gray-500">基於安全性，API Key 不會透過此頁讀取、回傳或明文寫入資料庫；請在後端環境變數或秘密管理服務中設定。</p>
+        <p className="text-xs text-gray-500">{t("settings.system.apiKeyNote")}</p>
       </section>
 
       <section className="card mb-6 space-y-5">
         <div>
-          <h2 className="font-semibold">郵件整合設定</h2>
-          <p className="mt-1 text-xs text-gray-500">設定專案管理「郵件整理」功能的連線參數，以支援 IMAP/SMTP 及 Google Mail API。</p>
+          <h2 className="font-semibold">{t("settings.system.emailIntegration")}</h2>
+          <p className="mt-1 text-xs text-gray-500">{t("settings.system.emailIntegrationDesc")}</p>
         </div>
         
-        <h3 className="font-medium text-sm border-b border-gray-200 pb-2 dark:border-gray-700">IMAP / SMTP 伺服器</h3>
+        <h3 className="font-medium text-sm border-b border-gray-200 pb-2 dark:border-gray-700">{t("settings.system.imapSmtp")}</h3>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="IMAP 伺服器" help="例如：imap.example.com">
+          <Field label={t("settings.system.imapServer")} help={t("settings.system.imapServerHelp")}>
             <input disabled={!admin} className="input-field" value={form.imapServer} onChange={(event) => setForm({ ...form, imapServer: event.target.value })} />
           </Field>
-          <Field label="IMAP 連接埠" help="例如：993">
+          <Field label={t("settings.system.imapPort")} help={t("settings.system.imapPortHelp")}>
             <input disabled={!admin} className="input-field" value={form.imapPort} onChange={(event) => setForm({ ...form, imapPort: event.target.value })} />
           </Field>
-          <Field label="IMAP 帳號" help="用於接收信件的帳號">
+          <Field label={t("settings.system.imapUsername")} help={t("settings.system.imapUsernameHelp")}>
             <input disabled={!admin} className="input-field" value={form.imapUsername} onChange={(event) => setForm({ ...form, imapUsername: event.target.value })} />
           </Field>
         </div>
         <div className="grid gap-4 md:grid-cols-2 mt-2">
-          <Field label="SMTP 伺服器" help="例如：smtp.example.com">
+          <Field label={t("settings.system.smtpServer")} help={t("settings.system.smtpServerHelp")}>
             <input disabled={!admin} className="input-field" value={form.smtpServer} onChange={(event) => setForm({ ...form, smtpServer: event.target.value })} />
           </Field>
-          <Field label="SMTP 連接埠" help="例如：465 或 587">
+          <Field label={t("settings.system.smtpPort")} help={t("settings.system.smtpPortHelp")}>
             <input disabled={!admin} className="input-field" value={form.smtpPort} onChange={(event) => setForm({ ...form, smtpPort: event.target.value })} />
           </Field>
-          <Field label="SMTP 帳號" help="用於發送信件的帳號">
+          <Field label={t("settings.system.smtpUsername")} help={t("settings.system.smtpUsernameHelp")}>
             <input disabled={!admin} className="input-field" value={form.smtpUsername} onChange={(event) => setForm({ ...form, smtpUsername: event.target.value })} />
           </Field>
         </div>
 
-        <h3 className="font-medium text-sm border-b border-gray-200 pb-2 mt-4 dark:border-gray-700">Google Mail API</h3>
+        <h3 className="font-medium text-sm border-b border-gray-200 pb-2 mt-4 dark:border-gray-700">{t("settings.system.googleMailApi")}</h3>
         <label className="flex items-center gap-3">
           <input disabled={!admin} type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700" checked={form.googleMailApiEnabled} onChange={(event) => setForm({ ...form, googleMailApiEnabled: event.target.checked })} />
-          <span className="text-sm">啟用 Google Mail API 整合</span>
+          <span className="text-sm">{t("settings.system.enableGoogleMailApi")}</span>
         </label>
-        <p className="text-xs text-gray-500">啟用後，將使用後端環境變數 (如 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) 進行 OAuth2 認證授權。</p>
+        <p className="text-xs text-gray-500">{t("settings.system.googleMailApiDesc")}</p>
       </section>
 
       <section className="card mb-6 space-y-5">
         <div>
-          <h2 className="font-semibold">底部資訊列</h2>
-          <p className="mt-1 text-xs text-gray-500">聯絡窗口會顯示在每個功能頁最下方；未填欄位不顯示連結。</p>
+          <h2 className="font-semibold">{t("settings.system.bottomInfoBar")}</h2>
+          <p className="mt-1 text-xs text-gray-500">{t("settings.system.bottomInfoBarDesc")}</p>
         </div>
-        <Field label="聯絡窗口名稱" help="例如：資訊服務台、MIS 值班窗口">
+        <Field label={t("settings.system.contactName")} help={t("settings.system.contactNameHelp")}>
           <input disabled={!admin} maxLength={120} className="input-field" value={form.contactName} onChange={(event) => setForm({ ...form, contactName: event.target.value })} />
         </Field>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="聯絡 Email" help="點選後開啟郵件程式">
+          <Field label={t("settings.system.contactEmail")} help={t("settings.system.contactEmailHelp")}>
             <input disabled={!admin} type="email" maxLength={254} className="input-field" value={form.contactEmail} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} />
           </Field>
-          <Field label="聯絡電話／分機" help="可留空">
+          <Field label={t("settings.system.contactPhone")} help={t("settings.system.contactPhoneHelp")}>
             <input disabled={!admin} maxLength={80} className="input-field" value={form.contactPhone} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} />
           </Field>
         </div>
@@ -259,46 +261,46 @@ export default function SettingsSystemPage() {
         <hr className="border-gray-200 dark:border-gray-700" />
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="flex items-center gap-2 font-medium"><Link2 className="h-4 w-4" />常用連結</h3>
-            <p className="mt-1 text-xs text-gray-500">依此處順序顯示於底部選單，僅接受 HTTP／HTTPS 網址。</p>
+            <h3 className="flex items-center gap-2 font-medium"><Link2 className="h-4 w-4" />{t("settings.system.commonLinks")}</h3>
+            <p className="mt-1 text-xs text-gray-500">{t("settings.system.commonLinksDesc")}</p>
           </div>
           <button type="button" disabled={!admin || form.commonLinks.length >= 20} className="btn-secondary flex items-center gap-1.5 text-sm" onClick={addLink}>
-            <Plus className="h-4 w-4" />新增連結
+            <Plus className="h-4 w-4" />{t("settings.system.addLink")}
           </button>
         </div>
         <div className="space-y-3">
           {form.commonLinks.map((link, index) => (
             <div key={`common-link-${index}`} className="grid gap-2 rounded-xl border border-gray-200 p-3 dark:border-gray-700 md:grid-cols-[1fr_2fr_auto] md:items-center">
-              <input disabled={!admin} maxLength={80} className="input-field" placeholder="連結名稱" value={link.label} onChange={(event) => updateLink(index, { label: event.target.value })} />
-              <input disabled={!admin} type="url" className="input-field" placeholder="https://portal.example.com" value={link.url} onChange={(event) => updateLink(index, { url: event.target.value })} />
+              <input disabled={!admin} maxLength={80} className="input-field" placeholder={t("settings.system.linkLabelPlaceholder")} value={link.label} onChange={(event) => updateLink(index, { label: event.target.value })} />
+              <input disabled={!admin} type="url" className="input-field" placeholder={t("settings.system.linkUrlPlaceholder")} value={link.url} onChange={(event) => updateLink(index, { url: event.target.value })} />
               <div className="flex justify-end gap-1">
-                <button type="button" disabled={!admin || index === 0} title="向上移動" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveLink(index, -1)}><ArrowUp className="h-4 w-4" /></button>
-                <button type="button" disabled={!admin || index === form.commonLinks.length - 1} title="向下移動" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveLink(index, 1)}><ArrowDown className="h-4 w-4" /></button>
-                <button type="button" disabled={!admin} title="刪除連結" className="rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-30 dark:hover:bg-red-900/20" onClick={() => removeLink(index)}><Trash2 className="h-4 w-4" /></button>
+                <button type="button" disabled={!admin || index === 0} title={t("settings.system.moveUp")} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveLink(index, -1)}><ArrowUp className="h-4 w-4" /></button>
+                <button type="button" disabled={!admin || index === form.commonLinks.length - 1} title={t("settings.system.moveDown")} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveLink(index, 1)}><ArrowDown className="h-4 w-4" /></button>
+                <button type="button" disabled={!admin} title={t("settings.system.deleteLink")} className="rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-30 dark:hover:bg-red-900/20" onClick={() => removeLink(index)}><Trash2 className="h-4 w-4" /></button>
               </div>
             </div>
           ))}
-          {!form.commonLinks.length && <div className="rounded-xl border border-dashed border-gray-300 py-8 text-center text-sm text-gray-400 dark:border-gray-700">尚未設定常用連結</div>}
+          {!form.commonLinks.length && <div className="rounded-xl border border-dashed border-gray-300 py-8 text-center text-sm text-gray-400 dark:border-gray-700">{t("settings.system.noCommonLinks")}</div>}
         </div>
       </section>
 
       <section className="card mb-6 space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="flex items-center gap-2 font-medium"><Building2 className="h-4 w-4" />企業資訊系統</h3>
-            <p className="mt-1 text-xs text-gray-500">此清單將顯示於儀表板中，供使用者快速存取外部子系統。系統將會依照「分類」與「區域」進行群組。</p>
+            <h3 className="flex items-center gap-2 font-medium"><Building2 className="h-4 w-4" />{t("settings.system.enterpriseSystems")}</h3>
+            <p className="mt-1 text-xs text-gray-500">{t("settings.system.enterpriseSystemsDesc")}</p>
           </div>
           <button type="button" disabled={!admin || form.enterpriseSystems.length >= 50} className="btn-secondary flex items-center gap-1.5 text-sm" onClick={addEnterpriseSystem}>
-            <Plus className="h-4 w-4" />新增系統
+            <Plus className="h-4 w-4" />{t("settings.system.addEnterpriseSystem")}
           </button>
         </div>
         <div className="space-y-3">
           {form.enterpriseSystems.map((sys, index) => (
             <div key={`enterprise-sys-${index}`} className="grid gap-2 rounded-xl border border-gray-200 p-3 dark:border-gray-700 md:grid-cols-[1fr_1fr_1.5fr_2fr_auto] md:items-center">
-              <input disabled={!admin} maxLength={50} className="input-field" placeholder="分類 (例如：內部管理)" value={sys.category} onChange={(event) => updateEnterpriseSystem(index, { category: event.target.value })} />
-              <input disabled={!admin} maxLength={50} className="input-field" placeholder="區域 (例如：台北總部)" value={sys.area} onChange={(event) => updateEnterpriseSystem(index, { area: event.target.value })} />
-              <input disabled={!admin} maxLength={80} className="input-field" placeholder="系統名稱" value={sys.label} onChange={(event) => updateEnterpriseSystem(index, { label: event.target.value })} />
-              <input disabled={!admin} type="url" className="input-field" placeholder="https://..." value={sys.url} onChange={(event) => updateEnterpriseSystem(index, { url: event.target.value })} />
+              <input disabled={!admin} maxLength={50} className="input-field" placeholder={t("settings.system.systemCategoryPlaceholder")} value={sys.category} onChange={(event) => updateEnterpriseSystem(index, { category: event.target.value })} />
+              <input disabled={!admin} maxLength={50} className="input-field" placeholder={t("settings.system.systemAreaPlaceholder")} value={sys.area} onChange={(event) => updateEnterpriseSystem(index, { area: event.target.value })} />
+              <input disabled={!admin} maxLength={80} className="input-field" placeholder={t("settings.system.systemNamePlaceholder")} value={sys.label} onChange={(event) => updateEnterpriseSystem(index, { label: event.target.value })} />
+              <input disabled={!admin} type="url" className="input-field" placeholder={t("settings.system.systemUrlPlaceholder")} value={sys.url} onChange={(event) => updateEnterpriseSystem(index, { url: event.target.value })} />
               <div className="flex justify-end gap-1">
                 <button type="button" disabled={!admin || index === 0} title="向上移動" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveEnterpriseSystem(index, -1)}><ArrowUp className="h-4 w-4" /></button>
                 <button type="button" disabled={!admin || index === form.enterpriseSystems.length - 1} title="向下移動" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" onClick={() => moveEnterpriseSystem(index, 1)}><ArrowDown className="h-4 w-4" /></button>
@@ -306,17 +308,17 @@ export default function SettingsSystemPage() {
               </div>
             </div>
           ))}
-          {!form.enterpriseSystems.length && <div className="rounded-xl border border-dashed border-gray-300 py-8 text-center text-sm text-gray-400 dark:border-gray-700">尚未設定企業資訊系統</div>}
+          {!form.enterpriseSystems.length && <div className="rounded-xl border border-dashed border-gray-300 py-8 text-center text-sm text-gray-400 dark:border-gray-700">{t("settings.system.noEnterpriseSystems")}</div>}
         </div>
       </section>
 
-      {!admin && <p className="mt-4 text-sm text-amber-600">目前帳號只有檢視權限；僅系統管理員可修改。</p>}
+      {!admin && <p className="mt-4 text-sm text-amber-600">{t("settings.system.viewOnly")}</p>}
       <button
         disabled={!admin || save.isPending || settings.isLoading || requiredValues.some((value) => !value.trim()) || invalidLinks || invalidEnterpriseSystems}
         onClick={() => save.mutate()}
         className="btn-primary flex items-center gap-2 px-6 py-2.5"
       >
-        <Save className="h-4 w-4" />{save.isPending ? '儲存中…' : '儲存系統參數'}
+        <Save className="h-4 w-4" />{save.isPending ? t("settings.system.saving") : t("settings.system.save")}
       </button>
     </div>
   );
@@ -333,10 +335,11 @@ function Field({ label, help, children }: { label: string; help: string; childre
 }
 
 function KeyStatus({ label, configured }: { label: string; configured: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className={`flex items-center gap-3 rounded-lg border p-3 ${configured ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20' : 'border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700'}`}>
       <KeyRound className={`h-5 w-5 ${configured ? 'text-emerald-600' : 'text-gray-400'}`} />
-      <div><p className="font-mono text-xs">{label}</p><p className={`text-xs ${configured ? 'text-emerald-600' : 'text-gray-400'}`}>{configured ? '已由環境設定' : '未設定'}</p></div>
+      <div><p className="font-mono text-xs">{label}</p><p className={`text-xs ${configured ? 'text-emerald-600' : 'text-gray-400'}`}>{configured ? t("settings.system.apiConfigured") : t("settings.system.apiNotConfigured")}</p></div>
       {configured && <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-600" />}
     </div>
   );

@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, CalendarDays, FileClock, Megaphone, Car, MonitorSmartphone, Users } from 'lucide-react';
 
 import { useQuery } from '@tanstack/react-query';
 import { departmentApi } from '../../services/api';
 
 export function Announcements() {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['department', 'collaboration'],
     queryFn: () => departmentApi.overview('collaboration'),
@@ -15,13 +17,13 @@ export function Announcements() {
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><Megaphone className="h-5 w-5 text-indigo-500"/> 團隊公告</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2"><Megaphone className="h-5 w-5 text-indigo-500"/> {t('collaborationFeatures.announcements')}</h2>
       </div>
       <div className="space-y-3">
         {isLoading ? (
-          <p className="text-gray-500 text-center py-4">Loading announcements...</p>
+          <p className="text-gray-500 text-center py-4">{t('collaborationFeatures.loadingAnnouncements')}</p>
         ) : items.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No announcements</p>
+          <p className="text-gray-500 text-center py-4">{t('collaborationFeatures.noAnnouncements')}</p>
         ) : (
           items.map((item: any) => {
             const meta = (item.metadata as any) || {};
@@ -29,7 +31,7 @@ export function Announcements() {
               <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
-                  <p className="text-sm text-gray-500">發布單位: {meta.department || 'General'}</p>
+                  <p className="text-sm text-gray-500">{t('collaborationFeatures.department')}: {meta.department || 'General'}</p>
                   <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                 </div>
                 <span className="text-sm text-gray-400 whitespace-nowrap ml-4">
@@ -45,23 +47,24 @@ export function Announcements() {
 }
 
 export function Workflows() {
+  const { t } = useTranslation();
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><FileClock className="h-5 w-5 text-indigo-500"/> 流程簽核追蹤</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2"><FileClock className="h-5 w-5 text-indigo-500"/> {t('collaborationFeatures.workflows')}</h2>
       </div>
       <div className="space-y-3">
         {[
-          { title: "請購單: 開發伺服器擴充", status: "簽核中", step: "經理簽核" },
-          { title: "差旅申請: 東京技術交流會", status: "已完成", step: "-" },
-          { title: "硬體借用: 測試用平板", status: "簽核中", step: "IT部門" }
+          { title: t('collaborationFeatures.sampleWorkflow1'), status: t('collaborationFeatures.approving'), step: t('collaborationFeatures.managerApproval') },
+          { title: t('collaborationFeatures.sampleWorkflow2'), status: t('collaborationFeatures.completed'), step: '-' },
+          { title: t('collaborationFeatures.sampleWorkflow3'), status: t('collaborationFeatures.approving'), step: t('collaborationFeatures.itDepartment') }
         ].map((item, idx) => (
           <div key={idx} className="flex justify-between items-center p-3 border rounded-lg">
             <div>
               <p className="font-medium text-gray-900 dark:text-gray-100">{item.title}</p>
-              <p className="text-sm text-gray-500">當前關卡: {item.step}</p>
+              <p className="text-sm text-gray-500">{t('collaborationFeatures.currentStep')}: {item.step}</p>
             </div>
-            <span className={`px-2 py-1 text-xs rounded-full ${item.status === '已完成' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+            <span className={`px-2 py-1 text-xs rounded-full ${item.status === t('collaborationFeatures.completed') ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
               {item.status}
             </span>
           </div>
@@ -72,6 +75,7 @@ export function Workflows() {
 }
 
 export function CalendarView() {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['department', 'collaboration'],
     queryFn: () => departmentApi.overview('collaboration'),
@@ -82,19 +86,19 @@ export function CalendarView() {
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><Calendar className="h-5 w-5 text-indigo-500"/> 行事曆整合</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2"><Calendar className="h-5 w-5 text-indigo-500"/> {t('collaborationFeatures.calendar')}</h2>
       </div>
       
       {isLoading ? (
         <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <p className="text-gray-500">Loading calendar...</p>
+          <p className="text-gray-500">{t('collaborationFeatures.loadingCalendar')}</p>
         </div>
       ) : items.length === 0 ? (
         <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-50 dark:bg-gray-800/50">
           <div className="text-center">
             <Calendar className="h-10 w-10 mx-auto text-gray-400 mb-2" />
-            <p className="text-gray-500 font-medium">個人行程與部門會議行事曆</p>
-            <p className="text-sm text-gray-400 mt-1">目前沒有排程事件</p>
+            <p className="text-gray-500 font-medium">{t('collaborationFeatures.calendarDesc')}</p>
+            <p className="text-sm text-gray-400 mt-1">{t('collaborationFeatures.noEvents')}</p>
           </div>
         </div>
       ) : (
@@ -107,12 +111,12 @@ export function CalendarView() {
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
                   <span className={`text-xs px-2 py-1 rounded-full ${type === 'company' ? 'bg-purple-100 text-purple-700' : type === 'department' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                    {type === 'company' ? '全公司' : type === 'department' ? '部門' : '個人'}
+                    {type === 'company' ? t('collaborationFeatures.company') : type === 'department' ? t('collaborationFeatures.department') : t('collaborationFeatures.personal')}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{item.description}</p>
                 <div className="mt-2 text-xs text-gray-500 font-medium">
-                  {meta.date ? new Date(meta.date).toLocaleDateString() : '未定日期'}
+                  {meta.date ? new Date(meta.date).toLocaleDateString() : t('collaborationFeatures.dateUnset')}
                 </div>
               </div>
             );
@@ -124,12 +128,13 @@ export function CalendarView() {
 }
 
 export function Bookings() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'rooms' | 'cars' | 'equipment'>('rooms');
 
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><CalendarDays className="h-5 w-5 text-indigo-500"/> 資源預約</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2"><CalendarDays className="h-5 w-5 text-indigo-500"/> {t('collaborationFeatures.bookings')}</h2>
       </div>
       
       <div className="flex space-x-2 border-b">
@@ -137,19 +142,19 @@ export function Bookings() {
           onClick={() => setTab('rooms')} 
           className={`px-4 py-2 flex items-center gap-2 ${tab === 'rooms' ? 'border-b-2 border-primary-500 text-primary-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          <Users className="h-4 w-4"/> 會議室
+          <Users className="h-4 w-4"/> {t('collaborationFeatures.rooms')}
         </button>
         <button 
           onClick={() => setTab('cars')} 
           className={`px-4 py-2 flex items-center gap-2 ${tab === 'cars' ? 'border-b-2 border-primary-500 text-primary-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          <Car className="h-4 w-4"/> 公務車
+          <Car className="h-4 w-4"/> {t('collaborationFeatures.cars')}
         </button>
         <button 
           onClick={() => setTab('equipment')} 
           className={`px-4 py-2 flex items-center gap-2 ${tab === 'equipment' ? 'border-b-2 border-primary-500 text-primary-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          <MonitorSmartphone className="h-4 w-4"/> 共享設備
+          <MonitorSmartphone className="h-4 w-4"/> {t('collaborationFeatures.equipment')}
         </button>
       </div>
 

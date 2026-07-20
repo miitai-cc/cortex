@@ -30,10 +30,10 @@ export default function KnowledgeCategoriesPage() {
     },
   });
   const edit = async (item: any) => {
-    const name = window.prompt("分類名稱", item.name);
+    const name = window.prompt(t("knowledge.categoryName"), item.name);
     if (!name) return;
     const description =
-      window.prompt("分類說明", item.description || "") ?? item.description;
+      window.prompt(t("knowledge.categoryDescription"), item.description || "") ?? item.description;
     await knowledgeApi.updateCategory(item.id, {
       name,
       description,
@@ -42,31 +42,31 @@ export default function KnowledgeCategoriesPage() {
     refresh();
   };
   const remove = async (item: any) => {
-    if (!window.confirm(`確定刪除分類「${item.name}」？`)) return;
+    if (!window.confirm(t("knowledge.confirmDeleteCategory", { name: item.name }))) return;
     try {
       await knowledgeApi.deleteCategory(item.id);
       refresh();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || "使用中的分類無法刪除");
+      toast.error(error.response?.data?.error || t("knowledge.categoryDeleteProtected"));
     }
   };
   return (
     <div className="mx-auto max-w-5xl px-4 pb-10">
       <CommonHeroTitle
         icon={FolderCog}
-        title="分類主題設定"
-        description="建立與維護企業知識分類；使用中的分類受到刪除保護"
+        title={t("knowledge.categoriesTitle")}
+        description={t("knowledge.categoriesDescription")}
       />
       <div className="card mb-6 grid gap-3 md:grid-cols-[1fr_2fr_auto_auto]">
         <input
           className="input-field"
-          placeholder="分類名稱"
+          placeholder={t("knowledge.categoryName")}
           value={form.name}
           onChange={(event) => setForm({ ...form, name: event.target.value })}
         />
         <input
           className="input-field"
-          placeholder="分類說明"
+          placeholder={t("knowledge.categoryDescription")}
           value={form.description}
           onChange={(event) =>
             setForm({ ...form, description: event.target.value })
@@ -84,7 +84,7 @@ export default function KnowledgeCategoriesPage() {
           onClick={() => create.mutate()}
         >
           <Plus className="h-4 w-4" />
-          新增
+          {t("knowledge.add")}
         </button>
       </div>
       <div className="space-y-3">
@@ -97,7 +97,7 @@ export default function KnowledgeCategoriesPage() {
             <div>
               <h2 className="font-semibold">{item.name}</h2>
               <p className="text-sm text-gray-500">
-                {item.description || "未填寫說明"}
+                {item.description || t("knowledge.noDescription")}
               </p>
             </div>
             {model.currentUser.role === "admin" && (
